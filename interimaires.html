@@ -82,7 +82,7 @@
     <div class="icon">👷</div>
     <p>Sélectionnez un profil ou créez-en un nouveau</p>
   </div>
-  <div id="fiche-panel" style="display:none;flex:1;display:none;flex-direction:column;overflow:hidden">
+  <div id="fiche-panel" style="display:none;flex-direction:column;overflow:hidden;flex:1">
     <div class="main-header" id="fiche-header">
       <div>
         <div class="main-title" id="fiche-title">—</div>
@@ -199,17 +199,6 @@ var currentTab = 'identite';
 var filterDispo = 'tous';
 var filterFamille = 'tous';
 
-// ── INIT ──
-demoInject();
-load();
-renderList();
-// Restaurer dernier profil ouvert
-var lastId = sessionStorage.getItem('jtp_last_int');
-if (lastId && DB.find(function(x){return x.id===lastId;})) {
-  openFiche(lastId);
-} else if (DB.length) {
-  openFiche(DB[0].id);
-}
 
 // ── PERSISTANCE ──
 function save() {
@@ -1561,6 +1550,19 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 document.querySelectorAll('.modal-overlay').forEach(function(m){
   m.addEventListener('click',function(e){if(e.target===m)closeModal(m.id);});
 });
+
+// ── INIT — en dernier, après toutes les définitions ──
+demoInject();
+load();
+renderList();
+(function(){
+  var lastId = sessionStorage.getItem('jtp_last_int');
+  if (lastId && DB.find(function(x){return x.id===lastId;})) {
+    openFiche(lastId);
+  } else if (DB.length) {
+    openFiche(DB[0].id);
+  }
+})();
 </script>
 </body>
 </html>

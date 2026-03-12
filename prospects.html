@@ -112,12 +112,6 @@ var currentTab = 'identite';
 var filterStatut = 'tous';
 var filterScore = 'tous';
 
-demoInject();
-load();
-renderList();
-var lastId = sessionStorage.getItem('jtp_last_pro');
-if (lastId && DB.find(function(x){return x.id===lastId;})) openFiche(lastId);
-else if (DB.length) openFiche(DB[0].id);
 
 function save(){try{localStorage.setItem('jtp_prospects',JSON.stringify(DB));}catch(e){}}
 function load(){try{var s=localStorage.getItem('jtp_prospects');if(s)DB=JSON.parse(s);}catch(e){}}
@@ -577,6 +571,16 @@ function exportJSON(){var blob=new Blob([JSON.stringify(DB,null,2)],{type:'appli
 function importJSON(inp){var file=inp.files[0];if(!file)return;var r=new FileReader();r.onload=function(e){try{var d=JSON.parse(e.target.result);if(!Array.isArray(d)){alert('Format invalide');return;}var a=0;d.forEach(function(p){if(!DB.find(function(x){return x.id===p.id;})){DB.push(p);a++;}});save();renderList();alert(a+' fiche(s) importée(s)');}catch(err){alert('Erreur : '+err.message);}};r.readAsText(file);inp.value='';}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.modal-overlay').forEach(function(m){m.addEventListener('click',function(e){if(e.target===m)closeModal(m.id);});});
+
+// ── INIT ──
+demoInject();
+load();
+renderList();
+(function(){
+  var lastId = sessionStorage.getItem('jtp_last_pro');
+  if (lastId && DB.find(function(x){return x.id===lastId;})) openFiche(lastId);
+  else if (DB.length) openFiche(DB[0].id);
+})();
 </script>
 </body>
 </html>

@@ -81,10 +81,6 @@
 <script src="data_demo.js"></script>
 <script>
 var DB=[], currentId=null, currentTab='detail', filterStatut='tous';
-demoInject();load();renderList();
-var lastId=sessionStorage.getItem('jtp_last_mis');
-if(lastId&&DB.find(function(x){return x.id===lastId;}))openFiche(lastId);
-else if(DB.length)openFiche(DB[0].id);
 
 function save(){try{localStorage.setItem('jtp_missions',JSON.stringify(DB));}catch(e){}}
 function load(){try{var s=localStorage.getItem('jtp_missions');if(s)DB=JSON.parse(s);}catch(e){}}
@@ -285,6 +281,16 @@ function supprimerMission(){
 }
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.modal-overlay').forEach(function(m){m.addEventListener('click',function(e){if(e.target===m)closeModal(m.id);});});
+
+// ── INIT ──
+demoInject();
+load();
+renderList();
+(function(){
+  var lastId=sessionStorage.getItem('jtp_last_mis');
+  if(lastId&&DB.find(function(x){return x.id===lastId;}))openFiche(lastId);
+  else if(DB.length)openFiche(DB[0].id);
+})();
 </script>
 </body>
 </html>

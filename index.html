@@ -149,12 +149,7 @@ function fmt(d){if(!d)return '--';var p=d.split('-');return p.length===3?p[2]+'/
 function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function fmtK(n){return n>=1000000?(n/1000000).toFixed(1)+'M€':n>=1000?(n/1000).toFixed(0)+'k€':Math.round(n)+'€';}
 
-// Init
-demoInject();
-loadConfig();
-loadConfigForm();
-renderDash();
-
+// Init déplacé en fin de script
 function loadConfigForm(){
   document.getElementById('cfg_nom').value=CONFIG.nom||'';
   document.getElementById('cfg_emetteur').value=CONFIG.emetteur||'';
@@ -344,6 +339,12 @@ function calcClientScore(p){
 setInterval(renderDash, 60000);
 
 document.getElementById('modal-config').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
+
+// ── INIT ──
+demoInject();
+loadConfig();
+loadConfigForm();
+renderDash();
 </script>
 </body>
 </html>
