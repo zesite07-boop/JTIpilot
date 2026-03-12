@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>JTIpilot — Simulateurs</title>
+<link rel="stylesheet" href="shared.css"/>
+<style>
+.sim-nav{display:flex;gap:4px;flex-wrap:wrap;padding:12px 20px;border-bottom:1px solid var(--border);background:var(--surface2)}
+.sim-btn{padding:7px 14px;border-radius:5px;border:1px solid var(--border);font-family:var(--mono);font-size:10px;font-weight:700;cursor:pointer;background:var(--surface);color:var(--muted);transition:all .15s;letter-spacing:.4px}
+.sim-btn.active{background:var(--orange);color:#fff;border-color:var(--orange)}
+.sim-btn:hover:not(.active){border-color:var(--orange);color:var(--orange)}
+.rule-card{background:var(--surface);border:1px solid var(--border2);border-radius:6px;margin-bottom:10px;overflow:hidden}
+.rule-head{padding:10px 14px;display:flex;justify-content:space-between;align-items:flex-start;cursor:pointer;background:var(--surface2)}
+.rule-head:hover{background:var(--surface3)}
+.rule-title{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text2)}
+.rule-sub{font-size:10px;color:var(--orange);font-family:var(--mono);margin-top:2px}
+.rule-body{padding:12px 16px;border-top:1px solid var(--border2);display:none;font-size:12px;line-height:1.7;color:var(--text2)}
+.rule-body.open{display:block}
+.obj-card{background:var(--surface);border:1px solid var(--border2);border-radius:6px;margin-bottom:10px;overflow:hidden}
+.obj-head{padding:12px 16px;cursor:pointer;background:var(--surface2);display:flex;align-items:flex-start;gap:10px}
+.obj-head:hover{background:var(--surface3)}
+.obj-num{width:28px;height:28px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:700;flex-shrink:0;margin-top:2px}
+.obj-body{padding:14px 16px;border-top:1px solid var(--border2);display:none}
+.obj-body.open{display:block}
+.rep-block{background:var(--green-lt);border:1px solid rgba(22,163,74,.2);border-radius:5px;padding:10px 12px;margin-bottom:10px}
+.rep-head{font-family:var(--mono);font-size:9px;font-weight:700;color:var(--green);letter-spacing:.4px;margin-bottom:6px}
+.arg-block{background:var(--blue-lt);border:1px solid rgba(37,99,235,.15);border-radius:5px;padding:10px 12px;margin-bottom:8px}
+.arg-head{font-family:var(--mono);font-size:9px;font-weight:700;color:var(--blue-md);letter-spacing:.4px;margin-bottom:6px}
+.pl-kpi{text-align:center;padding:12px;background:var(--surface2);border:1px solid var(--border2);border-radius:5px}
+.pl-kpi-num{font-size:20px;font-weight:700;font-family:var(--mono)}
+.pl-kpi-lbl{font-size:9px;font-family:var(--mono);color:var(--muted);margin-top:3px;letter-spacing:.3px}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-logo">⚡ <span>JTI</span>pilot</div>
+  <a href="index.html" class="nav-link"><span class="nav-icon">📊</span>Tableau de bord</a>
+  <a href="interimaires.html" class="nav-link"><span class="nav-icon">👷</span>Intérimaires</a>
+  <a href="prospects.html" class="nav-link"><span class="nav-icon">🏢</span>Prospects / Clients</a>
+  <a href="missions.html" class="nav-link"><span class="nav-icon">📋</span>Missions</a>
+  <a href="simulateurs.html" class="nav-link active"><span class="nav-icon">🧮</span>Simulateurs</a>
+</nav>
+
+<div style="display:flex;flex-direction:column;height:calc(100vh - 48px)">
+<div class="sim-nav">
+  <button class="sim-btn active" id="btn-marge" onclick="showSim('marge',this)">🧮 Calculateur Marge</button>
+  <button class="sim-btn" id="btn-pl" onclick="showSim('pl',this)">📈 Simulateur P&amp;L</button>
+  <button class="sim-btn" id="btn-juridique" onclick="showSim('juridique',this)">⚖ Guide Juridique</button>
+  <button class="sim-btn" id="btn-objections" onclick="showSim('objections',this)">💬 Objections Direction</button>
+  <button class="sim-btn" id="btn-baremes" onclick="showSim('baremes',this)">📋 Barèmes BTP IDF</button>
+</div>
+<div style="flex:1;overflow-y:auto;padding:20px 24px;max-width:1000px;width:100%" id="sim-body"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// JTIPILOT — Simulateurs
+// ═══════════════════════════════════════════════════════════════
+
+var ITR_ZONES=[
+  {label:'Z1 ≤5km',val:2.20},{label:'Z2 5→10km',val:4.50},{label:'Z3 10→20km',val:6.80},
+  {label:'Z4 20→30km',val:9.15},{label:'Z5 30→40km',val:11.50},{label:'Z6 40→50km',val:13.85},{label:'Z7 >50km',val:16.20}
+];
+
+function fmt2(n){return Number(n).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
+function fmtK(n){return n>=1000?(n/1000).toFixed(1)+'k€':Math.round(n)+'€';}
+
+// ── NAVIGATION ──
+var currentSim='marge';
+function showSim(name,btn){
+  currentSim=name;
+  document.querySelectorAll('.sim-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  var body=document.getElementById('sim-body');
+  if(name==='marge') body.innerHTML=renderMarge();
+  else if(name==='pl') body.innerHTML=renderPL();
+  else if(name==='juridique') body.innerHTML=renderJuridique();
+  else if(name==='objections') body.innerHTML=renderObjections();
+  else if(name==='baremes') body.innerHTML=renderBaremes();
+  if(name==='marge') setTimeout(calcMarge,50);
+  if(name==='pl') setTimeout(calcPL,50);
+}
+
+// Init
+document.getElementById('sim-body').innerHTML=renderMarge();
+setTimeout(calcMarge,50);
+
+// ══════════════════════════════════════
+// CALCULATEUR MARGE COMPLET
+// ══════════════════════════════════════
+function renderMarge(){
+  return '<h2 style="font-family:var(--mono);font-size:13px;font-weight:700;margin-bottom:16px;color:var(--text2)">🧮 CALCULATEUR MARGE — BTP IDF</h2>'
+  +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">'
+
+  // COLONNE GAUCHE — inputs
+  +'<div>'
+  +'<div class="sec"><div class="sec-head">PARAMÈTRES DE BASE</div><div class="sec-body"><div class="form-grid">'
+  +'<div class="field"><label>TAUX BRUT CANDIDAT (€/H)</label><input id="mg_tb" type="number" step="0.5" value="16.50" oninput="calcMarge()"/></div>'
+  +'<div class="field"><label>HEURES NORMALES / SEM</label><input id="mg_hn" type="number" step="0.5" value="35" oninput="calcMarge()"/></div>'
+  +'<div class="field"><label>HS +25% (36e→43e h)</label><input id="mg_hs25" type="number" step="0.5" value="0" oninput="calcMarge()"/></div>'
+  +'<div class="field"><label>HS +50% (≥44e h)</label><input id="mg_hs50" type="number" step="0.5" value="0" oninput="calcMarge()"/></div>'
+  +'<div class="field"><label>NB SEMAINES</label><input id="mg_sem" type="number" value="4" oninput="calcMarge()"/></div>'
+  +'<div class="field"><label>CHARGES PATRONALES (%)</label><input id="mg_charges" type="number" step="0.5" value="43" oninput="calcMarge()"/></div>'
+  +'</div></div></div>'
+
+  +'<div class="sec"><div class="sec-head">ACCESSOIRES</div><div class="sec-body"><div class="form-grid">'
+  +'<div class="field"><label>PANIER REPAS (€/j)</label><input id="mg_pan_val" type="number" step="0.1" value="10.10" oninput="calcMarge()"/></div>'
+  +'<div class="field"><label>NB PANIERS / SEM</label><input id="mg_pan_nb" type="number" value="5" oninput="calcMarge()"/></div>'
+  +'<div class="field"><label>ZONE ITR</label><select id="mg_itr_zone" onchange="applyZoneITR();calcMarge()">'
+  +'<option value="0">Sans ITR</option>'
+  +ITR_ZONES.map(function(z){return '<option value="'+z.val+'">'+z.label+' ('+z.val+' €)</option>';}).join('')
+  +'</select></div>'
+  +'<div class="field"><label>MONTANT ITR (€/j)</label><input id="mg_itr_val" type="number" step="0.1" value="0" oninput="calcMarge()"/></div>'
+  +'<div class="field"><label>NB JOURS ITR / SEM</label><input id="mg_itr_nb" type="number" value="5" oninput="calcMarge()"/></div>'
+  +'<div class="field"><label>PRIME RISQUE (%TB)</label><input id="mg_risque" type="number" step="0.5" value="0" oninput="calcMarge()"/></div>'
+  +'</div></div></div>'
+
+  +'<div class="sec"><div class="sec-head">TAUX DE FACTURATION</div><div class="sec-body"><div class="form-grid">'
+  +'<div class="field"><label>OBJECTIF MARGE (%)</label><input id="mg_marge_pct" type="number" step="0.5" value="18" oninput="calcMarge()"/></div>'
+  +'<div class="field"><label>TAUX CLIENT (€/H)</label><input id="mg_tc" type="number" step="0.5" value="" placeholder="Auto ou manuel" oninput="calcMarge()"/></div>'
+  +'<div class="field"><label>COEFFICIENT</label><input id="mg_coeff" type="number" step="0.01" value="" placeholder="Ex : 2.10" oninput="calcMarge()"/></div>'
+  +'</div>'
+  +'<div style="font-size:10px;color:var(--muted);margin-top:8px;font-family:var(--mono)">Coeff × 2.05 min · × 2.20 objectif · × 2.40 profils rares</div>'
+  +'</div></div>'
+  +'</div>'
+
+  // COLONNE DROITE — résultats
+  +'<div>'
+  +'<div class="sec"><div class="sec-head" style="color:var(--orange)">RÉSULTATS — SEMAINE</div><div class="sec-body">'
+  +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">'
+  +'<div class="pl-kpi"><div class="pl-kpi-num" id="r_ca" style="color:var(--orange)">—</div><div class="pl-kpi-lbl">CA / SEMAINE</div></div>'
+  +'<div class="pl-kpi"><div class="pl-kpi-num" id="r_cout" style="color:var(--blue)">—</div><div class="pl-kpi-lbl">COÛT ETT / SEM</div></div>'
+  +'<div class="pl-kpi"><div class="pl-kpi-num" id="r_marge" style="color:var(--green)">—</div><div class="pl-kpi-lbl">MARGE € / SEM</div></div>'
+  +'<div class="pl-kpi"><div class="pl-kpi-num" id="r_pct">—</div><div class="pl-kpi-lbl">MARGE %</div></div>'
+  +'</div>'
+  +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+  +'<div class="pl-kpi"><div class="pl-kpi-num" id="r_ca_total" style="color:var(--orange);font-size:16px">—</div><div class="pl-kpi-lbl">CA TOTAL MISSION</div></div>'
+  +'<div class="pl-kpi"><div class="pl-kpi-num" id="r_marge_total" style="color:var(--green);font-size:16px">—</div><div class="pl-kpi-lbl">MARGE TOTALE</div></div>'
+  +'<div class="pl-kpi"><div class="pl-kpi-num" id="r_taux_fact" style="color:var(--cyan);font-size:16px">—</div><div class="pl-kpi-lbl">TAUX FACTURATION €/H</div></div>'
+  +'<div class="pl-kpi"><div class="pl-kpi-num" id="r_coeff" style="color:var(--purple);font-size:16px">—</div><div class="pl-kpi-lbl">COEFFICIENT</div></div>'
+  +'</div></div></div>'
+
+  +'<div class="sec"><div class="sec-head">DÉCOMPOSITION COÛT ETT / SEMAINE</div><div class="sec-body">'
+  +'<table class="tbl" id="r_detail"><tbody></tbody></table>'
+  +'</div></div>'
+
+  +'<div class="sec"><div class="sec-head" style="color:var(--muted)">SIMULATION 3 SCÉNARIOS</div><div class="sec-body">'
+  +'<table class="tbl"><thead><tr><th>Coefficient</th><th>Taux client €/h</th><th>Marge %</th><th>Signal</th></tr></thead>'
+  +'<tbody id="r_scenarios"></tbody></table>'
+  +'</div></div>'
+
+  +'</div>'
+  +'</div>';
+}
+
+function applyZoneITR(){
+  var sel=document.getElementById('mg_itr_zone');
+  var inp=document.getElementById('mg_itr_val');
+  if(sel&&inp&&sel.value!=='0') inp.value=sel.value;
+}
+
+function calcMarge(){
+  var tb=parseFloat(document.getElementById('mg_tb').value)||0;
+  var hn=parseFloat(document.getElementById('mg_hn').value)||35;
+  var hs25=parseFloat(document.getElementById('mg_hs25').value)||0;
+  var hs50=parseFloat(document.getElementById('mg_hs50').value)||0;
+  var sem=parseFloat(document.getElementById('mg_sem').value)||4;
+  var chPct=(parseFloat(document.getElementById('mg_charges').value)||43)/100;
+  var panVal=parseFloat(document.getElementById('mg_pan_val').value)||10.10;
+  var panNb=parseFloat(document.getElementById('mg_pan_nb').value)||5;
+  var itrVal=parseFloat(document.getElementById('mg_itr_val').value)||0;
+  var itrNb=parseFloat(document.getElementById('mg_itr_nb').value)||5;
+  var risquePct=(parseFloat(document.getElementById('mg_risque').value)||0)/100;
+  var margePct=(parseFloat(document.getElementById('mg_marge_pct').value)||18)/100;
+  var tcManuel=parseFloat(document.getElementById('mg_tc').value)||0;
+  var coeffManuel=parseFloat(document.getElementById('mg_coeff').value)||0;
+  if(!tb)return;
+
+  var hTotal=hn+hs25+hs50;
+  var brutSem=hn*tb + hs25*tb*1.25 + hs50*tb*1.50;
+  var primeRisque=brutSem*risquePct;
+  var brutBase=brutSem+primeRisque;
+  var ifm=brutBase*0.10;
+  var icp=(brutBase+ifm)*0.10;
+  var charges=(brutBase+ifm)*chPct;
+  var panTotal=panVal*panNb;
+  var itrTotal=itrVal*itrNb;
+  var acc=panTotal+itrTotal;
+  var coutSem=brutBase+ifm+icp+charges+acc;
+
+  // Taux de facturation
+  var caHeuresSem, caSem, margeSem, pctReel, tFact;
+  if(tcManuel>0){
+    caHeuresSem=tcManuel*hTotal; caSem=caHeuresSem+acc;
+    margeSem=caSem-coutSem; pctReel=caSem?margeSem/caSem*100:0;
+    tFact=tcManuel;
+  } else if(coeffManuel>0){
+    caHeuresSem=tb*hTotal*coeffManuel; caSem=caHeuresSem+acc;
+    margeSem=caSem-coutSem; pctReel=caSem?margeSem/caSem*100:0;
+    tFact=caHeuresSem/hTotal;
+  } else {
+    var baseSanAcc=brutBase+ifm+icp+charges;
+    caHeuresSem=baseSanAcc/(1-margePct); caSem=caHeuresSem+acc;
+    margeSem=caSem-coutSem; pctReel=caSem?margeSem/caSem*100:0;
+    tFact=caHeuresSem/hTotal;
+  }
+  var coeff=hTotal>0?tFact/tb:0;
+
+  var pctColor=pctReel>=18?'var(--green)':pctReel>=12?'var(--yellow)':'var(--warn)';
+  var set=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
+  var setColor=function(id,c){var el=document.getElementById(id);if(el)el.style.color=c;};
+
+  set('r_ca',fmtK(caSem)); set('r_cout',fmtK(coutSem));
+  set('r_marge',fmtK(margeSem)); set('r_pct',pctReel.toFixed(1)+'%');
+  set('r_ca_total',fmtK(caSem*sem)); set('r_marge_total',fmtK(margeSem*sem));
+  set('r_taux_fact',tFact.toFixed(2)+' €/h'); set('r_coeff','×'+coeff.toFixed(2));
+  setColor('r_pct',pctColor); setColor('r_marge','var(--green)'); setColor('r_marge_total','var(--green)');
+
+  // Détail
+  var rows=[
+    ['Brut semaine ('+hn+'h norm'+(hs25?'+'+hs25+'h×1.25':'')+(hs50?'+'+hs50+'h×1.50':'')+')',brutBase],
+    ['IFM (10%)',ifm],['ICP (10%×(brut+IFM))',icp],['Charges patronales ('+Math.round(chPct*100)+'%)',charges],
+    ['Panier repas ('+panNb+'×'+panVal+'€)',panTotal],['ITR/IPD ('+itrNb+'×'+itrVal+'€)',itrTotal],
+    ['<strong>COÛT TOTAL ETT / SEM</strong>','<strong>'+fmt2(coutSem)+'</strong>'],
+  ];
+  var tbl=document.getElementById('r_detail');
+  if(tbl){tbl.innerHTML='<tbody>'+rows.map(function(r){return '<tr><td style="font-size:11px">'+r[0]+'</td><td style="font-family:var(--mono);font-size:11px;text-align:right">'+r[1]+'</td></tr>';}).join('')+'</tbody>';}
+
+  // Scénarios
+  var scenarios=[{coeff:2.05,label:'Minimum'},{coeff:2.20,label:'Objectif'},{coeff:2.40,label:'Profil rare'}];
+  var sc=document.getElementById('r_scenarios');
+  if(sc){sc.innerHTML=scenarios.map(function(s){
+    var tc_s=tb*s.coeff; var ca_s=tc_s*hTotal+acc; var mb_s=ca_s?(ca_s-(brutBase+ifm+icp+charges+acc))/ca_s*100:0;
+    var color=mb_s>=18?'var(--green)':mb_s>=12?'var(--yellow)':'var(--warn)';
+    return '<tr><td style="font-family:var(--mono);font-weight:700">×'+s.coeff+'<br><small style="color:var(--muted)">'+s.label+'</small></td>'
+      +'<td style="font-family:var(--mono);font-weight:700">'+tc_s.toFixed(2)+'</td>'
+      +'<td style="font-family:var(--mono);font-weight:700;color:'+color+'">'+mb_s.toFixed(1)+'%</td>'
+      +'<td style="font-size:11px">'+(mb_s>=18?'✅ Rentable':mb_s>=12?'⚠ Limite':'❌ Insuffisant')+'</td></tr>';
+  }).join('');}
+}
+
+// ══════════════════════════════════════
+// SIMULATEUR P&L
+// ══════════════════════════════════════
+function renderPL(){
+  return '<h2 style="font-family:var(--mono);font-size:13px;font-weight:700;margin-bottom:16px;color:var(--text2)">📈 SIMULATEUR P&L AGENCE BTP</h2>'
+  +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">'
+  +'<div>'
+  +'<div class="sec"><div class="sec-head">ACTIVITÉ</div><div class="sec-body"><div class="form-grid">'
+  +'<div class="field"><label>INTÉRIMAIRES EN MISSION / SEM</label><input id="pl_etp" type="number" value="15" oninput="calcPL()"/></div>'
+  +'<div class="field"><label>TAUX BRUT MOYEN (€/H)</label><input id="pl_tb" type="number" step="0.5" value="16.50" oninput="calcPL()"/></div>'
+  +'<div class="field"><label>TAUX CLIENT MOYEN (€/H)</label><input id="pl_tc" type="number" step="0.5" value="25.00" oninput="calcPL()"/></div>'
+  +'<div class="field"><label>HEURES MOYENNES / SEM</label><input id="pl_h" type="number" step="0.5" value="35" oninput="calcPL()"/></div>'
+  +'<div class="field"><label>SEMAINES ACTIVES / AN</label><input id="pl_sem" type="number" value="47" oninput="calcPL()"/></div>'
+  +'<div class="field"><label>% ACCESSOIRES SUR CA</label><input id="pl_acc_pct" type="number" step="0.5" value="5" oninput="calcPL()"/></div>'
+  +'</div></div></div>'
+
+  +'<div class="sec"><div class="sec-head">STRUCTURE DE COÛTS AGENCE</div><div class="sec-body"><div class="form-grid">'
+  +'<div class="field"><label>SALAIRE RA BRUT / MOIS (€)</label><input id="pl_ra_salaire" type="number" value="3500" oninput="calcPL()"/></div>'
+  +'<div class="field"><label>NB CHARGÉS DE COMPTE</label><input id="pl_cc_nb" type="number" value="0" oninput="calcPL()"/></div>'
+  +'<div class="field"><label>SALAIRE CC BRUT / MOIS (€)</label><input id="pl_cc_salaire" type="number" value="2500" oninput="calcPL()"/></div>'
+  +'<div class="field"><label>LOYER AGENCE / MOIS (€)</label><input id="pl_loyer" type="number" value="1500" oninput="calcPL()"/></div>'
+  +'<div class="field"><label>FRAIS VARIABLES / MOIS (€)</label><input id="pl_frais_var" type="number" value="800" oninput="calcPL()"/></div>'
+  +'<div class="field"><label>CHARGES ÉQUIPE (%)</label><input id="pl_charges_eq" type="number" value="45" oninput="calcPL()"/></div>'
+  +'</div></div></div>'
+  +'</div>'
+
+  +'<div>'
+  +'<div class="sec"><div class="sec-head" style="color:var(--orange)">RÉSULTATS ANNUELS</div><div class="sec-body">'
+  +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">'
+  +'<div class="pl-kpi"><div class="pl-kpi-num" id="pl_r_ca" style="color:var(--orange)">—</div><div class="pl-kpi-lbl">CA BRUT</div></div>'
+  +'<div class="pl-kpi"><div class="pl-kpi-num" id="pl_r_mb" style="color:var(--green)">—</div><div class="pl-kpi-lbl">MARGE BRUTE</div></div>'
+  +'<div class="pl-kpi"><div class="pl-kpi-num" id="pl_r_mb_pct" style="color:var(--green)">—</div><div class="pl-kpi-lbl">MARGE BRUTE %</div></div>'
+  +'<div class="pl-kpi"><div class="pl-kpi-num" id="pl_r_frais" style="color:var(--blue)">—</div><div class="pl-kpi-lbl">FRAIS FIXES</div></div>'
+  +'<div class="pl-kpi"><div class="pl-kpi-num" id="pl_r_rbe" style="color:var(--purple)">—</div><div class="pl-kpi-lbl">RBE / RÉSULTAT</div></div>'
+  +'<div class="pl-kpi"><div class="pl-kpi-num" id="pl_r_rbe_pct" style="color:var(--purple)">—</div><div class="pl-kpi-lbl">RBE %</div></div>'
+  +'</div>'
+  +'<div class="pl-kpi" style="margin-bottom:12px"><div class="pl-kpi-num" id="pl_r_seuil" style="color:var(--cyan)">—</div><div class="pl-kpi-lbl">SEUIL DE RENTABILITÉ (ETP)</div></div>'
+  +'</div></div>'
+
+  +'<div class="sec"><div class="sec-head">COMPTE DE RÉSULTAT SIMPLIFIÉ</div><div class="sec-body">'
+  +'<table class="tbl"><tbody id="pl_detail"></tbody></table>'
+  +'</div></div>'
+  +'</div>'
+  +'</div>';
+}
+
+function calcPL(){
+  var etp=parseFloat(document.getElementById('pl_etp').value)||0;
+  var tb=parseFloat(document.getElementById('pl_tb').value)||0;
+  var tc=parseFloat(document.getElementById('pl_tc').value)||0;
+  var h=parseFloat(document.getElementById('pl_h').value)||35;
+  var sem=parseFloat(document.getElementById('pl_sem').value)||47;
+  var accPct=(parseFloat(document.getElementById('pl_acc_pct').value)||5)/100;
+  var raSal=parseFloat(document.getElementById('pl_ra_salaire').value)||3500;
+  var ccNb=parseFloat(document.getElementById('pl_cc_nb').value)||0;
+  var ccSal=parseFloat(document.getElementById('pl_cc_salaire').value)||2500;
+  var loyer=parseFloat(document.getElementById('pl_loyer').value)||1500;
+  var fraisVar=parseFloat(document.getElementById('pl_frais_var').value)||800;
+  var chEq=(parseFloat(document.getElementById('pl_charges_eq').value)||45)/100;
+
+  var caSem=tc*h*etp;
+  var caAn=caSem*sem*(1+accPct);
+  var coutSem=(tb*(1+0.10+0.10*1.10)*h*etp)*1.43;
+  var coutAn=coutSem*sem;
+  var mb=caAn-coutAn;
+  var mbPct=caAn?mb/caAn*100:0;
+
+  var fraissEq=((raSal+ccNb*ccSal)*(1+chEq))*12;
+  var fraisFixAn=(loyer+fraisVar)*12;
+  var totalFrais=fraissEq+fraisFixAn;
+  var rbe=mb-totalFrais;
+  var rbePct=caAn?rbe/caAn*100:0;
+
+  var mbParEtp=etp>0?mb/etp:0;
+  var seuilEtp=mbParEtp>0?totalFrais/mbParEtp:0;
+
+  function f(n){return n>=1000000?(n/1000000).toFixed(2)+'M€':n>=1000?(n/1000).toFixed(1)+'k€':Math.round(n)+'€';}
+  var set=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
+  var setColor=function(id,c){var el=document.getElementById(id);if(el)el.style.color=c;};
+
+  set('pl_r_ca',f(caAn)); set('pl_r_mb',f(mb));
+  set('pl_r_mb_pct',mbPct.toFixed(1)+'%');
+  set('pl_r_frais',f(totalFrais));
+  set('pl_r_rbe',f(rbe)); set('pl_r_rbe_pct',rbePct.toFixed(1)+'%');
+  setColor('pl_r_rbe',rbe>=0?'var(--green)':'var(--warn)');
+  setColor('pl_r_rbe_pct',rbePct>=5?'var(--green)':rbePct>=0?'var(--yellow)':'var(--warn)');
+  set('pl_r_seuil',seuilEtp.toFixed(1)+' ETP moy.');
+
+  var rows=[
+    ['CA facturation intérimaires',f(caAn),''],
+    ['— Coût intérimaires (brut+IFM+ICP+ch. pat.)','-'+f(coutAn),'var(--warn)'],
+    ['= MARGE BRUTE',f(mb),mbPct>=18?'var(--green)':mbPct>=12?'var(--yellow)':'var(--warn)'],
+    ['Frais d\'équipe (RA + CC + charges)','-'+f(fraissEq),'var(--blue)'],
+    ['Frais fixes (loyer + variables)','-'+f(fraisFixAn),'var(--blue)'],
+    ['= RBE / RÉSULTAT',f(rbe),rbe>=0?'var(--green)':'var(--warn)'],
+  ];
+  var d=document.getElementById('pl_detail');
+  if(d) d.innerHTML=rows.map(function(r){return '<tr><td style="font-size:12px">'+r[0]+'</td><td style="font-family:var(--mono);font-weight:700;text-align:right;color:'+(r[2]||'var(--text)')+'">'+r[1]+'</td></tr>';}).join('');
+}
+
+// ══════════════════════════════════════
+// GUIDE JURIDIQUE
+// ══════════════════════════════════════
+function renderJuridique(){
+  var rules=[
+    {title:'MOTIFS DE RECOURS AUTORISÉS',sub:'Art. L.1251-6 CT — Conditions préalables impératives',body:'<b>3 motifs licites uniquement :</b><br><br>① Remplacement d\'un salarié absent (maladie, congé, formation…)<br>② Accroissement temporaire d\'activité — motif majoritaire en BTP second œuvre<br>③ Emploi saisonnier ou emploi pour lequel il est d\'usage constant de ne pas recourir au CDI<br><br><b class="warn-block">❌ Motifs INTERDITS (Art. L.1251-10) :</b> Poste lié à l\'activité normale et permanente, remplacement d\'un salarié en grève, travaux dangereux listés, après licenciement économique (6 mois sur même poste/qualification).<br><br><b style="color:var(--warn)">Sanction :</b> Requalification en CDI chez le client. Amende pénale Art. L.1254-1.'},
+    {title:'DURÉES MAXIMALES & DÉLAI DE CARENCE',sub:'Art. L.1251-12 & L.1251-36 — Pièges majeurs en BTP',body:'<table class="tbl"><thead><tr><th>Motif</th><th>Durée max</th><th>Renouvellements</th></tr></thead><tbody>'
+      +'<tr><td>Accroissement temporaire</td><td style="font-family:var(--mono);color:var(--orange)">18 mois</td><td>2 max</td></tr>'
+      +'<tr><td>Remplacement salarié</td><td style="font-family:var(--mono);color:var(--orange)">18 mois</td><td>2 max</td></tr>'
+      +'<tr><td>Commande exceptionnelle export</td><td style="font-family:var(--mono);color:var(--cyan)">24 mois</td><td>2 max</td></tr>'
+      +'<tr><td>Emploi saisonnier / d\'usage</td><td style="font-family:var(--mono);color:var(--green)">Durée saison</td><td>Sans limite</td></tr>'
+      +'</tbody></table><br>'
+      +'<b>DÉLAI DE CARENCE — LA RÈGLE DU TIERS</b> (Art. L.1251-36)<br>Après une mission sur un même poste chez un même client : délai de carence = 1/3 de la durée totale (mission + renouvellements).<br>Exemple : mission 3 mois → carence 1 mois avant remission sur même poste.<br><br><b style="color:var(--warn)">Exception :</b> pas de carence si nouvelle mission pour remplacement d\'un autre salarié, ou si la durée < 1 semaine.'},
+    {title:'CONTRATS OBLIGATOIRES',sub:'Art. L.1251-42 à L.1251-43 — À signer AVANT le début',body:'<b>Contrat de mise à disposition (ETT → Client EU)</b> — signé avant le démarrage :<br>• Motif et justification<br>• Durée et terme (précis ou imprecis)<br>• Caractéristiques du poste + qualification exigée<br>• Lieu de travail et horaires<br>• Taux de facturation<br>• Mention des risques particuliers<br><br><b>Contrat de mission (ETT → Intérimaire)</b> — transmis dans les 2 jours ouvrables (Art. L.1251-16) :<br>• Motif + justification<br>• Terme ou durée minimale<br>• Désignation du poste et qualification<br>• Lieu, horaires et règles AT<br>• Montant rémunération + IFM + ICP<br>• Clause de rapatriement si Grand Déplacement'},
+    {title:'ÉGALITÉ DE TRAITEMENT',sub:'Art. L.1251-18 & L.1251-24 — Principe fondamental',body:'L\'intérimaire perçoit une rémunération au moins égale à celle qu\'aurait perçue un salarié de l\'EU en CDI, sur le même poste, après période d\'essai.<br><br>Accès aux avantages collectifs de l\'EU après 3 mois (cantine, transport, prime…).<br><br><b>IFM (Indemnité de Fin de Mission)</b> = 10% du brut — due sauf :<br>• Mission < 1 semaine en emploi saisonnier ou d\'usage<br>• Embauche en CDI par le client à l\'issue<br>• Refus par l\'intérimaire d\'un CDI proposé par le client<br><br><b>ICP (Indemnité Compensatrice de Congés Payés)</b> = 10% × (brut + IFM).'},
+    {title:'SANTÉ & SÉCURITÉ — RESPONSABILITÉS',sub:'Art. L.1251-21 — Partage ETT / EU',body:'L\'EU assume la responsabilité des conditions de travail et de la sécurité sur le chantier.<br>L\'ETT vérifie la qualification, remet les EPI nécessaires, informe des risques particuliers.<br><br>Visite médicale obligatoire avant affectation à un poste à risque (Art. R.4624-23).<br>L\'ETT a obligation de transmettre la fiche de risques à la médecine du travail.<br><br><b style="color:var(--warn)">AT sur chantier :</b> déclaration dans les 24h, mise en jeu responsabilité EU + ETT. Faute inexcusable si risque connu non signalé.'},
+    {title:'PRÊT DE MAIN-D\'ŒUVRE À BUT NON LUCRATIF',sub:'Art. L.8241-2 — Exception légale depuis Loi El Khomri 2016',body:'Une entreprise peut prêter un salarié à une autre à titre non lucratif :<br>• Accord écrit du salarié obligatoire<br>• Convention de mise à disposition entre les entreprises<br>• L\'entreprise d\'accueil rembourse UNIQUEMENT les coûts réels (salaire + charges)<br>• Interdit si licenciement économique en cours chez l\'entreprise d\'accueil<br><br><b style="color:var(--warn)">Attention :</b> Tout prêt lucratif = délit de marchandage (Art. L.8231-1).'},
+    {title:'TABLEAU DE BORD RÉGLEMENTAIRE',sub:'Récapitulatif des seuils clés à mémoriser',body:'<table class="tbl"><thead><tr><th>Règle</th><th>Valeur</th><th>Référence</th></tr></thead><tbody>'
+      +'<tr><td>Durée max mission (cas général)</td><td style="font-family:var(--mono);font-weight:700;color:var(--orange)">18 mois</td><td>L.1251-12</td></tr>'
+      +'<tr><td>Renouvellements max</td><td style="font-family:var(--mono);font-weight:700">2 fois</td><td>L.1251-35</td></tr>'
+      +'<tr><td>Délai de carence</td><td style="font-family:var(--mono);font-weight:700">1/3 durée totale</td><td>L.1251-36</td></tr>'
+      +'<tr><td>IFM</td><td style="font-family:var(--mono);font-weight:700;color:var(--green)">10% brut</td><td>L.1251-32</td></tr>'
+      +'<tr><td>ICP</td><td style="font-family:var(--mono);font-weight:700;color:var(--green)">10% × (brut + IFM)</td><td>L.1251-19</td></tr>'
+      +'<tr><td>Délai envoi contrat mission</td><td style="font-family:var(--mono);font-weight:700">2 jours ouvrables</td><td>L.1251-16</td></tr>'
+      +'<tr><td>Accès avantages EU</td><td style="font-family:var(--mono);font-weight:700">3 mois</td><td>L.1251-24</td></tr>'
+      +'<tr><td>Amende délit prêt illicite</td><td style="font-family:var(--mono);font-weight:700;color:var(--warn)">3 750€/salarié</td><td>L.1254-1</td></tr>'
+      +'</tbody></table>'},
+  ];
+
+  return '<h2 style="font-family:var(--mono);font-size:13px;font-weight:700;margin-bottom:16px;color:var(--text2)">⚖ GUIDE JURIDIQUE INTÉRIM BTP</h2>'
+    +'<div style="background:var(--blue-lt);border:1px solid rgba(37,99,235,.2);border-radius:5px;padding:10px 14px;margin-bottom:16px;font-size:12px">'
+    +'💡 <b>Source :</b> Code du Travail — Livre 2, Titre 5 (L.1251-1 à L.1251-87). Mis à jour 2025. Cliquez sur chaque règle pour développer.'
+    +'</div>'
+    +rules.map(function(r,i){
+      return '<div class="rule-card">'
+        +'<div class="rule-head" onclick="toggleRule(this)">'
+        +'<div><div class="rule-title">'+r.title+'</div><div class="rule-sub">'+r.sub+'</div></div>'
+        +'<span style="font-family:var(--mono);font-size:11px;color:var(--muted)">▼</span>'
+        +'</div>'
+        +'<div class="rule-body'+(i===0?' open':'')+'">'+r.body+'</div>'
+        +'</div>';
+    }).join('');
+}
+function toggleRule(head){var body=head.nextElementSibling;body.classList.toggle('open');head.querySelector('span').textContent=body.classList.contains('open')?'▲':'▼';}
+
+// ══════════════════════════════════════
+// OBJECTIONS DIRECTION
+// ══════════════════════════════════════
+function renderObjections(){
+  var objections=[
+    {
+      title:'«  Vos taux sont trop élevés »',
+      ctx:'Pression sur le TB lors de la proposition ou du renouvellement',
+      reponse:'Je comprends la sensibilité sur le coût horaire. Regardons ensemble ce que couvre ce taux : brut + IFM 10% + ICP 10% + charges 43% BTP IDF — soit un coût réel de ×1,63 avant ma marge. Sur un profil [QUALIF] en IDF avec [HAB], la fourchette marché est [MIN]–[MAX] €/h. Je suis à [TAUX], soit dans le bas de la fourchette pour ce niveau.',
+      args:['Le taux BTP IDF a augmenté de +8% entre 2023 et 2025 (tension extrême sur les profils CVC et électriciens qualifiés).','Un profil sous-payé ne reste pas en mission — turn-over = perte de productivité + coût de remplacement pour vous.','Coût d\'un remplacement d\'intérimaire : ~3 jours de productivité perdus + délai de recherche 5–15 jours en CVC/élec.'],
+      danger:'Ne jamais accepter de baisser le TB sans contre-partie (réduction accessoires, engagement de volume, extension durée).'
+    },
+    {
+      title:'« La concurrence propose moins cher »',
+      ctx:'Un concurrent a été consulté, avec un coeff inférieur',
+      reponse:'Très bien. Quelle est leur spécialisation en BTP ? Ont-ils des profils [QUALIF] disponibles maintenant ? Mon positionnement : base BTP exclusivement, qualification systématiquement vérifiée, habilitations à jour avant démarrage. Le coût réel d\'un placement raté — profil non qualifié, AT, habilitation manquante — dépasse en général 3 à 5 fois l\'économie réalisée sur le taux.',
+      args:['Un agence généraliste n\'a pas de vivier BTP structuré — délai moyen 3× plus long sur profils qualifiés.','Habilitation manquante = refus de chantier = jour non travaillé à votre charge.','Si le concurrent propose ×1,90 sur un maçon N2 IDF, posez-vous la question : qui sont vraiment ces profils ?'],
+      danger:'Ne jamais dénigrer le concurrent nommément. Mettre en avant la valeur, pas le prix.'
+    },
+    {
+      title:'« Votre marge est trop haute »',
+      ctx:'Direction connaît le coeff ou conteste le taux de facturation',
+      reponse:'La marge de [X]% que vous observez couvre : recrutement + qualification + gestion administrative (contrats, paie, déclarations, AT) + vivier + permanence téléphonique + risque client. Notre modèle accord-cadre peut vous proposer un coeff fixe [COEFF] sur volume garanti de [NB] missions/mois.',
+      args:['Coût réel de gestion d\'un intérimaire ETT vs CDI intérimaire = -40% charges administratives pour vous.','Comparaison correcte : notre marge vs votre coût de recrutement direct (annonce 500–2000€, entretiens, vérifications, onboarding).','Sur un accord-cadre 20 ETP, notre marge peut baisser de 2 points avec engagement durée.'],
+      danger:'Ne jamais révéler votre coût de revient exact. Parler en valeur créée, pas en pourcentage brut.'
+    },
+    {
+      title:'« Vous n\'avez pas les profils qu\'il nous faut »',
+      ctx:'Objection sur la disponibilité ou la qualité du vivier',
+      reponse:'Voici [PRÉNOM], [QUALIF] N[X], disponible sous [J] jours. Ses habilitations : [LISTE]. Mission similaire chez [RÉFÉRENCE] pendant [DURÉE]. Je vous transmets son profil complet. Sur un besoin récurrent, je vous propose un accord de flux — je pré-sourçe en permanence les profils correspondant à vos qualifications habituelles.',
+      args:['Avoir en main au moins 3 profils à proposer avant tout RDV ou appel de prospection.','Référencer les habilitations, CACES, certifications — c\'est l\'argument béton face aux généralistes.','Accord de flux : je garde 2 profils en stand-by sur vos qualifications prioritaires, démarrage <48h garanti.'],
+      danger:'Ne jamais promettre un profil qu\'on n\'a pas. Toujours proposer un profil réel ou une date de mise à disposition fiable.'
+    },
+    {
+      title:'« Le RBE est insuffisant, vous devez baisser vos coûts »',
+      ctx:'Direction interne questionne la rentabilité ou compare avec des objectifs groupe',
+      reponse:'Le RBE de [X]% s\'explique par la phase de démarrage/construction du portefeuille. Le point mort se situe à [N] ETP — je suis à [M] ETP actuellement. Voici ma trajectoire : [J+30] : [OBJECTIF]. La marge brute par ETP est en ligne avec le groupe. Ce qui manque c\'est le volume.',
+      args:['Différencier clairement MB (marge brute) et RBE : la MB est structurellement saine, le RBE pâtit du faible volume.','Montrer la courbe de montée en puissance : 1 ETP supplémentaire = +[X]k€ MB, point mort à [N] ETP.','Comparer à la période de démarrage des autres agences du groupe sur même durée.'],
+      danger:'Ne jamais accepter une réduction de la marge taux comme solution à un RBE insuffisant. La solution est le volume.'
+    },
+    {
+      title:'« Il faut baisser les charges de l\'agence »',
+      ctx:'Pression sur les frais de structure ou le salaire RA',
+      reponse:'Les charges agence sont déjà optimisées : [LOYER] €/mois loyer, pas de CC, process digitalisé. Une réduction des investissements (prospection, formation) ralentirait la montée en puissance et repousserait le point mort. Ce qu\'il faut, c\'est accélérer la croissance du CA. Voici mon plan à 90 jours.',
+      args:['Séparer les charges incompressibles (loyer, salaire) des investissements de croissance (prospection, outils).','Montrer que chaque réduction de charge = retard sur point mort, pas avance.','Proposer un deal : je m\'engage sur [X] ETP à 60 jours contre maintien des moyens actuels.'],
+      danger:'Ne jamais accepter une réduction de salaire sans contrepartie (variable augmenté, objectifs révisés). Tenir ferme sur la valeur du RA.'
+    },
+  ];
+
+  return '<h2 style="font-family:var(--mono);font-size:13px;font-weight:700;margin-bottom:8px;color:var(--text2)">💬 OBJECTIONS DIRECTION — GUIDE DE RÉPONSE RA BTP</h2>'
+    +'<div style="font-size:12px;color:var(--muted);margin-bottom:16px">Une direction qui objectionne avec des généralités. Toi tu réponds avec des chiffres précis et des faits. Cliquez sur chaque objection.</div>'
+    +objections.map(function(o,i){
+      return '<div class="obj-card">'
+        +'<div class="obj-head" onclick="toggleObj(this)">'
+        +'<div class="obj-num">'+(i+1)+'</div>'
+        +'<div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--text2);font-style:italic">'+o.title+'</div>'
+        +'<div style="font-size:10px;color:var(--muted);margin-top:2px">Contexte : '+o.ctx+'</div></div>'
+        +'<span style="font-family:var(--mono);font-size:11px;color:var(--muted);flex-shrink:0">▼</span>'
+        +'</div>'
+        +'<div class="obj-body'+(i===0?' open':'')+'">'
+        +'<div class="rep-block"><div class="rep-head">✅ RÉPONSE RECOMMANDÉE</div><div style="font-size:12px;line-height:1.7">'+o.reponse+'</div></div>'
+        +'<div class="arg-block"><div class="arg-head">💡 ARGUMENTS BÉTON À CITER</div><ul style="margin:0;padding-left:16px">'+o.args.map(function(a){return '<li style="font-size:12px;margin-bottom:4px;line-height:1.6">'+a+'</li>';}).join('')+'</ul></div>'
+        +'<div style="background:var(--warn-lt);border:1px solid rgba(220,38,38,.15);border-radius:5px;padding:8px 12px;font-size:11px"><span style="font-weight:700;color:var(--warn)">⚠ PIÈGE À ÉVITER :</span> '+o.danger+'</div>'
+        +'</div></div>';
+    }).join('');
+}
+function toggleObj(head){var body=head.nextElementSibling;body.classList.toggle('open');head.querySelector('span').textContent=body.classList.contains('open')?'▲':'▼';}
+
+// ══════════════════════════════════════
+// BARÈMES BTP IDF
+// ══════════════════════════════════════
+function renderBaremes(){
+  var metiers=[
+    {nom:'Technicien CVC / Chauffagiste',naf:'4322B',niveaux:[{n:'N2 / Monteur',min:'13.00',max:'14.50'},{n:'N3P1 / Technicien',min:'14.50',max:'16.50'},{n:'N3P2 / Tech. confirmé',min:'16.50',max:'19.00'},{n:'N4 / Chef d\'équipe',min:'19.00',max:'23.00'}]},
+    {nom:'Technicien frigoriste',naf:'4322B',niveaux:[{n:'N3P1',min:'15.00',max:'17.50'},{n:'N3P2',min:'17.50',max:'21.00'},{n:'N4',min:'21.00',max:'26.00'}]},
+    {nom:'Électricien courants forts',naf:'4321A',niveaux:[{n:'N2',min:'12.00',max:'13.50'},{n:'N3P1',min:'13.50',max:'15.50'},{n:'N3P2',min:'15.50',max:'18.00'},{n:'Chef d\'équipe',min:'18.00',max:'22.00'}]},
+    {nom:'Plaquiste / Plâtrier',naf:'4331Z',niveaux:[{n:'N2',min:'11.88',max:'13.00'},{n:'N3P1',min:'13.00',max:'14.50'},{n:'N3P2',min:'14.50',max:'17.00'},{n:'Chef d\'équipe',min:'17.00',max:'21.00'}]},
+    {nom:'Plombier sanitaire',naf:'4322A',niveaux:[{n:'N2',min:'12.50',max:'14.00'},{n:'N3P1',min:'14.00',max:'16.00'},{n:'N3P2',min:'16.00',max:'18.50'},{n:'Chef d\'équipe',min:'18.50',max:'22.00'}]},
+    {nom:'Maçon / GO',naf:'4120A',niveaux:[{n:'N2',min:'11.88',max:'13.00'},{n:'N3P1',min:'13.00',max:'15.00'},{n:'N3P2',min:'15.00',max:'17.50'},{n:'N4 / Chef de chantier',min:'18.00',max:'22.00'}]},
+    {nom:'Technicien multi-services',naf:'4322B',niveaux:[{n:'N3P1',min:'13.50',max:'15.50'},{n:'N3P2',min:'15.50',max:'18.00'},{n:'ETAM',min:'18.00',max:'22.00'}]},
+    {nom:'Conducteur de travaux',naf:'4120A',niveaux:[{n:'ETAM débutant',min:'20.00',max:'24.00'},{n:'ETAM confirmé',min:'24.00',max:'30.00'},{n:'Cadre',min:'28.00',max:'38.00'}]},
+  ];
+
+  var html='<h2 style="font-family:var(--mono);font-size:13px;font-weight:700;margin-bottom:16px;color:var(--text2)">📋 BARÈMES TAUX BRUTS BTP IDF 2025</h2>'
+    +'<div style="background:var(--yellow-lt);border:1px solid rgba(217,119,6,.2);border-radius:5px;padding:8px 12px;margin-bottom:16px;font-size:11px">Taux de marché indicatifs IDF 2025. Ajuster selon tension locale, habilitations, ancienneté.</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px">';
+
+  metiers.forEach(function(m){
+    html+='<div class="sec" style="margin-bottom:0"><div class="sec-head">'+m.nom+' <span style="font-size:9px;color:var(--muted);font-weight:400">NAF '+m.naf+'</span></div>'
+      +'<div class="sec-body"><table class="tbl"><thead><tr><th style="text-align:left">Niveau</th><th>Min €/h</th><th>Max €/h</th></tr></thead><tbody>'
+      +m.niveaux.map(function(n){return '<tr><td style="font-size:11px">'+n.n+'</td><td style="font-family:var(--mono);font-weight:700;text-align:center;color:var(--green)">'+n.min+'</td><td style="font-family:var(--mono);font-weight:700;text-align:center;color:var(--orange)">'+n.max+'</td></tr>';}).join('')
+      +'</tbody></table></div></div>';
+  });
+
+  html+='</div>'
+    +'<div style="margin-top:20px"><div class="sec"><div class="sec-head" style="color:var(--cyan)">BARÈME ITR / IPD ACOSS 2025</div><div class="sec-body">'
+    +'<table class="tbl"><thead><tr><th>Zone</th><th>Distance</th><th>Plafond exonéré / jour</th></tr></thead><tbody>'
+    +ITR_ZONES.map(function(z){return '<tr><td style="font-family:var(--mono);font-weight:600">'+z.label+'</td><td style="color:var(--muted);font-size:11px">'+z.label.split(' ')[1]+'</td><td style="font-family:var(--mono);font-weight:700;color:var(--cyan)">'+z.val.toFixed(2)+' €</td></tr>';}).join('')
+    +'</tbody></table></div></div></div>'
+
+    +'<div class="sec" style="margin-top:12px"><div class="sec-head" style="color:var(--orange)">COEFFICIENTS MULTIPLICATEURS DE RÉFÉRENCE</div><div class="sec-body">'
+    +'<table class="tbl"><thead><tr><th>Niveau</th><th>Coeff</th><th>Usage</th></tr></thead><tbody>'
+    +'<tr><td>Plancher</td><td style="font-family:var(--mono);font-weight:700;color:var(--warn)">×2.05</td><td style="font-size:11px">Seuil minimum — marge brute ~10%</td></tr>'
+    +'<tr><td>Standard</td><td style="font-family:var(--mono);font-weight:700;color:var(--yellow)">×2.20</td><td style="font-size:11px">Objectif agence — marge brute ~18%</td></tr>'
+    +'<tr><td>Profil rare</td><td style="font-family:var(--mono);font-weight:700;color:var(--green)">×2.40</td><td style="font-size:11px">CVC confirmé, élec HTA, CACES multi — marge brute ~25%</td></tr>'
+    +'<tr><td>Accord-cadre</td><td style="font-family:var(--mono);font-weight:700;color:var(--blue-md)">Négocié</td><td style="font-size:11px">Sur volume garanti — généralement 1.85–2.10</td></tr>'
+    +'</tbody></table></div></div>'
+
+    +'<div class="sec" style="margin-top:12px"><div class="sec-head">RAPPEL CALCUL CHARGES</div><div class="sec-body">'
+    +'<table class="tbl"><thead><tr><th>Élément</th><th>Taux / Règle</th></tr></thead><tbody>'
+    +'<tr><td>IFM</td><td style="font-family:var(--mono);font-weight:700">10% brut</td></tr>'
+    +'<tr><td>ICP</td><td style="font-family:var(--mono);font-weight:700">10% × (brut + IFM)</td></tr>'
+    +'<tr><td>Charges patronales BTP IDF</td><td style="font-family:var(--mono);font-weight:700">≈43% base (brut + IFM)</td></tr>'
+    +'<tr><td>HS +25%</td><td style="font-family:var(--mono)">36e → 43e heure semaine (contingent 220h/an)</td></tr>'
+    +'<tr><td>HS +50%</td><td style="font-family:var(--mono)">44e heure et au-delà</td></tr>'
+    +'<tr><td>Panier repas (plafond exo.)</td><td style="font-family:var(--mono)">10,10 €/j sédentaire</td></tr>'
+    +'</tbody></table></div></div>';
+
+  return html;
+}
+
+// ── Initialiser nav depuis URL ──
+(function(){
+  var hash=window.location.hash.replace('#','');
+  if(['marge','pl','juridique','objections','baremes'].indexOf(hash)!==-1){
+    var btn=document.getElementById('btn-'+hash);
+    if(btn) showSim(hash,btn);
+  }
+})();
+</script>
+</body>
+</html>

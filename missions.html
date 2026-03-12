@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>JTIpilot — Missions</title>
+<link rel="stylesheet" href="shared.css"/>
+<style>
+.mis-status-active{background:var(--green-lt);color:var(--green);border:1px solid rgba(22,163,74,.2)}
+.mis-status-a_pourvoir{background:var(--yellow-lt);color:var(--yellow);border:1px solid rgba(217,119,6,.2)}
+.mis-status-cloturee{background:var(--surface3);color:var(--muted);border:1px solid var(--border)}
+.mis-status-annulee{background:var(--warn-lt);color:var(--warn);border:1px solid rgba(220,38,38,.2)}
+.timeline-item{display:flex;gap:10px;padding:8px 0;border-left:2px solid var(--border2);padding-left:14px;position:relative;margin-left:6px}
+.timeline-dot{width:10px;height:10px;border-radius:50%;background:var(--orange);position:absolute;left:-6px;top:12px;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-logo">⚡ <span>JTI</span>pilot</div>
+  <a href="index.html" class="nav-link"><span class="nav-icon">📊</span>Tableau de bord</a>
+  <a href="interimaires.html" class="nav-link"><span class="nav-icon">👷</span>Intérimaires</a>
+  <a href="prospects.html" class="nav-link"><span class="nav-icon">🏢</span>Prospects / Clients</a>
+  <a href="missions.html" class="nav-link active"><span class="nav-icon">📋</span>Missions</a>
+  <a href="simulateurs.html" class="nav-link"><span class="nav-icon">🧮</span>Simulateurs</a>
+  <div class="topnav-spacer"></div>
+</nav>
+
+<div class="app">
+<div class="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-title">📋 Missions</div>
+    <div class="sidebar-sub" id="count-label">0 missions</div>
+  </div>
+  <div class="sidebar-content">
+    <button class="btn-new" onclick="newMission()">+ Nouvelle mission</button>
+    <input class="filter-search" type="text" id="search-input" placeholder="Rechercher client, intérimaire, qualif…" oninput="renderList()"/>
+    <div class="filter-bar">
+      <button class="filter-btn active" data-val="tous" onclick="setFilter('tous',this)">Toutes</button>
+      <button class="filter-btn" data-val="active" onclick="setFilter('active',this)">Actives</button>
+      <button class="filter-btn" data-val="a_pourvoir" onclick="setFilter('a_pourvoir',this)">À pourvoir</button>
+      <button class="filter-btn" data-val="cloturee" onclick="setFilter('cloturee',this)">Clôturées</button>
+    </div>
+    <div id="list-container"></div>
+  </div>
+</div>
+
+<div class="main">
+  <div id="empty-state" class="empty" style="padding:60px 20px"><div class="icon">📋</div><p>Sélectionnez une mission ou créez-en une nouvelle</p></div>
+  <div id="fiche-panel" style="display:none;flex:1;display:none;flex-direction:column;overflow:hidden">
+    <div class="main-header" id="fiche-header">
+      <div>
+        <div class="main-title" id="fiche-title">—</div>
+        <div style="display:flex;gap:6px;margin-top:4px" id="fiche-badges"></div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-danger btn-sm" onclick="supprimerMission()">🗑</button>
+      </div>
+    </div>
+    <div class="fiche-tabs">
+      <button class="fiche-tab active" data-tab="detail" onclick="switchTab('detail',this)">DÉTAIL</button>
+      <button class="fiche-tab" data-tab="marge" onclick="switchTab('marge',this)">MARGE</button>
+      <button class="fiche-tab" data-tab="journal" onclick="switchTab('journal',this)">JOURNAL</button>
+    </div>
+    <div class="fiche-body" id="fiche-body"></div>
+  </div>
+</div>
+</div>
+
+<div class="modal-overlay" id="modal-confirm">
+<div class="modal" style="width:400px">
+  <div class="modal-title" id="confirm-title">Confirmer</div>
+  <p id="confirm-msg" style="font-size:13px;margin-bottom:16px"></p>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeModal('modal-confirm')">Annuler</button>
+    <button class="btn btn-danger" id="confirm-ok-btn">Confirmer</button>
+  </div>
+</div>
+</div>
+
+<script src="data_demo.js"></script>
+<script>
+var DB=[], currentId=null, currentTab='detail', filterStatut='tous';
+demoInject();load();renderList();
+var lastId=sessionStorage.getItem('jtp_last_mis');
+if(lastId&&DB.find(function(x){return x.id===lastId;}))openFiche(lastId);
+else if(DB.length)openFiche(DB[0].id);
+
+function save(){try{localStorage.setItem('jtp_missions',JSON.stringify(DB));}catch(e){}}
+function load(){try{var s=localStorage.getItem('jtp_missions');if(s)DB=JSON.parse(s);}catch(e){}}
+function uid(){return 'mis_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);}
+function today(){return new Date().toISOString().split('T')[0];}
+function fmt(d){if(!d)return '--';var p=d.split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:d;}
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function nrm(s){return (s||'').toLowerCase().replace(/[^a-z0-9]/g,'');}
+
+var STATUS_LABELS={active:'ACTIVE',a_pourvoir:'À POURVOIR',cloturee:'CLÔTURÉE',annulee:'ANNULÉE'};
+
+function setFilter(val,btn){filterStatut=val;document.querySelectorAll('.filter-btn').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');renderList();}
+
+function daysLeft(dateStr){if(!dateStr)return null;var diff=Math.round((new Date(dateStr)-new Date())/864e5);return diff;}
+
+function renderList(){
+  var q=(document.getElementById('search-input').value||'').toLowerCase();
+  var list=DB.filter(function(m){
+    if(filterStatut!=='tous'&&m.statut!==filterStatut)return false;
+    if(q){var hay=nrm(m.client_nom+(m.interimaire_nom||'')+(m.qualif||''));return hay.indexOf(nrm(q))!==-1;}
+    return true;
+  });
+  list.sort(function(a,b){var ord={active:0,a_pourvoir:1,cloturee:2,annulee:3};return(ord[a.statut]||4)-(ord[b.statut]||4)||(a.date_debut||'').localeCompare(b.date_debut||'');});
+  document.getElementById('count-label').textContent=list.length+' mission'+(list.length>1?'s':'');
+  var html='';
+  if(!list.length){html='<div class="empty" style="padding:30px 10px"><div class="icon">🔍</div><p>Aucun résultat</p></div>';}
+  list.forEach(function(m){
+    var dl=m.statut==='active'?daysLeft(m.date_fin):null;
+    var dlColor=dl!==null?(dl<=3?'var(--warn)':dl<=7?'var(--yellow)':'var(--green)'):'';
+    html+='<div class="item-card'+(currentId===m.id?' selected':'')+'" onclick="openFiche(\''+m.id+'\')">'
+      +'<div style="display:flex;justify-content:space-between"><div class="item-name">'+esc(m.client_nom||'—')+'</div>'
+      +'<span class="badge mis-status-'+m.statut+'">'+STATUS_LABELS[m.statut]+'</span></div>'
+      +'<div class="item-sub">'+esc(m.qualif||'—')+'</div>'
+      +'<div class="item-meta">'
+      +(m.interimaire_nom?'<span class="badge b-orange">👷 '+esc(m.interimaire_nom)+'</span>':'<span class="badge b-veille">Poste vacant</span>')
+      +(dl!==null?'<span style="font-size:9px;font-family:var(--mono);color:'+dlColor+'">J-'+dl+'</span>':'')
+      +(m.taux_client?'<span style="font-size:9px;font-family:var(--mono);color:var(--muted)">'+m.taux_client+'€/h</span>':'')
+      +'</div></div>';
+  });
+  document.getElementById('list-container').innerHTML=html;
+}
+
+function openFiche(id){currentId=id;sessionStorage.setItem('jtp_last_mis',id);document.getElementById('empty-state').style.display='none';document.getElementById('fiche-panel').style.display='flex';renderList();renderFiche(id);}
+function renderFiche(id){
+  var m=DB.find(function(x){return x.id===id;}); if(!m)return;
+  document.getElementById('fiche-title').textContent=(m.client_nom||'—')+' — '+(m.qualif||'—');
+  document.getElementById('fiche-badges').innerHTML='<span class="badge mis-status-'+m.statut+'">'+STATUS_LABELS[m.statut]+'</span>'
+    +(m.interimaire_nom?'<span class="badge b-orange">👷 '+esc(m.interimaire_nom)+'</span>':'');
+  renderTab(id,currentTab);
+}
+function switchTab(tab,btn){currentTab=tab;document.querySelectorAll('.fiche-tab').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');renderTab(currentId,tab);}
+function renderTab(id,tab){var m=DB.find(function(x){return x.id===id;}); if(!m)return;var body=document.getElementById('fiche-body');if(tab==='detail')body.innerHTML=renderDetail(m);else if(tab==='marge')body.innerHTML=renderMarge(m);else if(tab==='journal')body.innerHTML=renderJournal(m);}
+
+// ══════════════════════════════════════
+// DÉTAIL MISSION
+// ══════════════════════════════════════
+function renderDetail(m){
+  var html='<div class="sec"><div class="sec-head">INFORMATIONS MISSION</div><div class="sec-body"><div class="form-grid">';
+  html+='<div class="field"><label>STATUT</label><select id="ms_statut" onchange="saveField(\'statut\',this.value)">'
+    +Object.entries(STATUS_LABELS).map(function(kv){return '<option'+(m.statut===kv[0]?' selected':'')+' value="'+kv[0]+'">'+kv[1]+'</option>';}).join('')+'</select></div>';
+  html+=mf('CLIENT / EU','ms_client_nom',m.client_nom,'text','BATIPRO 93');
+  html+=mf('INTÉRIMAIRE','ms_int_nom',m.interimaire_nom,'text','Carlos MARTINEZ');
+  html+=mf('QUALIFICATION','ms_qualif',m.qualif,'text','Maçon N2');
+  html+=mf('DÉBUT','ms_debut',m.date_debut,'date');
+  html+=mf('FIN PRÉVUE','ms_fin',m.date_fin,'date');
+  html+='<div class="field full"><label>ADRESSE CHANTIER</label><input id="ms_adresse" value="'+esc(m.adresse_chantier||'')+'" placeholder="15 rue…" onblur="saveField(\'adresse_chantier\',this.value)"/></div>';
+  html+=mf('CP','ms_cp',m.cp_chantier,'text','75008');
+  html+=mf('VILLE CHANTIER','ms_ville',m.ville_chantier,'text','Paris 8');
+  html+=mf('CONTACT CLIENT','ms_contact',m.contact_client,'text','M. Dupont');
+  html+=mf('TÉL CONTACT','ms_contact_tel',m.contact_tel,'tel','01 00 00 00 00');
+  html+=mf('HORAIRES','ms_horaires',m.horaires,'text','7h-16h L-V');
+  html+='</div></div></div>';
+
+  // Durée et alertes
+  if(m.date_debut&&m.date_fin){
+    var d1=new Date(m.date_debut),d2=new Date(m.date_fin);
+    var nbSem=Math.max(0,Math.round((d2-d1)/(7*86400000)));
+    var dl=daysLeft(m.date_fin);
+    html+='<div class="stat-grid">'
+      +'<div class="stat-card"><div class="stat-num" style="color:var(--blue)">'+nbSem+'</div><div class="stat-lbl">SEMAINES</div></div>'
+      +(dl!==null?'<div class="stat-card"><div class="stat-num" style="color:'+(dl<=3?'var(--warn)':dl<=7?'var(--yellow)':'var(--green)')+'">J-'+dl+'</div><div class="stat-lbl">FIN MISSION</div></div>':'')
+      +(m.taux_client&&m.taux_brut?'<div class="stat-card"><div class="stat-num" style="color:var(--orange)">'+(((m.taux_client-(m.taux_brut*1.63))/m.taux_client)*100).toFixed(1)+'%</div><div class="stat-lbl">MARGE EST.</div></div>':'')
+      +'</div>';
+    if(nbSem>=72) html+='<div class="alert alert-warn"><span class="alert-icon">⚠</span>Durée ≥ 72 semaines — vérifier limite légale 18 mois (L.1251-5 CT)</div>';
+    if(dl!==null&&dl<=7&&dl>=0&&m.statut==='active') html+='<div class="alert alert-yellow"><span class="alert-icon">⚠</span>Fin de mission dans <strong>'+dl+' jour(s)</strong> — anticiper renouvellement ou remplacement</div>';
+    if(dl!==null&&dl<0&&m.statut==='active') html+='<div class="alert alert-warn"><span class="alert-icon">🔴</span>Mission <strong>dépassée</strong> — mettre à jour le statut</div>';
+  }
+
+  html+='<div class="sec"><div class="sec-head">NOTES</div><div class="sec-body"><textarea id="ms_notes" rows="4" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:8px;color:var(--text);font-family:var(--sans);font-size:12px;outline:none;resize:vertical" onblur="saveField(\'notes\',this.value)">'+esc(m.notes||'')+'</textarea></div></div>';
+  return html;
+}
+function mf(label,id,val,type,placeholder){return '<div class="field"><label>'+label+'</label><input id="'+id+'" type="'+(type||'text')+'" value="'+esc(val||'')+'" placeholder="'+(placeholder||'')+'" onblur="saveField(\''+id.replace('ms_','')+'\',this.value);renderFiche(currentId)"/></div>';}
+
+// ══════════════════════════════════════
+// MARGE MISSION
+// ══════════════════════════════════════
+function renderMarge(m){
+  var html='<div class="sec"><div class="sec-head">MARGE MISSION</div><div class="sec-body"><div class="form-grid">';
+  html+='<div class="field"><label>TAUX BRUT €/H</label><input id="mg_tb" type="number" step="0.5" value="'+(m.taux_brut||'')+'" placeholder="16.50" onblur="saveTaux(\'brut\',this.value)" oninput="calcMargeM()"/></div>';
+  html+='<div class="field"><label>TAUX CLIENT €/H</label><input id="mg_tc" type="number" step="0.5" value="'+(m.taux_client||'')+'" placeholder="24.50" onblur="saveTaux(\'client\',this.value)" oninput="calcMargeM()"/></div>';
+  html+='<div class="field"><label>HEURES/SEM</label><input id="mg_h" type="number" step="0.5" value="35" oninput="calcMargeM()"/></div>';
+  html+='<div class="field"><label>NB SEMAINES</label><input id="mg_s" type="number" value="'+(function(){var d1=m.date_debut?new Date(m.date_debut):null,d2=m.date_fin?new Date(m.date_fin):null;return d1&&d2?Math.max(1,Math.round((d2-d1)/(7*86400000))):4;}())+'" oninput="calcMargeM()"/></div>';
+  html+='</div>';
+  html+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:16px">'
+    +'<div class="stat-card"><div class="stat-num" id="mk_ca" style="color:var(--orange);font-size:18px">—</div><div class="stat-lbl">CA TOTAL</div></div>'
+    +'<div class="stat-card"><div class="stat-num" id="mk_cout" style="color:var(--blue);font-size:18px">—</div><div class="stat-lbl">COÛT ETT</div></div>'
+    +'<div class="stat-card"><div class="stat-num" id="mk_marge" style="color:var(--green);font-size:18px">—</div><div class="stat-lbl">MARGE €</div></div>'
+    +'<div class="stat-card"><div class="stat-num" id="mk_pct" style="font-size:18px">—</div><div class="stat-lbl">MARGE %</div></div>'
+    +'</div>';
+  html+='</div></div>';
+  html+='<script>setTimeout(calcMargeM,50);<\/script>';
+  return html;
+}
+
+function calcMargeM(){
+  var tb=parseFloat(document.getElementById('mg_tb')&&document.getElementById('mg_tb').value||0);
+  var tc=parseFloat(document.getElementById('mg_tc')&&document.getElementById('mg_tc').value||0);
+  var h=parseFloat(document.getElementById('mg_h')&&document.getElementById('mg_h').value||35);
+  var s=parseFloat(document.getElementById('mg_s')&&document.getElementById('mg_s').value||4);
+  if(!tb||!tc)return;
+  var hn=Math.min(h,35),hs25=Math.max(0,Math.min(h,43)-35),hs50=Math.max(0,h-43);
+  var brut=(hn*tb+hs25*tb*1.25+hs50*tb*1.5)*s;
+  var ifm=brut*0.10,icp=(brut+ifm)*0.10,charges=(brut+ifm)*0.43;
+  var cout=brut+ifm+icp+charges;
+  var ca=tc*h*s;
+  var marge=ca-cout,pct=ca?marge/ca*100:0;
+  function f(n){return(n/1000).toFixed(1)+'k€';}
+  var set=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
+  set('mk_ca',f(ca));set('mk_cout',f(cout));set('mk_marge',f(marge));
+  var pEl=document.getElementById('mk_pct');if(pEl){pEl.textContent=pct.toFixed(1)+'%';pEl.style.color=pct>=18?'var(--green)':pct>=12?'var(--yellow)':'var(--warn)';}
+}
+function saveTaux(type,val){
+  var m=DB.find(function(x){return x.id===currentId;}); if(!m)return;
+  if(type==='brut')m.taux_brut=parseFloat(val)||0;else m.taux_client=parseFloat(val)||0;
+  save();
+}
+
+// ══════════════════════════════════════
+// JOURNAL
+// ══════════════════════════════════════
+function renderJournal(m){
+  var journal=m.historique||[];
+  var JTYPES={note:{l:'NOTE',c:'t-note'},appel:{l:'APPEL',c:'t-appel'},rdv:{l:'RDV',c:'t-rdv'},incident:{l:'INCIDENT',c:'t-fin'},fin:{l:'FIN',c:'t-fin'}};
+  var html='<div class="sec"><div class="sec-head">+ ENTRÉE</div><div class="sec-body">';
+  html+='<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">';
+  html+='<select id="j_type" style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:5px 8px;color:var(--text);font-family:var(--mono);font-size:10px;outline:none">'+Object.entries(JTYPES).map(function(kv){return '<option value="'+kv[0]+'">'+kv[1].l+'</option>';}).join('')+'</select>';
+  html+='<input type="date" id="j_date" value="'+today()+'" style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:5px 8px;color:var(--text);font-family:var(--mono);font-size:11px;outline:none"/>';
+  html+='<input id="j_texte" placeholder="Note, événement, alerte…" style="flex:1;min-width:200px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:5px 8px;color:var(--text);font-size:12px;outline:none" onkeydown="if(event.key===\'Enter\')addJ(\''+m.id+'\')"/>';
+  html+='<button class="btn btn-primary btn-sm" onclick="addJ(\''+m.id+'\')">+ Ajouter</button>';
+  html+='</div></div></div>';
+  if(!journal.length){html+='<div class="empty"><p>Aucune entrée</p></div>';}
+  else{
+    html+='<div>';
+    var sorted=journal.slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+    sorted.forEach(function(e){
+      var jt=JTYPES[e.type]||JTYPES.note;
+      var rid=journal.findIndex(function(x){return x.id===e.id;});
+      html+='<div class="entry">'
+        +'<span class="entry-type '+jt.c+'">'+jt.l+'</span>'
+        +'<span class="entry-date">'+(e.date?e.date.split('-').reverse().join('/'):'—')+'</span>'
+        +'<span class="entry-text">'+esc(e.texte)+'</span>'
+        +'<span class="entry-del" onclick="delJ(\''+m.id+'\',\''+e.id+'\')">✕</span>'
+        +'</div>';
+    });
+    html+='</div>';
+  }
+  return html;
+}
+
+// ── ACTIONS ──
+function saveField(field,val){
+  var m=DB.find(function(x){return x.id===currentId;}); if(!m)return;
+  m[field]=val;save();renderList();
+  if(field==='statut'||field==='client_nom'||field==='interimaire_nom'||field==='qualif')renderFiche(currentId);
+}
+function addJ(mid){
+  var texte=document.getElementById('j_texte').value.trim();if(!texte)return;
+  var m=DB.find(function(x){return x.id===mid;}); if(!m)return;
+  if(!m.historique)m.historique=[];
+  m.historique.push({id:'j'+Date.now(),type:document.getElementById('j_type').value,date:document.getElementById('j_date').value||today(),texte:texte});
+  save();renderTab(mid,'journal');
+}
+function delJ(mid,eid){
+  var m=DB.find(function(x){return x.id===mid;}); if(!m)return;
+  m.historique=(m.historique||[]).filter(function(e){return e.id!==eid;});save();renderTab(mid,'journal');
+}
+function newMission(){
+  var m={id:uid(),statut:'a_pourvoir',titre:'Nouvelle mission',client_id:'',client_nom:'',interimaire_id:'',interimaire_nom:'',qualif:'',adresse_chantier:'',cp_chantier:'',ville_chantier:'',contact_client:'',contact_tel:'',date_debut:'',date_fin:'',horaires:'',taux_client:0,taux_brut:0,coeff:0,notes:'',historique:[]};
+  DB.unshift(m);save();openFiche(m.id);renderList();
+}
+function supprimerMission(){
+  if(!currentId)return;
+  var m=DB.find(function(x){return x.id===currentId;});
+  document.getElementById('confirm-title').textContent='Supprimer la mission';
+  document.getElementById('confirm-msg').textContent='Supprimer cette mission ?';
+  document.getElementById('confirm-ok-btn').onclick=function(){DB=DB.filter(function(x){return x.id!==currentId;});save();closeModal('modal-confirm');currentId=null;document.getElementById('fiche-panel').style.display='none';document.getElementById('empty-state').style.display='block';renderList();};
+  document.getElementById('modal-confirm').classList.add('open');
+}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(function(m){m.addEventListener('click',function(e){if(e.target===m)closeModal(m.id);});});
+</script>
+</body>
+</html>

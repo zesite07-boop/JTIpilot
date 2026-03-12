@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>JTIpilot — Tableau de bord</title>
+<link rel="stylesheet" href="shared.css"/>
+<style>
+.tdb-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+@media(max-width:900px){.tdb-grid{grid-template-columns:repeat(2,1fr)}}
+.kpi-card{background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:16px 14px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.kpi-card:hover{border-color:var(--orange);transform:translateY(-1px)}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.kpi-orange::before{background:var(--orange)}
+.kpi-green::before{background:var(--green)}
+.kpi-blue::before{background:var(--blue)}
+.kpi-purple::before{background:var(--purple)}
+.kpi-cyan::before{background:var(--cyan)}
+.kpi-yellow::before{background:var(--yellow)}
+.kpi-num{font-size:28px;font-weight:800;font-family:var(--mono);line-height:1.1;margin-bottom:4px}
+.kpi-lbl{font-size:9px;font-family:var(--mono);color:var(--muted);letter-spacing:.6px}
+.kpi-sub{font-size:10px;color:var(--muted2);margin-top:4px}
+.spark{height:30px;display:flex;align-items:flex-end;gap:2px;margin-top:8px}
+.spark-bar{flex:1;border-radius:2px 2px 0 0;min-width:4px;transition:height .3s}
+.alert-banner{padding:10px 14px;border-radius:6px;margin-bottom:8px;display:flex;align-items:flex-start;gap:8px;font-size:12px;cursor:pointer;transition:all .15s}
+.alert-banner:hover{opacity:.85}
+.section-title{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.8px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.obj-progress{margin-bottom:6px}
+.obj-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.obj-label{font-size:10px;font-family:var(--mono);color:var(--muted);width:120px;flex-shrink:0}
+.obj-bar{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.obj-fill{height:100%;border-radius:3px;transition:width .4s}
+.obj-val{font-size:11px;font-family:var(--mono);font-weight:700;width:60px;text-align:right;flex-shrink:0}
+.quick-action{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:5px;cursor:pointer;transition:all .15s;margin-bottom:6px;text-decoration:none;color:var(--text)}
+.quick-action:hover{border-color:var(--orange);background:var(--orange-lt)}
+.quick-icon{font-size:18px;flex-shrink:0}
+.config-field{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.config-field label{font-size:10px;font-family:var(--mono);color:var(--muted);width:180px;flex-shrink:0}
+.config-field input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:5px 8px;color:var(--text);font-family:var(--mono);font-size:11px;outline:none}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-logo">⚡ <span>JTI</span>pilot</div>
+  <a href="index.html" class="nav-link active"><span class="nav-icon">📊</span>Tableau de bord</a>
+  <a href="interimaires.html" class="nav-link"><span class="nav-icon">👷</span>Intérimaires</a>
+  <a href="prospects.html" class="nav-link"><span class="nav-icon">🏢</span>Prospects / Clients</a>
+  <a href="missions.html" class="nav-link"><span class="nav-icon">📋</span>Missions</a>
+  <a href="simulateurs.html" class="nav-link"><span class="nav-icon">🧮</span>Simulateurs</a>
+  <div class="topnav-spacer"></div>
+  <div class="topnav-right">
+    <button class="btn btn-outline btn-sm" onclick="document.getElementById('modal-config').classList.add('open')">⚙ Paramètres</button>
+  </div>
+</nav>
+
+<div style="flex:1;overflow-y:auto;padding:20px 24px">
+
+<!-- KPIs -->
+<div class="tdb-grid" id="kpi-grid"></div>
+
+<!-- ALERTES -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+  <div>
+    <div class="section-title">⚠ ALERTES PRIORITAIRES</div>
+    <div id="alertes-container"></div>
+  </div>
+  <div>
+    <div class="section-title">📊 OBJECTIFS RA</div>
+    <div id="objectifs-container"></div>
+  </div>
+</div>
+
+<!-- ACTIVITÉ + ACTIONS RAPIDES -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+  <div>
+    <div class="section-title">🔄 MISSIONS ACTIVES</div>
+    <div id="missions-actives"></div>
+  </div>
+  <div>
+    <div class="section-title">⚡ ACTIONS RAPIDES</div>
+    <div id="quick-actions"></div>
+  </div>
+</div>
+
+<!-- PIPELINE PROSPECTS -->
+<div>
+  <div class="section-title">🏢 PIPELINE PROSPECTS</div>
+  <div id="pipeline-container"></div>
+</div>
+
+</div>
+
+<!-- MODAL CONFIG -->
+<div class="modal-overlay" id="modal-config">
+<div class="modal" style="width:560px">
+  <div class="modal-title">⚙ Paramètres Agence</div>
+  <div style="margin-bottom:16px">
+    <div class="config-field"><label>NOM AGENCE</label><input id="cfg_nom" placeholder="JTIPilot — Agence BTP" onblur="saveConfig()"/></div>
+    <div class="config-field"><label>RESPONSABLE (ÉMETTEUR)</label><input id="cfg_emetteur" placeholder="Jean TIMMIAH" onblur="saveConfig()"/></div>
+    <div class="config-field"><label>TÉLÉPHONE</label><input id="cfg_tel" placeholder="01 00 00 00 00" onblur="saveConfig()"/></div>
+    <div class="config-field"><label>EMAIL</label><input id="cfg_email" placeholder="agence@btpinterim.fr" onblur="saveConfig()"/></div>
+    <div class="config-field"><label>ADRESSE</label><input id="cfg_adresse" placeholder="15 rue…, 75017 Paris" onblur="saveConfig()"/></div>
+  </div>
+  <div class="modal-title" style="font-size:11px;margin-bottom:12px">OBJECTIFS HEBDOMADAIRES</div>
+  <div>
+    <div class="config-field"><label>OBJ. ETP EN MISSION</label><input id="cfg_obj_etp" type="number" value="20" onblur="saveConfig()"/></div>
+    <div class="config-field"><label>OBJ. CA HEBDO (€)</label><input id="cfg_obj_ca" type="number" value="30000" onblur="saveConfig()"/></div>
+    <div class="config-field"><label>OBJ. MARGE % MINI</label><input id="cfg_obj_mb" type="number" value="18" onblur="saveConfig()"/></div>
+    <div class="config-field"><label>OBJ. APPELS PROSPECTS / SEM</label><input id="cfg_obj_appels" type="number" value="20" onblur="saveConfig()"/></div>
+    <div class="config-field"><label>OBJ. RDV / MOIS</label><input id="cfg_obj_rdv" type="number" value="8" onblur="saveConfig()"/></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="document.getElementById('modal-config').classList.remove('open')">Fermer</button>
+    <button class="btn btn-primary" onclick="saveConfig();document.getElementById('modal-config').classList.remove('open');renderDash()">✓ Enregistrer</button>
+  </div>
+</div>
+</div>
+
+<script src="data_demo.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════════════
+// JTIPILOT — Tableau de bord
+// ═══════════════════════════════════════════════════════════════
+
+var CONFIG = {
+  nom:'JTIpilot — Agence BTP',emetteur:'',tel:'',email:'',adresse:'',
+  obj_etp:20,obj_ca:30000,obj_mb:18,obj_appels:20,obj_rdv:8
+};
+
+function loadConfig(){try{var s=localStorage.getItem('jtp_config');if(s)CONFIG=Object.assign(CONFIG,JSON.parse(s));}catch(e){}}
+function saveConfig(){
+  CONFIG.nom=document.getElementById('cfg_nom').value||CONFIG.nom;
+  CONFIG.emetteur=document.getElementById('cfg_emetteur').value||CONFIG.emetteur;
+  CONFIG.tel=document.getElementById('cfg_tel').value||CONFIG.tel;
+  CONFIG.email=document.getElementById('cfg_email').value||CONFIG.email;
+  CONFIG.adresse=document.getElementById('cfg_adresse').value||CONFIG.adresse;
+  CONFIG.obj_etp=parseInt(document.getElementById('cfg_obj_etp').value)||20;
+  CONFIG.obj_ca=parseInt(document.getElementById('cfg_obj_ca').value)||30000;
+  CONFIG.obj_mb=parseFloat(document.getElementById('cfg_obj_mb').value)||18;
+  CONFIG.obj_appels=parseInt(document.getElementById('cfg_obj_appels').value)||20;
+  CONFIG.obj_rdv=parseInt(document.getElementById('cfg_obj_rdv').value)||8;
+  try{localStorage.setItem('jtp_config',JSON.stringify(CONFIG));}catch(e){}
+}
+
+function loadDB(key){try{var s=localStorage.getItem(key);return s?JSON.parse(s):[];}catch(e){return[];}}
+function today(){return new Date().toISOString().split('T')[0];}
+function fmt(d){if(!d)return '--';var p=d.split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:d;}
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function fmtK(n){return n>=1000000?(n/1000000).toFixed(1)+'M€':n>=1000?(n/1000).toFixed(0)+'k€':Math.round(n)+'€';}
+
+// Init
+demoInject();
+loadConfig();
+loadConfigForm();
+renderDash();
+
+function loadConfigForm(){
+  document.getElementById('cfg_nom').value=CONFIG.nom||'';
+  document.getElementById('cfg_emetteur').value=CONFIG.emetteur||'';
+  document.getElementById('cfg_tel').value=CONFIG.tel||'';
+  document.getElementById('cfg_email').value=CONFIG.email||'';
+  document.getElementById('cfg_adresse').value=CONFIG.adresse||'';
+  document.getElementById('cfg_obj_etp').value=CONFIG.obj_etp||20;
+  document.getElementById('cfg_obj_ca').value=CONFIG.obj_ca||30000;
+  document.getElementById('cfg_obj_mb').value=CONFIG.obj_mb||18;
+  document.getElementById('cfg_obj_appels').value=CONFIG.obj_appels||20;
+  document.getElementById('cfg_obj_rdv').value=CONFIG.obj_rdv||8;
+}
+
+function renderDash(){
+  var interimaires=loadDB('jtp_interimaires');
+  var prospects=loadDB('jtp_prospects');
+  var missions=loadDB('jtp_missions');
+
+  // ── CALCULS ──
+  var dispos=interimaires.filter(function(c){return c.dispo==='disponible';});
+  var enMission=interimaires.filter(function(c){return c.dispo==='mission';});
+  var preavis=interimaires.filter(function(c){return c.dispo==='preavis';});
+  var clients=prospects.filter(function(p){return p.statut==='client';});
+  var prospsOnly=prospects.filter(function(p){return p.statut==='prospect';});
+  var misActives=missions.filter(function(m){return m.statut==='active';});
+  var misApourvoir=missions.filter(function(m){return m.statut==='a_pourvoir';});
+
+  // CA estimé semaine
+  var caSem=misActives.reduce(function(acc,m){return acc+(m.taux_client||0)*(35)+(m.taux_client||0)*35*0.05;},0);
+  var mbPct=misActives.length&&misActives[0].taux_client&&misActives[0].taux_brut?
+    ((misActives[0].taux_client-misActives[0].taux_brut*1.63)/misActives[0].taux_client*100):0;
+
+  // Alertes
+  var alertes=[];
+  // VM expirées
+  interimaires.forEach(function(c){
+    var vm=c.visite_medicale||{};
+    if(vm.expiration){var diff=Math.round((new Date(vm.expiration)-new Date())/864e5);if(diff<0)alertes.push({type:'warn',msg:'VM expirée : '+c.prenom+' '+c.nom,link:'interimaires.html'});else if(diff<30)alertes.push({type:'yellow',msg:'VM expire dans '+diff+'j : '+c.prenom+' '+c.nom,link:'interimaires.html'});}
+  });
+  // Missions fin proche
+  misActives.forEach(function(m){
+    if(m.date_fin){var diff=Math.round((new Date(m.date_fin)-new Date())/864e5);if(diff>=0&&diff<=7)alertes.push({type:'yellow',msg:'Fin mission J-'+diff+' : '+m.client_nom+' ('+m.interimaire_nom+')',link:'missions.html'});if(diff<0)alertes.push({type:'warn',msg:'Mission dépassée : '+m.client_nom,link:'missions.html'});}
+  });
+  // Postes à pourvoir
+  if(misApourvoir.length)alertes.push({type:'info',msg:misApourvoir.length+' poste(s) à pourvoir — intérimaires dispos : '+dispos.length,link:'missions.html'});
+  // Profils en préavis
+  if(preavis.length)alertes.push({type:'info',msg:preavis.length+' profil(s) en préavis — anticiper placement',link:'interimaires.html'});
+
+  // ── KPIs ──
+  var kpis=[
+    {lbl:'INTÉRIMAIRES DISPOS',val:dispos.length,sub:enMission.length+' en mission',color:'kpi-green',link:'interimaires.html?filter=dispo'},
+    {lbl:'EN MISSION',val:enMission.length,sub:'Obj : '+CONFIG.obj_etp+' ETP',color:'kpi-orange',link:'missions.html'},
+    {lbl:'CA / SEMAINE EST.',val:fmtK(caSem),sub:'Obj : '+fmtK(CONFIG.obj_ca),color:'kpi-blue',link:'simulateurs.html'},
+    {lbl:'POSTES À POURVOIR',val:misApourvoir.length,sub:'Urgents à placer',color:'kpi-yellow',link:'missions.html'},
+    {lbl:'CLIENTS ACTIFS',val:clients.length,sub:prospsOnly.length+' prospects',color:'kpi-purple',link:'prospects.html'},
+    {lbl:'PROFILS EN PRÉAVIS',val:preavis.length,sub:'Dispo prochainement',color:'kpi-cyan',link:'interimaires.html'},
+    {lbl:'ALERTES',val:alertes.length,sub:'À traiter',color:alertes.length>0?'kpi-orange':'kpi-green',link:'#alertes'},
+    {lbl:'SCORE MOYEN CLIENTS',val:calcScoreMoyen(clients),sub:'A=excellent · D=risqué',color:'kpi-purple',link:'prospects.html'},
+  ];
+
+  document.getElementById('kpi-grid').innerHTML=kpis.map(function(k){
+    return '<a href="'+(k.link||'#')+'" class="kpi-card '+k.color+'" style="text-decoration:none">'
+      +'<div class="kpi-num" style="color:'+(k.color==='kpi-green'?'var(--green)':k.color==='kpi-orange'?'var(--orange)':k.color==='kpi-blue'?'var(--blue)':k.color==='kpi-yellow'?'var(--yellow)':k.color==='kpi-purple'?'var(--purple)':'var(--cyan)')+'">'+k.val+'</div>'
+      +'<div class="kpi-lbl">'+k.lbl+'</div>'
+      +(k.sub?'<div class="kpi-sub">'+k.sub+'</div>':'')
+      +'</a>';
+  }).join('');
+
+  // ── ALERTES ──
+  var alertContainer=document.getElementById('alertes-container');
+  if(!alertes.length){
+    alertContainer.innerHTML='<div class="alert alert-ok"><span class="alert-icon">✅</span>Aucune alerte — situation nominale</div>';
+  } else {
+    alertContainer.innerHTML=alertes.slice(0,6).map(function(a){
+      var cls=a.type==='warn'?'alert-warn':a.type==='yellow'?'alert-yellow':'alert-info';
+      var icon=a.type==='warn'?'🔴':a.type==='yellow'?'⚠':'💡';
+      return '<a href="'+a.link+'" class="alert-banner alert-'+a.type+'" style="text-decoration:none;color:inherit">'
+        +'<span class="alert-icon">'+icon+'</span><span>'+esc(a.msg)+'</span></a>';
+    }).join('');
+  }
+
+  // ── OBJECTIFS ──
+  var etpPct=Math.min(100,Math.round(enMission.length/CONFIG.obj_etp*100));
+  var caPct=Math.min(100,Math.round(caSem/CONFIG.obj_ca*100));
+  var clientPct=Math.min(100,Math.round(clients.length/Math.max(10,clients.length)*100));
+  var objs=[
+    {label:'ETP EN MISSION',val:enMission.length,obj:CONFIG.obj_etp,pct:etpPct,color:'var(--orange)'},
+    {label:'CA SEMAINE',val:fmtK(caSem),obj:fmtK(CONFIG.obj_ca),pct:caPct,color:'var(--blue)'},
+    {label:'CLIENTS ACTIFS',val:clients.length,obj:'Max',pct:Math.min(100,clients.length*5),color:'var(--purple)'},
+    {label:'PROFILS DISPOS',val:dispos.length,obj:'Vivier',pct:Math.min(100,dispos.length*3),color:'var(--green)'},
+  ];
+  document.getElementById('objectifs-container').innerHTML=objs.map(function(o){
+    var barColor=o.pct>=80?o.color:o.pct>=50?'var(--yellow)':'var(--warn)';
+    return '<div class="obj-row">'
+      +'<div class="obj-label">'+o.label+'</div>'
+      +'<div class="obj-bar"><div class="obj-fill" style="width:'+o.pct+'%;background:'+barColor+'"></div></div>'
+      +'<div class="obj-val" style="color:'+barColor+'">'+o.val+'</div>'
+      +'</div>';
+  }).join('');
+
+  // ── MISSIONS ACTIVES ──
+  var maCont=document.getElementById('missions-actives');
+  if(!misActives.length){
+    maCont.innerHTML='<div class="empty" style="padding:20px"><p>Aucune mission active</p><a href="missions.html" class="btn btn-primary btn-sm">+ Créer une mission</a></div>';
+  } else {
+    maCont.innerHTML=misActives.slice(0,5).map(function(m){
+      var dl=m.date_fin?Math.round((new Date(m.date_fin)-new Date())/864e5):null;
+      var dlColor=dl!==null?(dl<=3?'var(--warn)':dl<=7?'var(--yellow)':'var(--green)'):'';
+      return '<a href="missions.html" style="text-decoration:none;display:block">'
+        +'<div style="padding:9px 12px;border:1px solid var(--border2);border-radius:5px;margin-bottom:6px;background:var(--surface);transition:all .15s" onmouseover="this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--border2)\'">'
+        +'<div style="display:flex;justify-content:space-between;align-items:flex-start">'
+        +'<div><div style="font-weight:600;font-size:12px;color:var(--text)">'+esc(m.client_nom||'—')+'</div>'
+        +'<div style="font-size:10px;color:var(--muted2);margin-top:2px">'+esc(m.interimaire_nom||'Poste vacant')+' · '+esc(m.qualif||'—')+'</div></div>'
+        +(dl!==null?'<span style="font-family:var(--mono);font-size:11px;font-weight:700;color:'+dlColor+'">J-'+dl+'</span>':'')
+        +'</div></div></a>';
+    }).join('')+(misActives.length>5?'<a href="missions.html" style="font-size:11px;color:var(--orange);text-decoration:none">Voir toutes les missions →</a>':'');
+  }
+
+  // ── ACTIONS RAPIDES ──
+  document.getElementById('quick-actions').innerHTML=[
+    {icon:'👷',label:'Nouveau profil intérimaire',sub:'Créer une fiche intérimaire',href:'interimaires.html'},
+    {icon:'🏢',label:'Nouvelle fiche prospect',sub:'Démarrer la prospection',href:'prospects.html'},
+    {icon:'📋',label:'Créer une mission',sub:'Poste à pourvoir ou actif',href:'missions.html'},
+    {icon:'🧮',label:'Simuler une marge',sub:'Calculer coût et rentabilité',href:'simulateurs.html'},
+    {icon:'⚖',label:'Guide juridique',sub:'Motifs, durées, contrats',href:'simulateurs.html#juridique'},
+    {icon:'💬',label:'Préparer les objections',sub:'Arguments pour la direction',href:'simulateurs.html#objections'},
+  ].map(function(a){
+    return '<a href="'+a.href+'" class="quick-action">'
+      +'<span class="quick-icon">'+a.icon+'</span>'
+      +'<div><div style="font-size:12px;font-weight:600">'+a.label+'</div>'
+      +'<div style="font-size:10px;color:var(--muted)">'+a.sub+'</div></div>'
+      +'</a>';
+  }).join('');
+
+  // ── PIPELINE ──
+  var stages=[
+    {id:'identification',label:'Identif.',color:'var(--muted)'},
+    {id:'premier_contact',label:'1er contact',color:'var(--blue-md)'},
+    {id:'rdv_planifie',label:'RDV planifié',color:'var(--purple)'},
+    {id:'rdv_realise',label:'RDV réalisé',color:'var(--orange)'},
+    {id:'proposition',label:'Proposition',color:'var(--yellow)'},
+    {id:'premier_placement',label:'1er placement',color:'var(--cyan)'},
+    {id:'client_actif',label:'Client actif',color:'var(--green)'},
+  ];
+  var stageCount={};
+  prospects.forEach(function(p){stageCount[p.pipeline_stage||'identification']=(stageCount[p.pipeline_stage||'identification']||0)+1;});
+  var total=prospects.length||1;
+  document.getElementById('pipeline-container').innerHTML='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">'
+    +stages.map(function(s){
+      var n=stageCount[s.id]||0; var pct=Math.round(n/total*100);
+      return '<div style="text-align:center">'
+        +'<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:10px 6px">'
+        +'<div style="height:40px;display:flex;align-items:flex-end;justify-content:center;margin-bottom:4px">'
+        +'<div style="width:24px;border-radius:3px 3px 0 0;background:'+s.color+';height:'+(n?Math.max(8,n*6)+'px':'4px')+';opacity:'+(n?'0.85':'0.3')+';transition:height .3s"></div>'
+        +'</div>'
+        +'<div style="font-family:var(--mono);font-size:18px;font-weight:800;color:'+(n?s.color:'var(--muted)')+'">'+n+'</div>'
+        +'<div style="font-size:9px;color:var(--muted);margin-top:2px;font-family:var(--mono)">'+s.label+'</div>'
+        +'</div></div>';
+    }).join('')
+    +'</div>';
+}
+
+function calcScoreMoyen(clients){
+  if(!clients.length) return '—';
+  var scores=clients.map(function(c){return calcClientScore(c);});
+  var counts={A:0,B:0,C:0,D:0};
+  scores.forEach(function(s){if(counts[s]!==undefined)counts[s]++;});
+  if(counts.A>=clients.length/2) return 'A';
+  if(counts.A+counts.B>=clients.length*0.7) return 'B';
+  if(counts.D>=clients.length*0.3) return 'D';
+  return 'C';
+}
+
+function calcClientScore(p){
+  if(!p||p.statut!=='client') return 'N';
+  var score=0;
+  var age=parseInt(p.age)||0;score+=age>=10?25:age>=5?15:age>=2?8:0;
+  var ca=parseFloat(p.ca)||0;score+=ca>=10?20:ca>=5?15:ca>=2?10:ca>=1?5:0;
+  var cap=parseInt(p.capital)||0;score+=cap>=500000?15:cap>=100000?10:cap>=50000?5:0;
+  var del=parseInt(p.delai_pmt)||45;score+=del<=30?20:del<=45?15:del<=60?8:0;
+  var incidents=parseInt(p.incidents)||0,proc=parseInt(p.procedure)||0;
+  score+=incidents===0&&proc===0?20:incidents<=1&&proc===0?10:0;
+  if(score>=80)return 'A';if(score>=60)return 'B';if(score>=35)return 'C';return 'D';
+}
+
+// Auto-refresh toutes les 60s
+setInterval(renderDash, 60000);
+
+document.getElementById('modal-config').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
+</script>
+</body>
+</html>

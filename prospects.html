@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>JTIpilot — Prospects / Clients</title>
+<link rel="stylesheet" href="shared.css"/>
+<style>
+.score-circle { width:60px;height:60px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px solid;flex-shrink:0 }
+.sc-A{border-color:var(--green);color:var(--green);background:var(--green-lt)}
+.sc-B{border-color:var(--blue-md);color:var(--blue-md);background:var(--blue-lt)}
+.sc-C{border-color:var(--yellow);color:var(--yellow);background:var(--yellow-lt)}
+.sc-D{border-color:var(--warn);color:var(--warn);background:var(--warn-lt)}
+.sc-N{border-color:var(--border);color:var(--muted);background:var(--surface3)}
+.contact-card{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:5px;margin-bottom:6px}
+.contact-avatar{width:32px;height:32px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;font-weight:700;flex-shrink:0}
+.pipe-stage{padding:8px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:4px;margin-bottom:4px;cursor:pointer;transition:all .15s}
+.pipe-stage:hover{border-color:var(--orange)}
+.pipe-stage.active-stage{border-color:var(--orange);background:var(--orange-lt)}
+.encours-bar{height:8px;border-radius:4px;margin-top:4px}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-logo">⚡ <span>JTI</span>pilot</div>
+  <a href="index.html" class="nav-link"><span class="nav-icon">📊</span>Tableau de bord</a>
+  <a href="interimaires.html" class="nav-link"><span class="nav-icon">👷</span>Intérimaires</a>
+  <a href="prospects.html" class="nav-link active"><span class="nav-icon">🏢</span>Prospects / Clients</a>
+  <a href="missions.html" class="nav-link"><span class="nav-icon">📋</span>Missions</a>
+  <a href="simulateurs.html" class="nav-link"><span class="nav-icon">🧮</span>Simulateurs</a>
+  <div class="topnav-spacer"></div>
+  <div class="topnav-right">
+    <button class="btn btn-outline btn-sm" onclick="exportJSON()">⬇ Export</button>
+    <button class="btn btn-outline btn-sm" onclick="document.getElementById('inp-import').click()">⬆ Import</button>
+    <input type="file" id="inp-import" accept=".json" style="display:none" onchange="importJSON(this)"/>
+  </div>
+</nav>
+
+<div class="app">
+<div class="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-title">🏢 Prospects / Clients</div>
+    <div class="sidebar-sub" id="count-label">0 entreprises</div>
+  </div>
+  <div class="sidebar-content">
+    <button class="btn-new" onclick="newProspect()">+ Nouvelle fiche</button>
+    <input class="filter-search" type="text" id="search-input" placeholder="Rechercher nom, secteur, ville…" oninput="renderList()"/>
+    <div class="filter-bar" id="filter-statut">
+      <button class="filter-btn active" data-val="tous" onclick="setFilter('statut','tous',this)">Tous</button>
+      <button class="filter-btn" data-val="client" onclick="setFilter('statut','client',this)">Clients</button>
+      <button class="filter-btn" data-val="prospect" onclick="setFilter('statut','prospect',this)">Prospects</button>
+    </div>
+    <div class="filter-bar" id="filter-score">
+      <button class="filter-btn active" data-val="tous" onclick="setFilter('score','tous',this)">Tous</button>
+      <button class="filter-btn" data-val="A" onclick="setFilter('score','A',this)">Score A</button>
+      <button class="filter-btn" data-val="B" onclick="setFilter('score','B',this)">Score B</button>
+      <button class="filter-btn" data-val="C" onclick="setFilter('score','C',this)">Score C</button>
+      <button class="filter-btn" data-val="D" onclick="setFilter('score','D',this)">Score D</button>
+    </div>
+    <div id="list-container"></div>
+  </div>
+</div>
+
+<div class="main" id="main-panel">
+  <div id="empty-state" class="empty" style="padding:60px 20px"><div class="icon">🏢</div><p>Sélectionnez une fiche ou créez-en une nouvelle</p></div>
+  <div id="fiche-panel" style="display:none;flex:1;display:none;flex-direction:column;overflow:hidden">
+    <div class="main-header" id="fiche-header">
+      <div>
+        <div class="main-title" id="fiche-title">—</div>
+        <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap" id="fiche-badges"></div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-danger btn-sm" onclick="supprimerFiche()">🗑</button>
+      </div>
+    </div>
+    <div class="fiche-tabs">
+      <button class="fiche-tab active" data-tab="identite" onclick="switchTab('identite',this)">FICHE EU</button>
+      <button class="fiche-tab" data-tab="scoring" onclick="switchTab('scoring',this)">SCORING</button>
+      <button class="fiche-tab" data-tab="contacts" onclick="switchTab('contacts',this)">CONTACTS</button>
+      <button class="fiche-tab" data-tab="placements" onclick="switchTab('placements',this)">PLACEMENTS</button>
+      <button class="fiche-tab" data-tab="pipeline" onclick="switchTab('pipeline',this)">PIPELINE</button>
+      <button class="fiche-tab" data-tab="journal" onclick="switchTab('journal',this)">JOURNAL</button>
+      <button class="fiche-tab" data-tab="comm" onclick="switchTab('comm',this)">COMM.</button>
+    </div>
+    <div class="fiche-body" id="fiche-body"></div>
+  </div>
+</div>
+</div>
+
+<!-- MODAL CONFIRM -->
+<div class="modal-overlay" id="modal-confirm">
+<div class="modal" style="width:400px">
+  <div class="modal-title" id="confirm-title">Confirmer</div>
+  <p id="confirm-msg" style="font-size:13px;margin-bottom:16px"></p>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeModal('modal-confirm')">Annuler</button>
+    <button class="btn btn-danger" id="confirm-ok-btn">Confirmer</button>
+  </div>
+</div>
+</div>
+
+<script src="data_demo.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════════════
+// JTIPILOT — Module Prospects / Clients
+// ═══════════════════════════════════════════════════════════════
+
+var DB = [];
+var currentId = null;
+var currentTab = 'identite';
+var filterStatut = 'tous';
+var filterScore = 'tous';
+
+demoInject();
+load();
+renderList();
+var lastId = sessionStorage.getItem('jtp_last_pro');
+if (lastId && DB.find(function(x){return x.id===lastId;})) openFiche(lastId);
+else if (DB.length) openFiche(DB[0].id);
+
+function save(){try{localStorage.setItem('jtp_prospects',JSON.stringify(DB));}catch(e){}}
+function load(){try{var s=localStorage.getItem('jtp_prospects');if(s)DB=JSON.parse(s);}catch(e){}}
+
+function uid(){return 'pro_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);}
+function today(){return new Date().toISOString().split('T')[0];}
+function fmt(d){if(!d)return '--';var p=d.split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:d;}
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function nrm(s){return (s||'').toLowerCase().replace(/[^a-z0-9]/g,'');}
+function fmtCA(n){if(!n)return '—';if(n>=1000000)return (n/1000000).toFixed(1)+'M€';if(n>=1000)return Math.round(n/100)/10+'k€';return Math.round(n)+'€';}
+
+var JTYPES = {
+  appel:{l:'APPEL',c:'t-appel'},rdv:{l:'RDV',c:'t-rdv'},email:{l:'EMAIL',c:'t-email'},
+  note:{l:'NOTE',c:'t-note'},sms:{l:'SMS',c:'t-sms'},visite:{l:'VISITE',c:'t-rdv'},
+};
+var PIPE_STAGES = [
+  {id:'identification',label:'Identification',color:'var(--muted)'},
+  {id:'premier_contact',label:'1er contact',color:'var(--blue-md)'},
+  {id:'rdv_planifie',label:'RDV planifié',color:'var(--purple)'},
+  {id:'rdv_realise',label:'RDV réalisé',color:'var(--orange)'},
+  {id:'proposition',label:'Proposition envoyée',color:'var(--yellow)'},
+  {id:'premier_placement',label:'1er placement',color:'var(--cyan)'},
+  {id:'client_actif',label:'Client actif',color:'var(--green)'},
+  {id:'en_pause',label:'En pause',color:'var(--warn)'},
+];
+
+// ── SCORING SOLVABILITÉ ──
+function calcScore(p) {
+  if (!p || p.statut !== 'client') return 'N';
+  var score = 0;
+  // Ancienneté (max 25 pts)
+  var age = parseInt(p.age)||0;
+  score += age>=10?25:age>=5?15:age>=2?8:0;
+  // CA (max 20 pts)
+  var ca = parseFloat(p.ca)||0;
+  score += ca>=10?20:ca>=5?15:ca>=2?10:ca>=1?5:0;
+  // Capital (max 15 pts)
+  var cap = parseInt(p.capital)||0;
+  score += cap>=500000?15:cap>=100000?10:cap>=50000?5:0;
+  // Délai paiement (max 20 pts)
+  var del = parseInt(p.delai_pmt)||45;
+  score += del<=30?20:del<=45?15:del<=60?8:0;
+  // Incidents/procédures (max 20 pts, décréments)
+  var incidents = parseInt(p.incidents)||0;
+  var proc = parseInt(p.procedure)||0;
+  score += incidents===0&&proc===0?20:incidents<=1&&proc===0?10:0;
+
+  if(score>=80)return 'A';
+  if(score>=60)return 'B';
+  if(score>=35)return 'C';
+  return 'D';
+}
+function scoreColor(s){return s==='A'?'var(--green)':s==='B'?'var(--blue-md)':s==='C'?'var(--yellow)':s==='D'?'var(--warn)':'var(--muted)';}
+
+// ── FILTRES ──
+function setFilter(type, val, btn) {
+  if(type==='statut') filterStatut=val; else filterScore=val;
+  document.getElementById('filter-'+type).querySelectorAll('.filter-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  renderList();
+}
+
+// ── LISTE ──
+function renderList() {
+  var q = (document.getElementById('search-input').value||'').toLowerCase();
+  var list = DB.filter(function(p) {
+    if(filterStatut!=='tous'&&p.statut!==filterStatut) return false;
+    var s = calcScore(p);
+    if(filterScore!=='tous'&&s!==filterScore) return false;
+    if(q){var hay=nrm(p.nom+(p.secteur||'')+(p.adresse||''));return hay.indexOf(nrm(q))!==-1;}
+    return true;
+  });
+  list.sort(function(a,b){return (a.nom||'').localeCompare(b.nom||'');});
+  document.getElementById('count-label').textContent = list.length+' entreprise'+(list.length>1?'s':'');
+
+  var html='';
+  if(!list.length){html='<div class="empty" style="padding:30px 10px"><div class="icon">🔍</div><p>Aucun résultat</p></div>';}
+  list.forEach(function(p){
+    var s=calcScore(p);
+    var totalCA=0;(p.placements||[]).forEach(function(pl){totalCA+=pl.ca||0;});
+    html+='<div class="item-card'+(currentId===p.id?' selected':'')+'" onclick="openFiche(\''+p.id+'\')">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start">'
+      +'<div class="item-name">'+esc(p.nom)+'</div>'
+      +'<span class="badge score-'+s+' tag">'+s+'</span>'
+      +'</div>'
+      +'<div class="item-sub">'+esc(p.secteur||'—')+'</div>'
+      +'<div class="item-meta">'
+      +'<span class="badge '+(p.statut==='client'?'b-dispo':'b-orange')+'">'+(p.statut==='client'?'CLIENT':'PROSPECT')+'</span>'
+      +(totalCA?'<span style="font-size:9px;color:var(--muted);font-family:var(--mono)">CA : '+fmtCA(totalCA)+'</span>':'')
+      +(p.delai_pmt?'<span style="font-size:9px;color:var(--muted)">'+p.delai_pmt+'j</span>':'')
+      +'</div></div>';
+  });
+  document.getElementById('list-container').innerHTML=html;
+}
+
+// ── OUVRIR FICHE ──
+function openFiche(id) {
+  currentId=id; sessionStorage.setItem('jtp_last_pro',id);
+  document.getElementById('empty-state').style.display='none';
+  document.getElementById('fiche-panel').style.display='flex';
+  renderList(); renderFiche(id);
+}
+function renderFiche(id) {
+  var p=DB.find(function(x){return x.id===id;}); if(!p) return;
+  var s=calcScore(p);
+  document.getElementById('fiche-title').textContent=p.nom;
+  document.getElementById('fiche-badges').innerHTML='<span class="badge '+(p.statut==='client'?'b-dispo':'b-orange')+'">'+(p.statut==='client'?'CLIENT':'PROSPECT')+'</span>'
+    +'<span class="badge score-'+s+' tag">Score '+s+'</span>'
+    +(p.secteur?'<span class="badge b-veille">'+esc(p.secteur)+'</span>':'');
+  renderTab(id, currentTab);
+}
+function switchTab(tab, btn) {
+  currentTab=tab;
+  document.querySelectorAll('.fiche-tab').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  renderTab(currentId, tab);
+}
+function renderTab(id, tab) {
+  var p=DB.find(function(x){return x.id===id;}); if(!p) return;
+  var body=document.getElementById('fiche-body');
+  if(tab==='identite') body.innerHTML=renderIdentite(p);
+  else if(tab==='scoring') body.innerHTML=renderScoring(p);
+  else if(tab==='contacts') body.innerHTML=renderContacts(p);
+  else if(tab==='placements') body.innerHTML=renderPlacements(p);
+  else if(tab==='pipeline') body.innerHTML=renderPipeline(p);
+  else if(tab==='journal') body.innerHTML=renderJournal(p);
+  else if(tab==='comm') body.innerHTML=renderComm(p);
+}
+
+// ══════════════════════════════════════
+// FICHE EU (IDENTITÉ)
+// ══════════════════════════════════════
+function renderIdentite(p) {
+  var html='<div class="sec"><div class="sec-head">IDENTITÉ ENTREPRISE</div><div class="sec-body"><div class="form-grid">';
+  html+=pfield('NOM / RAISON SOCIALE','p_nom',p.nom,'text','BATIPRO 93');
+  html+=pfield('SIRET','p_siret',p.siret,'text','123 456 789 00012');
+  html+='<div class="field"><label>STATUT</label><select id="p_statut" onchange="saveField(\'statut\',this.value)">'
+    +['prospect','client'].map(function(v){return '<option'+(p.statut===v?' selected':'')+' value="'+v+'">'+v.toUpperCase()+'</option>';}).join('')
+    +'</select></div>';
+  html+=pfield('SECTEUR','p_secteur',p.secteur,'text','Gros œuvre / TP');
+  html+=pfield('TAILLE','p_taille',p.taille,'text','50-200 salariés');
+  html+='<div class="field full"><label>ADRESSE</label><input id="p_adresse" value="'+esc(p.adresse||'')+'" placeholder="15 rue…, 75000 Paris" onblur="saveField(\'adresse\',this.value)"/></div>';
+  html+=pfield('CA ANNUEL (M€)','p_ca',p.ca,'number','1.5','step="0.1"');
+  html+=pfield('CAPITAL SOCIAL (€)','p_capital',p.capital,'number','150000');
+  html+=pfield('ANCIENNETÉ (ANS)','p_age',p.age,'number','8');
+  html+=pfield('QUALIFS RECHERCHÉES','p_qualifs',Array.isArray(p.qualifs_recherchees)?p.qualifs_recherchees.join(', '):p.qualifs_recherchees,'text','Maçon N2, Élec CF…');
+  html+='</div></div></div>';
+
+  html+='<div class="sec"><div class="sec-head">NOTES COMMERCIALES</div><div class="sec-body">';
+  html+='<textarea id="p_notes" rows="4" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:8px;color:var(--text);font-family:var(--sans);font-size:12px;outline:none;resize:vertical" onblur="saveField(\'notes\',this.value)">'+esc(p.notes||'')+'</textarea>';
+  html+='</div></div>';
+  return html;
+}
+function pfield(label,id,val,type,placeholder,extra){
+  return '<div class="field"><label>'+label+'</label><input id="'+id+'" type="'+(type||'text')+'" value="'+esc(val||'')+'" placeholder="'+(placeholder||'')+'" '+(extra||'')+' onblur="saveField(\''+id.replace('p_','')+'\',this.value)"/></div>';
+}
+
+// ══════════════════════════════════════
+// SCORING SOLVABILITÉ
+// ══════════════════════════════════════
+function renderScoring(p) {
+  var s = calcScore(p);
+  var html='<div class="sec"><div class="sec-head">SCORING SOLVABILITÉ CLIENT</div><div class="sec-body">';
+  html+='<div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">'
+    +'<div class="score-circle sc-'+s+'"><span style="font-size:24px;font-weight:700;font-family:var(--mono)">'+s+'</span></div>'
+    +'<div><div style="font-size:13px;font-weight:600">Score '+s+'</div>'
+    +'<div style="font-size:11px;color:var(--muted)">'+scoreDesc(s)+'</div></div></div>';
+
+  html+='<div class="form-grid">';
+  html+=sfield('DÉLAI PAIEMENT (j)','p_delai',p.delai_pmt,'number','30 / 45 / 60');
+  html+='<div class="field"><label>CONDITIONS RÈGLEMENT</label><select id="p_cond" onchange="saveField(\'cond_regl\',this.value)">'
+    +[['','— Sélectionner —'],['net_30','Net 30j'],['net_45','Net 45j'],['net_60','Net 60j'],['fin_de_mois','Fin de mois'],['fin_de_mois_le_10','FDM le 10'],['acompte_30pct','Acompte 30%'],['acompte_50pct','Acompte 50%']].map(function(kv){return '<option'+(p.cond_regl===kv[0]?' selected':'')+' value="'+kv[0]+'">'+kv[1]+'</option>';}).join('')
+    +'</select></div>';
+  html+=sfield('ENCOURS MAX AUTORISÉ (€)','p_encours',p.encours,'number','5000');
+  html+='<div class="field"><label>ACOMPTE EXIGÉ</label><select id="p_acompte" onchange="saveField(\'acompte_client\',this.value)">'
+    +[['non','Non'],['oui_30pct','Oui — 30%'],['oui_50pct','Oui — 50%'],['oui_sur_devis','Oui — sur devis']].map(function(kv){return '<option'+(p.acompte_client===kv[0]?' selected':'')+' value="'+kv[0]+'">'+kv[1]+'</option>';}).join('')
+    +'</select></div>';
+  html+=sfield('PROCÉDURES COLLECTIVES PASSÉES','p_proc',p.procedure,'number','0');
+  html+=sfield('INCIDENTS PAIEMENT (sur 3 ans)','p_incidents',p.incidents,'number','0');
+  html+='</div>';
+
+  // Encours
+  var totalEnCoursEst = 0;
+  (p.placements||[]).forEach(function(pl){if(!pl.date_fin||new Date(pl.date_fin)>new Date()) totalEnCoursEst+=pl.ca||0;});
+  if (p.encours && totalEnCoursEst > 0) {
+    var pct = Math.min(100,Math.round(totalEnCoursEst/p.encours*100));
+    var barColor = pct>=100?'var(--warn)':pct>=80?'var(--yellow)':'var(--green)';
+    html+='<div style="margin-top:14px">'
+      +'<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-family:var(--mono);font-size:10px">ENCOURS ESTIMÉ</span><span style="font-family:var(--mono);font-size:11px;font-weight:700;color:'+barColor+'">'+fmtCA(totalEnCoursEst)+' / '+fmtCA(p.encours)+'</span></div>'
+      +'<div class="prog-bar"><div class="prog-fill" style="background:'+barColor+';width:'+pct+'%"></div></div>'
+      +(pct>=80?'<div class="alert alert-'+(pct>=100?'warn':'yellow')+'" style="margin-top:8px"><span class="alert-icon">'+(pct>=100?'🔴':'⚠')+'</span>'+(pct>=100?'Encours DÉPASSÉ':'Encours proche du plafond')+'</div>':'')
+      +'</div>';
+  }
+
+  // Alertes
+  if(p.procedure>0) html+='<div class="alert alert-warn" style="margin-top:10px"><span class="alert-icon">⚠</span>Procédure(s) collective(s) passée(s) — vérifier Infogreffe</div>';
+  if(p.incidents>1) html+='<div class="alert alert-warn" style="margin-top:6px"><span class="alert-icon">⚠</span>'+p.incidents+' incident(s) de paiement — exiger acompte</div>';
+  html+='</div></div>';
+  return html;
+}
+function scoreDesc(s){return s==='A'?'Excellent — conditions standard, encours élargi':s==='B'?'Bon — quelques points de vigilance':s==='C'?'Moyen — délai serré ou ancienneté faible':s==='D'?'Risqué — acompte obligatoire, exposition limitée':'Non noté — prospect en cours d\'évaluation';}
+function sfield(label,id,val,type,placeholder){
+  return '<div class="field"><label>'+label+'</label><input id="'+id+'" type="'+(type||'text')+'" value="'+esc(val||'')+'" placeholder="'+(placeholder||'')+'" onblur="saveField(\''+id.replace('p_','')+'\',this.value);renderFiche(currentId)"/></div>';
+}
+
+// ══════════════════════════════════════
+// CONTACTS
+// ══════════════════════════════════════
+function renderContacts(p) {
+  var contacts = p.contacts||[];
+  var html='<div class="sec"><div class="sec-head">CONTACTS <button class="btn btn-outline btn-sm" onclick="addContact(\''+p.id+'\')">+ Ajouter</button></div><div class="sec-body">';
+  if(!contacts.length){html+='<div class="empty" style="padding:20px"><p>Aucun contact enregistré</p></div>';}
+  contacts.forEach(function(c,i){
+    var initials = ((c.nom||'').split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2)||'?').toUpperCase();
+    html+='<div class="contact-card">'
+      +'<div class="contact-avatar">'+initials+'</div>'
+      +'<div style="flex:1">'
+      +'<div style="display:flex;justify-content:space-between">'
+      +'<div style="font-size:12px;font-weight:600">'+esc(c.nom)+'</div>'
+      +'<button onclick="delContact(\''+p.id+'\','+i+')" class="btn btn-danger btn-xs">✕</button>'
+      +'</div>'
+      +'<div style="font-size:10px;color:var(--orange);font-family:var(--mono)">'+esc(c.fonction||'—')+'</div>'
+      +'<div style="font-size:11px;color:var(--muted2);margin-top:3px;display:flex;gap:12px;flex-wrap:wrap">'
+      +(c.tel?'<a href="tel:'+esc(c.tel)+'" style="color:var(--blue-md);text-decoration:none">📞 '+esc(c.tel)+'</a>':'')
+      +(c.email?'<a href="mailto:'+esc(c.email)+'" style="color:var(--blue-md);text-decoration:none">✉ '+esc(c.email)+'</a>':'')
+      +'</div></div></div>';
+  });
+  html+='</div></div>';
+
+  // Formulaire ajout
+  html+='<div class="sec" id="form-contact" style="display:none"><div class="sec-head" style="color:var(--orange)">NOUVEAU CONTACT</div><div class="sec-body"><div class="form-grid">';
+  html+='<div class="field"><label>NOM COMPLET</label><input id="nc_nom" placeholder="Dupont Jean"/></div>';
+  html+='<div class="field"><label>FONCTION</label><input id="nc_fonction" placeholder="Gérant / DRH / CDT"/></div>';
+  html+='<div class="field"><label>TÉL</label><input id="nc_tel" type="tel" placeholder="01 00 00 00 00"/></div>';
+  html+='<div class="field"><label>EMAIL</label><input id="nc_email" type="email" placeholder="contact@entreprise.fr"/></div>';
+  html+='</div><div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-primary btn-sm" onclick="saveContact(\''+p.id+'\')">✓ Enregistrer</button><button class="btn btn-ghost btn-sm" onclick="document.getElementById(\'form-contact\').style.display=\'none\'">Annuler</button></div>';
+  html+='</div></div>';
+  return html;
+}
+
+function addContact(pid){document.getElementById('form-contact').style.display='block';}
+function saveContact(pid){
+  var nom=document.getElementById('nc_nom').value.trim();
+  if(!nom){alert('Nom obligatoire');return;}
+  var p=DB.find(function(x){return x.id===pid;}); if(!p)return;
+  if(!p.contacts)p.contacts=[];
+  p.contacts.push({nom:nom,fonction:document.getElementById('nc_fonction').value.trim(),tel:document.getElementById('nc_tel').value.trim(),email:document.getElementById('nc_email').value.trim()});
+  save();renderTab(pid,'contacts');
+}
+function delContact(pid,idx){
+  var p=DB.find(function(x){return x.id===pid;}); if(!p)return;
+  p.contacts.splice(idx,1); save();renderTab(pid,'contacts');
+}
+
+// ══════════════════════════════════════
+// PLACEMENTS
+// ══════════════════════════════════════
+function renderPlacements(p) {
+  var pls = p.placements||[];
+  var totalCA=0,totalSem=0;
+  pls.forEach(function(pl){totalCA+=pl.ca||0;totalSem+=pl.nb_semaines||0;});
+
+  var html='<div class="stat-grid">'
+    +'<div class="stat-card"><div class="stat-num" style="color:var(--blue)">'+pls.length+'</div><div class="stat-lbl">PLACEMENTS</div></div>'
+    +'<div class="stat-card"><div class="stat-num" style="color:var(--orange)">'+fmtCA(totalCA)+'</div><div class="stat-lbl">CA TOTAL</div></div>'
+    +'<div class="stat-card"><div class="stat-num" style="color:var(--green)">'+totalSem+'</div><div class="stat-lbl">SEMAINES</div></div>'
+    +'</div>';
+
+  // Formulaire ajout
+  html+='<div class="sec"><div class="sec-head" style="color:var(--green)">+ AJOUTER PLACEMENT</div><div class="sec-body">';
+  html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px;margin-bottom:8px">';
+  html+='<input id="pl_int" placeholder="Intérimaire" style="background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:5px 7px;color:var(--text);font-size:11px;outline:none"/>';
+  html+='<input id="pl_qualif" placeholder="Qualification" style="background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:5px 7px;color:var(--text);font-size:11px;outline:none"/>';
+  html+='<input id="pl_debut" type="date" style="background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:5px 7px;color:var(--text);font-size:11px;outline:none"/>';
+  html+='<input id="pl_fin" type="date" style="background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:5px 7px;color:var(--text);font-size:11px;outline:none"/>';
+  html+='<input id="pl_tc" type="number" placeholder="TC €/h" step="0.5" style="background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:5px 7px;color:var(--text);font-size:11px;outline:none"/>';
+  html+='<input id="pl_tb" type="number" placeholder="TB €/h" step="0.5" style="background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:5px 7px;color:var(--text);font-size:11px;outline:none"/>';
+  html+='</div><button class="btn btn-green btn-sm" onclick="addPlacement(\''+p.id+'\')">+ Ajouter</button></div></div>';
+
+  if(!pls.length){html+='<div class="empty"><p>Aucun placement enregistré</p></div>';}
+  else {
+    var sorted=pls.slice().sort(function(a,b){return (b.date_debut||'').localeCompare(a.date_debut||'');});
+    sorted.forEach(function(pl){
+      var ridx=pls.indexOf(pl);
+      var mb=pl.taux_client&&pl.taux_brut?(pl.taux_client-pl.taux_brut*(1+0.43+0.10+0.10*1.10))/pl.taux_client*100:0;
+      html+='<div style="padding:10px 12px;border:1px solid var(--border2);border-radius:5px;margin-bottom:6px;background:var(--surface)">'
+        +'<div style="display:flex;justify-content:space-between">'
+        +'<div><div style="font-weight:600;font-size:12px">'+esc(pl.interimaire||'—')+'</div>'
+        +'<div style="font-size:10px;color:var(--muted2)">'+esc(pl.qualif||'—')+' · '+fmt(pl.date_debut)+' → '+fmt(pl.date_fin)+'</div>'
+        +'</div>'
+        +'<div style="text-align:right;display:flex;align-items:flex-start;gap:8px">'
+        +'<div style="font-family:var(--mono);font-size:11px">'
+        +(pl.nb_semaines?pl.nb_semaines+'s&nbsp;':'')+(pl.ca?fmtCA(pl.ca):'')+(mb>0?'&nbsp;·&nbsp;<span style="color:'+(mb>=18?'var(--green)':mb>=12?'var(--yellow)':'var(--warn)')+'">'+Math.round(mb)+'%</span>':'')
+        +'</div>'
+        +'<button onclick="delPlacement(\''+p.id+'\','+ridx+')" class="btn btn-danger btn-xs">✕</button>'
+        +'</div></div></div>';
+    });
+  }
+  return html;
+}
+
+function addPlacement(pid){
+  var int_=document.getElementById('pl_int').value.trim();
+  if(!int_){alert('Intérimaire obligatoire');return;}
+  var p=DB.find(function(x){return x.id===pid;}); if(!p)return;
+  if(!p.placements)p.placements=[];
+  var debut=document.getElementById('pl_debut').value,fin=document.getElementById('pl_fin').value;
+  var nbSem=0;if(debut&&fin){var d1=new Date(debut),d2=new Date(fin);nbSem=Math.max(0,Math.round((d2-d1)/(7*86400000)));}
+  var tc=parseFloat(document.getElementById('pl_tc').value)||0;
+  var tb=parseFloat(document.getElementById('pl_tb').value)||0;
+  var ca=nbSem*35*4.33*tc;
+  p.placements.push({interimaire:int_,qualif:document.getElementById('pl_qualif').value.trim(),date_debut:debut,date_fin:fin,nb_semaines:nbSem,taux_client:tc,taux_brut:tb,ca:ca});
+  save();renderTab(pid,'placements');
+}
+function delPlacement(pid,idx){
+  var p=DB.find(function(x){return x.id===pid;}); if(!p)return;
+  p.placements.splice(idx,1);save();renderTab(pid,'placements');
+}
+
+// ══════════════════════════════════════
+// PIPELINE COMMERCIAL
+// ══════════════════════════════════════
+function renderPipeline(p) {
+  var stage = p.pipeline_stage||'identification';
+  var html='<div class="sec"><div class="sec-head">STADE COMMERCIAL</div><div class="sec-body">';
+  PIPE_STAGES.forEach(function(ps){
+    var isActive = ps.id===stage;
+    html+='<div class="pipe-stage'+(isActive?' active-stage':'')+'" onclick="setPipeStage(\''+p.id+'\',\''+ps.id+'\')">'
+      +'<div style="display:flex;align-items:center;gap:8px">'
+      +'<span style="width:8px;height:8px;border-radius:50%;background:'+ps.color+';flex-shrink:0"></span>'
+      +'<span style="font-size:12px;font-weight:'+(isActive?'700':'400')+'">'+(isActive?'► ':'')+''+ps.label+'</span>'
+      +'</div></div>';
+  });
+  html+='</div></div>';
+
+  // Actions suggestions selon stade
+  var tips = {
+    identification:'📋 Valider SIRET et contacts sur Infogreffe / LinkedIn',
+    premier_contact:'📞 Appel découverte : activité, volumes, interlocuteur RH',
+    rdv_planifie:'📅 Préparer la visite : secteur, concurrence, argumentaire taux',
+    rdv_realise:'📝 Envoyer CR de visite + proposition commerciale sous 24h',
+    proposition:'⏳ Relancer à J+7 si pas de retour',
+    premier_placement:'✅ Suivre mission de près — excellent service = fidélisation',
+    client_actif:'📈 Proposer profils complémentaires — augmenter panier moyen',
+    en_pause:'🔄 Reprendre contact à 3 mois — se rappeler',
+  };
+  if(tips[stage]){
+    html+='<div class="alert alert-info" style="margin-top:12px"><span class="alert-icon">💡</span>'+tips[stage]+'</div>';
+  }
+  return html;
+}
+function setPipeStage(pid,stage){
+  var p=DB.find(function(x){return x.id===pid;}); if(!p)return;
+  p.pipeline_stage=stage; save();renderTab(pid,'pipeline');
+}
+
+// ══════════════════════════════════════
+// JOURNAL
+// ══════════════════════════════════════
+function renderJournal(p) {
+  var journal=p.journal||[];
+  var html='<div class="sec"><div class="sec-head">+ NOUVELLE ENTRÉE</div><div class="sec-body">';
+  html+='<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">';
+  html+='<select id="j_type" style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:5px 8px;color:var(--text);font-family:var(--mono);font-size:10px;outline:none">'
+    +Object.entries(JTYPES).map(function(kv){return '<option value="'+kv[0]+'">'+kv[1].l+'</option>';}).join('')+'</select>';
+  html+='<input type="date" id="j_date" value="'+today()+'" style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:5px 8px;color:var(--text);font-family:var(--mono);font-size:11px;outline:none"/>';
+  html+='<input id="j_texte" placeholder="Compte-rendu, action, info…" style="flex:1;min-width:200px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:5px 8px;color:var(--text);font-size:12px;outline:none" onkeydown="if(event.key===\'Enter\')addJournal(\''+p.id+'\')"/>';
+  html+='<button class="btn btn-primary btn-sm" onclick="addJournal(\''+p.id+'\')">+ Ajouter</button>';
+  html+='</div></div></div>';
+
+  if(!journal.length){html+='<div class="empty"><p>Aucune entrée de journal</p></div>';}
+  else {
+    var sorted=journal.slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+    html+='<div>';
+    sorted.forEach(function(e){
+      var jt=JTYPES[e.type]||JTYPES.note;
+      html+='<div class="entry">'
+        +'<span class="entry-type '+jt.c+'">'+jt.l+'</span>'
+        +'<span class="entry-date">'+fmt(e.date)+'</span>'
+        +'<span class="entry-text">'+esc(e.texte)+'</span>'
+        +'<span class="entry-del" onclick="delJournal(\''+p.id+'\',\''+e.id+'\')">✕</span>'
+        +'</div>';
+    });
+    html+='</div>';
+  }
+  return html;
+}
+
+// ══════════════════════════════════════
+// COMM.
+// ══════════════════════════════════════
+function renderComm(p) {
+  var nom=p.nom||'[ENTREPRISE]';
+  var contact1=(p.contacts&&p.contacts[0])?p.contacts[0].prenom||p.contacts[0].nom.split(' ')[0]:'[CONTACT]';
+  var tpls={
+    intro_mail:{label:'📧 Mail intro',txt:'Objet : [AGENCE] — Partenariat intérim spécialisé BTP\n\nBonjour '+contact1+',\n\nJe me permets de vous contacter en ma qualité de Responsable d\'Agence pour [AGENCE], spécialisée dans le placement de personnel BTP qualifié en Île-de-France.\n\nNous intervenons principalement sur les profils : '+((p.qualifs_recherchees||[]).join(', ')||'Maçon, Électricien, CVC…')+'.\n\nSeriez-vous disponible pour un échange de 20 minutes cette semaine ?\n\nCordialement,\n[PRÉNOM NOM]\nResponsable d\'Agence — [AGENCE]'},
+    relance:{label:'📧 Relance',txt:'Objet : Suite à notre échange — [AGENCE]\n\nBonjour '+contact1+',\n\nJe me permets de vous recontacter suite à notre échange du [DATE].\n\nAvez-vous eu l\'occasion d\'analyser notre proposition ?\n\nJe reste disponible pour tout complément d\'information.\n\nCordialement,\n[PRÉNOM NOM] — [AGENCE]'},
+    cr_rdv:{label:'📧 CR RDV',txt:'Objet : Compte-rendu visite — [DATE]\n\nBonjour '+contact1+',\n\nMerci pour votre accueil lors de notre rendez-vous. Je vous transmets ci-dessous les points clés discutés :\n\n• Besoins identifiés : '+((p.qualifs_recherchees||[]).join(', ')||'…')+'\n• Conditions proposées : [CONDITIONS]\n• Prochaine étape : [ACTION]\n\nJe reste à votre disposition.\n\nCordialement,\n[PRÉNOM NOM] — [AGENCE]'},
+    envoi_profil:{label:'📧 Envoi profil',txt:'Objet : Profil [QUALIFICATION] disponible — [AGENCE]\n\nBonjour '+contact1+',\n\nSuite à votre besoin, je vous transmets ci-joint le profil de [PRÉNOM NOM], [QUALIFICATION] disponible dès le [DATE].\n\nCaractéristiques :\n• Taux horaire : [TAUX] €/h\n• Expérience : [EXP] ans\n• Habilitations : [HABILITATIONS]\n\nJe reste disponible pour un retour.\n\nCordialement,\n[PRÉNOM NOM] — [AGENCE]'},
+  };
+  var html='<div class="sec"><div class="sec-head">📧 TEMPLATES EMAIL CLIENT</div><div class="sec-body">';
+  html+='<div class="tpl-btns">'+Object.entries(tpls).map(function(kv){return '<button class="tpl-btn" onclick="showComm(\''+kv[0]+'\')">'+kv[1].label+'</button>';}).join('')+'</div>';
+  html+='</div></div>';
+  html+='<div class="sec" id="comm-result" style="display:none"><div class="sec-head">MESSAGE</div><div class="sec-body">'
+    +'<textarea id="comm-text" rows="12" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:8px;color:var(--text);font-family:var(--mono);font-size:11px;outline:none;resize:vertical"></textarea>'
+    +'<div style="margin-top:8px"><button class="btn btn-cyan btn-sm" onclick="copyComm()">📋 Copier</button></div>'
+    +'</div></div>';
+  html+='<script>window._COMM_TPLS='+JSON.stringify(Object.fromEntries(Object.entries(tpls).map(function(kv){return [kv[0],kv[1].txt];})))+';<\/script>';
+  return html;
+}
+function showComm(key){
+  var el=document.getElementById('comm-result'),ta=document.getElementById('comm-text');
+  if(!el||!ta)return;el.style.display='block';ta.value=(window._COMM_TPLS&&window._COMM_TPLS[key])||'—';el.scrollIntoView({behavior:'smooth'});
+}
+function copyComm(){
+  var ta=document.getElementById('comm-text');if(!ta)return;
+  navigator.clipboard.writeText(ta.value).then(function(){var btn=event.target;btn.textContent='✓ Copié!';setTimeout(function(){btn.textContent='📋 Copier';},2000);});
+}
+
+// ── ACTIONS DONNÉES ──
+function saveField(field,val){
+  var p=DB.find(function(x){return x.id===currentId;}); if(!p)return;
+  if(field==='qualifs') p.qualifs_recherchees=val.split(',').map(function(v){return v.trim();});
+  else p[field]=val;
+  save();renderList();renderFiche(currentId);
+}
+function addJournal(pid){
+  var texte=document.getElementById('j_texte').value.trim();if(!texte)return;
+  var p=DB.find(function(x){return x.id===pid;}); if(!p)return;
+  if(!p.journal)p.journal=[];
+  p.journal.push({id:uid(),type:document.getElementById('j_type').value,date:document.getElementById('j_date').value||today(),texte:texte});
+  save();renderTab(pid,'journal');
+}
+function delJournal(pid,eid){
+  var p=DB.find(function(x){return x.id===pid;}); if(!p)return;
+  p.journal=(p.journal||[]).filter(function(e){return e.id!==eid;});save();renderTab(pid,'journal');
+}
+function newProspect(){
+  var p={id:uid(),statut:'prospect',nom:'NOUVELLE FICHE',secteur:'',taille:'',adresse:'',siret:'',ca:'',capital:0,age:0,delai_pmt:45,encours:0,cond_regl:'',acompte_client:'non',procedure:0,incidents:0,contacts:[],qualifs_recherchees:[],notes:'',placements:[],journal:[],pipeline_stage:'identification'};
+  DB.unshift(p);save();openFiche(p.id);renderList();
+}
+function supprimerFiche(){
+  if(!currentId)return;
+  var p=DB.find(function(x){return x.id===currentId;});
+  document.getElementById('confirm-title').textContent='Supprimer la fiche';
+  document.getElementById('confirm-msg').textContent='Supprimer définitivement '+(p?p.nom:'cette fiche')+' ?';
+  document.getElementById('confirm-ok-btn').onclick=function(){
+    DB=DB.filter(function(x){return x.id!==currentId;});
+    save();closeModal('modal-confirm');currentId=null;
+    document.getElementById('fiche-panel').style.display='none';
+    document.getElementById('empty-state').style.display='block';
+    renderList();
+  };
+  document.getElementById('modal-confirm').classList.add('open');
+}
+function exportJSON(){var blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='jtipilot_prospects_'+today()+'.json';a.click();}
+function importJSON(inp){var file=inp.files[0];if(!file)return;var r=new FileReader();r.onload=function(e){try{var d=JSON.parse(e.target.result);if(!Array.isArray(d)){alert('Format invalide');return;}var a=0;d.forEach(function(p){if(!DB.find(function(x){return x.id===p.id;})){DB.push(p);a++;}});save();renderList();alert(a+' fiche(s) importée(s)');}catch(err){alert('Erreur : '+err.message);}};r.readAsText(file);inp.value='';}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(function(m){m.addEventListener('click',function(e){if(e.target===m)closeModal(m.id);});});
+</script>
+</body>
+</html>

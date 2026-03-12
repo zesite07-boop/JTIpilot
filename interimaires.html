@@ -1,0 +1,1566 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>JTIpilot — Intérimaires</title>
+<link rel="stylesheet" href="shared.css"/>
+<style>
+/* ── SPÉCIFIQUE MODULE INTÉRIMAIRES ── */
+.import-zone{border:2px dashed var(--border);border-radius:6px;padding:16px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:8px;color:var(--muted);font-size:12px}
+.import-zone:hover{border-color:var(--orange);color:var(--orange)}
+.import-zone.drag{border-color:var(--orange);background:var(--orange-lt)}
+.nota-star{cursor:pointer;font-size:18px;transition:transform .1s}
+.nota-star:hover{transform:scale(1.2)}
+.hab-row{display:grid;grid-template-columns:1fr 120px 120px 100px 30px;gap:6px;align-items:center;padding:7px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:4px;margin-bottom:4px;font-size:11px}
+.hab-row-head{font-family:var(--mono);font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.4px;padding:4px 10px;background:var(--surface3);border-radius:3px;margin-bottom:6px}
+.vm-block{background:var(--surface2);border:1px solid var(--border2);border-radius:5px;padding:12px 14px;margin-bottom:12px}
+.vm-status{font-family:var(--mono);font-size:10px;font-weight:700;padding:3px 9px;border-radius:3px}
+.score-bar{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.score-bar label{font-family:var(--mono);font-size:9px;color:var(--muted);width:80px;flex-shrink:0;letter-spacing:.3px}
+.marg-ok{color:var(--green)}
+.marg-warn{color:var(--yellow)}
+.marg-bad{color:var(--warn)}
+</style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav class="topnav">
+  <div class="topnav-logo">⚡ <span>JTI</span>pilot</div>
+  <a href="index.html" class="nav-link"><span class="nav-icon">📊</span>Tableau de bord</a>
+  <a href="interimaires.html" class="nav-link active"><span class="nav-icon">👷</span>Intérimaires</a>
+  <a href="prospects.html" class="nav-link"><span class="nav-icon">🏢</span>Prospects / Clients</a>
+  <a href="missions.html" class="nav-link"><span class="nav-icon">📋</span>Missions</a>
+  <a href="simulateurs.html" class="nav-link"><span class="nav-icon">🧮</span>Simulateurs</a>
+  <div class="topnav-spacer"></div>
+  <div class="topnav-right">
+    <button class="btn btn-outline btn-sm" onclick="exportJSON()">⬇ Export</button>
+    <button class="btn btn-outline btn-sm" onclick="document.getElementById('inp-import').click()">⬆ Import</button>
+    <input type="file" id="inp-import" accept=".json" style="display:none" onchange="importJSON(this)"/>
+    <button class="btn btn-outline btn-sm" onclick="openImportCV()">🤖 Import CV IA</button>
+  </div>
+</nav>
+
+<!-- ── LAYOUT ── -->
+<div class="app">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-title">👷 Intérimaires</div>
+    <div class="sidebar-sub" id="count-label">0 profils</div>
+  </div>
+  <div class="sidebar-content">
+    <button class="btn-new" onclick="newInterimaire()">+ Nouveau profil</button>
+    <input class="filter-search" type="text" id="search-input" placeholder="Rechercher nom, qualif, ville…" oninput="renderList()"/>
+    <div class="filter-bar" id="filter-dispo">
+      <button class="filter-btn active" data-val="tous" onclick="setFilter('dispo','tous',this)">Tous</button>
+      <button class="filter-btn" data-val="disponible" onclick="setFilter('dispo','disponible',this)">Dispo</button>
+      <button class="filter-btn" data-val="mission" onclick="setFilter('dispo','mission',this)">Mission</button>
+      <button class="filter-btn" data-val="preavis" onclick="setFilter('dispo','preavis',this)">Préavis</button>
+      <button class="filter-btn" data-val="indisponible" onclick="setFilter('dispo','indisponible',this)">Indispo</button>
+      <button class="filter-btn" data-val="veille" onclick="setFilter('dispo','veille',this)">Veille</button>
+    </div>
+    <div class="filter-bar" id="filter-famille">
+      <button class="filter-btn active" data-val="tous" onclick="setFilter('famille','tous',this)">Tous corps</button>
+      <button class="filter-btn" data-val="gros_oeuvre" onclick="setFilter('famille','gros_oeuvre',this)">GO</button>
+      <button class="filter-btn" data-val="cvc" onclick="setFilter('famille','cvc',this)">CVC</button>
+      <button class="filter-btn" data-val="elec" onclick="setFilter('famille','elec',this)">Élec</button>
+      <button class="filter-btn" data-val="platre" onclick="setFilter('famille','platre',this)">Plâtre</button>
+      <button class="filter-btn" data-val="plomberie" onclick="setFilter('famille','plomberie',this)">Plomberie</button>
+      <button class="filter-btn" data-val="bureau" onclick="setFilter('famille','bureau',this)">Bureau</button>
+      <button class="filter-btn" data-val="multitech" onclick="setFilter('famille','multitech',this)">Multi</button>
+    </div>
+    <div id="list-container"></div>
+  </div>
+</div>
+
+<!-- PANNEAU PRINCIPAL -->
+<div class="main" id="main-panel">
+  <div id="empty-state" class="empty" style="padding:60px 20px">
+    <div class="icon">👷</div>
+    <p>Sélectionnez un profil ou créez-en un nouveau</p>
+  </div>
+  <div id="fiche-panel" style="display:none;flex:1;display:none;flex-direction:column;overflow:hidden">
+    <div class="main-header" id="fiche-header">
+      <div>
+        <div class="main-title" id="fiche-title">—</div>
+        <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap" id="fiche-badges"></div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-cyan btn-sm" onclick="ouvrirReleve()">📄 Relevé</button>
+        <button class="btn btn-purple btn-sm" onclick="checkAndGenererCV()">📋 CV PDF</button>
+        <button class="btn btn-danger btn-sm" onclick="supprimerProfil()">🗑</button>
+      </div>
+    </div>
+    <div class="fiche-tabs" id="fiche-tabs">
+      <button class="fiche-tab active" data-tab="identite" onclick="switchTab('identite',this)">IDENTITÉ</button>
+      <button class="fiche-tab" data-tab="mission" onclick="switchTab('mission',this)">MISSION</button>
+      <button class="fiche-tab" data-tab="checklist" onclick="switchTab('checklist',this)">CHECKLIST</button>
+      <button class="fiche-tab" data-tab="habilitations" onclick="switchTab('habilitations',this)">HABILIT.</button>
+      <button class="fiche-tab" data-tab="competences" onclick="switchTab('competences',this)">COMPÉT.</button>
+      <button class="fiche-tab" data-tab="marge" onclick="switchTab('marge',this)">MARGE</button>
+      <button class="fiche-tab" data-tab="trajet" onclick="switchTab('trajet',this)">TRAJET</button>
+      <button class="fiche-tab" data-tab="historique" onclick="switchTab('historique',this)">HISTORIQUE</button>
+      <button class="fiche-tab" data-tab="notation" onclick="switchTab('notation',this)">NOTATION</button>
+      <button class="fiche-tab" data-tab="journal" onclick="switchTab('journal',this)">JOURNAL</button>
+      <button class="fiche-tab" data-tab="comm" onclick="switchTab('comm',this)">SMS/EMAIL</button>
+    </div>
+    <div class="fiche-body" id="fiche-body"></div>
+  </div>
+</div>
+</div>
+
+<!-- ── MODAL RELEVÉ D'HEURES ── -->
+<div class="modal-overlay" id="modal-releve">
+<div class="modal" style="width:700px">
+  <div class="modal-title">📄 Relevé d'heures</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+    <div class="field"><label>Semaine N°</label><input id="rh_semaine" type="number" placeholder="12"/></div>
+    <div class="field"><label>Du</label><input id="rh_date_debut" type="date"/></div>
+    <div class="field"><label>Au</label><input id="rh_date_fin" type="date"/></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+    <div class="field"><label>Client / Chantier</label><input id="rh_client" placeholder="Nom client"/></div>
+    <div class="field"><label>Adresse chantier</label><input id="rh_adresse" placeholder="Adresse"/></div>
+    <div class="field"><label>Contact client</label><input id="rh_contact" placeholder="Nom contact"/></div>
+  </div>
+  <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px">
+    <thead><tr style="background:var(--blue);color:#fff;font-family:var(--mono);font-size:9px">
+      <th style="padding:6px;text-align:left">JOUR</th>
+      <th style="padding:6px">H.NORM</th>
+      <th style="padding:6px">HS+25%</th>
+      <th style="padding:6px">HS+50%</th>
+      <th style="padding:6px">WE/FÉR.</th>
+      <th style="padding:6px">PANIER</th>
+    </tr></thead>
+    <tbody id="rh-tbody"></tbody>
+  </table>
+  <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text2);margin-bottom:8px">SUITE DE LA MISSION</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px"><input type="checkbox" id="rh_reconduite"/> Reconduite</label>
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px"><input type="checkbox" id="rh_fin"/> Fin de mission</label>
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px"><input type="checkbox" id="rh_prolonge"/> Prolongation</label>
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px"><input type="checkbox" id="rh_embauche"/> Proposition embauche</label>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 2fr;gap:8px;margin-bottom:12px">
+    <div class="field"><label>Date suite</label><input id="rh_suite_date" type="date"/></div>
+    <div class="field"><label>Commentaire</label><input id="rh_suite_comment" placeholder="Commentaire suite…"/></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeModal('modal-releve')">Annuler</button>
+    <button class="btn btn-primary" onclick="genererReleve()">📄 Générer PDF</button>
+  </div>
+</div>
+</div>
+
+<!-- ── MODAL IMPORT CV IA ── -->
+<div class="modal-overlay" id="modal-import-cv">
+<div class="modal">
+  <div class="modal-title">🤖 Import CV par IA</div>
+  <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Déposez un CV (PDF ou DOCX). L'IA extrait automatiquement nom, qualification, expérience, habilitations.</p>
+  <div class="import-zone" id="cv-drop-zone" onclick="document.getElementById('cv-file-input').click()"
+    ondragover="event.preventDefault();this.classList.add('drag')"
+    ondragleave="this.classList.remove('drag')"
+    ondrop="handleCVDrop(event)">
+    📄 Cliquez ou déposez un CV ici (PDF, DOCX)
+  </div>
+  <input type="file" id="cv-file-input" accept=".pdf,.docx,.doc" style="display:none" onchange="handleCVFile(this)"/>
+  <div id="cv-import-result" style="margin-top:12px;display:none"></div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeModal('modal-import-cv')">Fermer</button>
+  </div>
+</div>
+</div>
+
+<!-- ── MODAL CONFIRM ── -->
+<div class="modal-overlay" id="modal-confirm">
+<div class="modal" style="width:400px">
+  <div class="modal-title" id="confirm-title">Confirmer</div>
+  <p id="confirm-msg" style="font-size:13px;margin-bottom:16px"></p>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeModal('modal-confirm')">Annuler</button>
+    <button class="btn btn-danger" id="confirm-ok-btn">Confirmer</button>
+  </div>
+</div>
+</div>
+
+<script src="data_demo.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════════════
+// JTIPILOT — Module Intérimaires
+// ═══════════════════════════════════════════════════════════════
+
+// ── DONNÉES ──
+var DB = [];
+var currentId = null;
+var currentTab = 'identite';
+var filterDispo = 'tous';
+var filterFamille = 'tous';
+
+// ── INIT ──
+demoInject();
+load();
+renderList();
+// Restaurer dernier profil ouvert
+var lastId = sessionStorage.getItem('jtp_last_int');
+if (lastId && DB.find(function(x){return x.id===lastId;})) {
+  openFiche(lastId);
+} else if (DB.length) {
+  openFiche(DB[0].id);
+}
+
+// ── PERSISTANCE ──
+function save() {
+  try { localStorage.setItem('jtp_interimaires', JSON.stringify(DB)); } catch(e){}
+}
+function load() {
+  try {
+    var s = localStorage.getItem('jtp_interimaires');
+    if (s) DB = JSON.parse(s);
+  } catch(e){}
+}
+
+// ── UTILS ──
+function uid() { return 'int_' + Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
+function today() { return new Date().toISOString().split('T')[0]; }
+function fmt(d) { if(!d) return '--'; var p=d.split('-'); return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:d; }
+function nrm(s) { return (s||'').toLowerCase().replace(/[^a-z0-9]/g,''); }
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtCA(n) { if(!n) return '—'; if(n>=1000) return Math.round(n/100)/10+'k€'; return Math.round(n)+'€'; }
+function fmt2(n) { return Number(n).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; }
+
+var DISPO = {
+  disponible:  { l:'DISPONIBLE',  c:'b-dispo'   },
+  mission:     { l:'EN MISSION',  c:'b-mission'  },
+  preavis:     { l:'PRÉAVIS',     c:'b-preavis'  },
+  indisponible:{ l:'INDISPONIBLE',c:'b-indispo'  },
+  veille:      { l:'VEILLE',      c:'b-veille'   },
+};
+var JTYPES = {
+  appel:{l:'APPEL',c:'t-appel'},rdv:{l:'RDV',c:'t-rdv'},mission:{l:'MISSION',c:'t-mission'},
+  fin:{l:'FIN MISS',c:'t-fin'},email:{l:'EMAIL',c:'t-email'},sms:{l:'SMS',c:'t-sms'},note:{l:'NOTE',c:'t-note'}
+};
+
+// ── MÉTIERS ──
+var FAMILLE_DEFAUT = 'autre';
+var METIERS = {
+  'Technicien CVC':{ famille:'cvc', habilitations:[
+    {id:'fluides_i',label:'Attestation fluides frigorigènes cat. I',oblig:true,validite:'5 ans — Règlement (UE) 517/2014',cat:'FLUIDES'},
+    {id:'fluides_ii',label:'Attestation fluides frigorigènes cat. II',oblig:false,validite:'5 ans',cat:'FLUIDES'},
+    {id:'elec_b1v',label:'Habilitation électrique B1V',oblig:true,validite:'Recyclage 3 ans recommandé',cat:'ÉLEC'},
+    {id:'elec_h1v',label:'Habilitation électrique H1V',oblig:false,validite:'Recyclage 3 ans recommandé',cat:'ÉLEC'},
+    {id:'elec_br',label:'Habilitation électrique BR',oblig:false,validite:'Recyclage 3 ans recommandé',cat:'ÉLEC'},
+    {id:'caces_r486a',label:'CACES R486 cat. A',oblig:false,validite:'5 ans',cat:'CACES'},
+    {id:'caces_r486b',label:'CACES R486 cat. B',oblig:false,validite:'5 ans',cat:'CACES'},
+  ], epi:['chaussures','casque','gilet_hv','gants_isolants','lunettes'],
+  outillage:['Manifold / manomètres','Pompe à vide','Valise de charge fluides','Détecteur de fuites électronique','Thermomètre infrarouge','Multimètre','Clés à molette'],
+  competences:[
+    {cat:'INTERVENTIONS',items:['Installation systèmes CVC','Mise en service','Maintenance préventive','Dépannage / diagnostic','Équilibrage hydraulique','Réglage régulation','Mesures performances']},
+    {cat:'COMPÉTENCES',items:['Lecture plans et schémas','Électricité associée CVC','Plomberie / tuyauterie','GTB / GTC']},
+  ], formations:['CAP Installateur thermique','Bac Pro TISEC','BTS FEE option GCE','DUT Génie Thermique'],
+  questions:['ITI ou sédentaire ?','Marques maîtrisées ?','GTB maîtrisé ?','Astreintes ?']},
+  'Technicien chauffagiste':{ famille:'cvc', habilitations:[
+    {id:'gaz_i',label:'Qualification gaz cat. I',oblig:true,validite:'Permanente — ATG P 601',cat:'GAZ'},
+    {id:'elec_b1v',label:'Habilitation B1V',oblig:true,validite:'Recyclage 3 ans recommandé',cat:'ÉLEC'},
+    {id:'elec_br',label:'Habilitation BR',oblig:false,validite:'Recyclage 3 ans recommandé',cat:'ÉLEC'},
+  ], epi:['chaussures','casque','gilet_hv','gants_isolants'],
+  outillage:['Manomètres gaz','Analyseur combustion','Multimètre','Détecteur CO'],
+  competences:[{cat:'INTERVENTIONS',items:['Installation chaudières','Entretien annuel','Installation planchers chauffants','Dépannage']}],
+  formations:['CAP Installateur thermique','Bac Pro TISEC','BTS FEE'],questions:['Types chaudières maîtrisés ?','PAC / solaire ?']},
+  'Technicien frigoriste':{ famille:'cvc', habilitations:[
+    {id:'fluides_i',label:'Attestation fluides cat. I',oblig:true,validite:'5 ans',cat:'FLUIDES'},
+    {id:'elec_b1v',label:'Habilitation B1V',oblig:true,validite:'Recyclage 3 ans recommandé',cat:'ÉLEC'},
+    {id:'caces_r486b',label:'CACES R486 cat. B',oblig:false,validite:'5 ans',cat:'CACES'},
+  ], epi:['chaussures','casque','gilet_hv','gants_isolants','lunettes'],
+  outillage:['Manifold','Pompe à vide','Valise de charge','Détecteur fuites','Chalumeau brasure'],
+  competences:[{cat:'INTERVENTIONS',items:['Systèmes froid','Chambres froides','Climatisation','Soudure circuits']}],
+  formations:['CAP Monteur génie climatique','BTS FEE Froid'],questions:['Réfrigération commerciale ou industrielle ?']},
+  'Monteur CVC':{ famille:'cvc', habilitations:[
+    {id:'elec_b0',label:'Habilitation B0',oblig:true,validite:'Recyclage 3 ans',cat:'ÉLEC'},
+    {id:'travail_hauteur',label:'Formation travail en hauteur',oblig:true,validite:'Recyclage 3 ans — R.408',cat:'SÉCURITÉ'},
+    {id:'caces_r486a',label:'CACES R486 cat. A',oblig:false,validite:'5 ans',cat:'CACES'},
+  ], epi:['chaussures','casque','gilet_hv','gants','harnais'],
+  outillage:['Perceuse','Scie sauteuse','Clés à molette','Niveau','Outillage sertissage'],
+  competences:[{cat:'INTERVENTIONS',items:['Pose gaines ventilation','Installation unités intérieures/extérieures','Rénovation réseaux']}],
+  formations:['CAP Installateur thermique','BTS FEE'],questions:['Gaines VRV/DRV ?','Faux plafonds ?']},
+  'Électricien courants forts':{ famille:'elec', habilitations:[
+    {id:'elec_b0',label:'Habilitation B0',oblig:true,validite:'Recyclage 3 ans — UTE C 18-510',cat:'HABILIT BT'},
+    {id:'elec_b1v',label:'Habilitation B1V',oblig:true,validite:'Recyclage 3 ans',cat:'HABILIT BT'},
+    {id:'elec_b2v',label:'Habilitation B2V',oblig:false,validite:'Recyclage 3 ans',cat:'HABILIT BT'},
+    {id:'elec_br',label:'Habilitation BR',oblig:false,validite:'Recyclage 3 ans',cat:'HABILIT BT'},
+    {id:'elec_bc',label:'Habilitation BC',oblig:false,validite:'Recyclage 3 ans',cat:'HABILIT BT'},
+    {id:'elec_h0',label:'Habilitation H0 (HTA)',oblig:false,validite:'Recyclage 3 ans',cat:'HABILIT HTA'},
+    {id:'elec_h1v',label:'Habilitation H1V',oblig:false,validite:'Recyclage 3 ans',cat:'HABILIT HTA'},
+    {id:'caces_r486a',label:'CACES R486 cat. A',oblig:false,validite:'5 ans',cat:'CACES'},
+  ], epi:['chaussures','casque','gilet_hv','gants_isolants','lunettes'],
+  outillage:['Multimètre','Testeur de tension','Pince ampèremétrique','Tournevis isolés','Sertisseuse','Perceuse'],
+  competences:[
+    {cat:'INTERVENTIONS',items:['Installation et câblage','Tableaux électriques','Chemins de câbles','Maintenance','Dépannage']},
+    {cat:'NORMES / LOGICIELS',items:['NF C 15-100','AutoCAD Electrical','See Electrical','CANECO BT']},
+  ], formations:['CAP Électricien','Bac Pro ELEEC','BTS Électrotechnique'],questions:['HTA ?','Neuf ou maintenance ?','Lecture schémas ?']},
+  'Électricien courants faibles':{ famille:'elec', habilitations:[
+    {id:'elec_b1v',label:'Habilitation B1V',oblig:true,validite:'Recyclage 3 ans',cat:'ÉLEC'},
+    {id:'elec_br',label:'Habilitation BR',oblig:false,validite:'Recyclage 3 ans',cat:'ÉLEC'},
+  ], epi:['chaussures','casque','gilet_hv','gants_isolants'],
+  outillage:['Testeur câbles réseau','Sertisseuse RJ45','Multimètre','Perceuse'],
+  competences:[{cat:'INTERVENTIONS',items:['Câblage réseau','Sécurité intrusion/vidéo','Contrôle accès','Courants faibles']}],
+  formations:['CAP Électricien','Bac Pro SEN','BTS SN'],questions:['Sécurité ?','Réseaux IP ?','Certifications constructeur ?']},
+  'Plaquiste N2':{ famille:'platre', habilitations:[
+    {id:'carte_btp',label:'Carte Professionnelle BTP',oblig:true,validite:'5 ans — art. L8291-1',cat:'ADMIN'},
+    {id:'travail_hauteur',label:'Formation travail en hauteur',oblig:true,validite:'Recyclage 3 ans — R.408',cat:'SÉCURITÉ'},
+    {id:'amiante_ss4',label:'Formation amiante SS4',oblig:false,validite:'3 ans — Décret 2012-639',cat:'SÉCURITÉ'},
+    {id:'caces_r486a',label:'CACES R486 cat. A',oblig:false,validite:'5 ans',cat:'CACES'},
+  ], epi:['chaussures','casque','gilet_hv','genouilleres','masque_p2'],
+  outillage:['Visseuse','Scie sauteuse','Perceuse','Cutter','Couteau à enduire','Niveau','Équerre'],
+  competences:[
+    {cat:'PLÂTRERIE',items:['Pose cloisons','Pose faux plafonds','Isolation','Enduit et lissage','Finition']},
+    {cat:'COMPÉTENCES',items:['Lecture plans','Profilés métalliques','NF DTU 25.41']},
+  ], formations:['CAP Plâtrier Plaquiste','Bac Pro Aménagement et Finition'],questions:['Enduit finition ?','Autonome ou binôme ?','Tertiaire ou résidentiel ?']},
+  'Plombier sanitaire N2':{ famille:'plomberie', habilitations:[
+    {id:'carte_btp',label:'Carte Professionnelle BTP',oblig:true,validite:'5 ans',cat:'ADMIN'},
+    {id:'gaz_i',label:'Qualification gaz cat. I',oblig:false,validite:'Permanente',cat:'GAZ'},
+    {id:'elec_b0',label:'Habilitation B0',oblig:false,validite:'Recyclage 3 ans',cat:'ÉLEC'},
+  ], epi:['chaussures','casque','gilet_hv','gants'],
+  outillage:['Chalumeau brasure','Coupe-tube','Clé à griffe','Sertisseuse multicouche','Niveau'],
+  competences:[
+    {cat:'SANITAIRE',items:['Tuyauterie','Sanitaires','Détection fuites','Débouchage']},
+    {cat:'CHAUFFAGE',items:['Radiateurs','Chaudières','Planchers chauffants']},
+  ], formations:['CAP Installateur sanitaire','Bac Pro TISEC'],questions:['Chauffage ?','Dépannage urgences ?','Résidentiel ou tertiaire ?']},
+  'Maçon N2':{ famille:'gros_oeuvre', habilitations:[
+    {id:'carte_btp',label:'Carte Professionnelle BTP',oblig:true,validite:'5 ans',cat:'ADMIN'},
+    {id:'travail_hauteur',label:'Formation travail en hauteur',oblig:true,validite:'Recyclage 3 ans',cat:'SÉCURITÉ'},
+    {id:'caces_r482',label:'CACES R482 (engins de chantier)',oblig:false,validite:'5 ans',cat:'CACES'},
+    {id:'caces_r486a',label:'CACES R486 cat. A',oblig:false,validite:'5 ans',cat:'CACES'},
+  ], epi:['chaussures','casque','gilet_hv','gants','lunettes'],
+  outillage:['Truelle','Niveau','Fil à plomb','Équerre','Massette','Burin','Scie circulaire'],
+  competences:[
+    {cat:'INTERVENTIONS',items:['Fondations','Murs briques/parpaings','Enduits et jointures','Dallages et chapes','Coffrage banche']},
+  ], formations:['CAP Maçon','BP Maçon','Bac Pro TGBO','BTS Bâtiment'],questions:['Coffrage / ferraillage ?','Neuf ou rénovation ?']},
+  'Conducteur de travaux':{ famille:'bureau', habilitations:[
+    {id:'carte_btp',label:'Carte Professionnelle BTP',oblig:true,validite:'5 ans',cat:'ADMIN'},
+    {id:'sst',label:'SST (Sauveteur Secouriste du Travail)',oblig:false,validite:'2 ans',cat:'SÉCURITÉ'},
+  ], epi:['chaussures','casque','gilet_hv'],
+  outillage:['Ordinateur portable','Tablette (plans)','Mètre laser','Niveau laser'],
+  competences:[
+    {cat:'GESTION',items:['Planification ressources','Supervision équipes','Contrôle qualité','Budget chantier','Coordination corps de métier','Réception travaux']},
+    {cat:'LOGICIELS',items:['AutoCAD','Revit / BIM','MS Project']},
+  ], formations:['BTS Bâtiment','DUT Génie Civil','Licence Pro Gestion chantier','Ingénieur BTP'],
+  questions:['TCE ou spécialité ?','Taille chantiers gérés ?','BIM / Revit ?']},
+  'Technicien multi-services CVC':{ famille:'multitech', habilitations:[
+    {id:'fluides_i',label:'Attestation fluides cat. I',oblig:true,validite:'5 ans',cat:'FLUIDES'},
+    {id:'elec_b1v',label:'Habilitation B1V',oblig:true,validite:'Recyclage 3 ans',cat:'ÉLEC'},
+    {id:'elec_br',label:'Habilitation BR',oblig:false,validite:'Recyclage 3 ans',cat:'ÉLEC'},
+    {id:'gaz_i',label:'Qualification gaz cat. I',oblig:false,validite:'Permanente',cat:'GAZ'},
+  ], epi:['chaussures','casque','gilet_hv','gants_isolants'],
+  outillage:['Manifold','Pompe à vide','Détecteur fuites','Thermomètre IR','Multimètre'],
+  competences:[
+    {cat:'DOMAINES CVC',items:['CVC','Plomberie sanitaire','Électricité associée','GTB / GTC','ECS']},
+    {cat:'GMAO',items:['Maximo','SAP PM','Archibus','Planon','Twimm','Yuman']},
+  ], formations:['CAP Installateur thermique','BTS FEE','DUT Génie thermique'],questions:['ITI ?','GMAO maîtrisée ?','Astreintes ?']},
+};
+
+var DOCS_LEGAUX = {
+  id:             { label:"Pièce d'identité en cours de validité", validite:'Vérifier date expiration' },
+  titre_sejour:   { label:"Titre de séjour / Autorisation travail", validite:'Vérifier date expiration et autorisation' },
+  rib:            { label:"RIB nominatif", validite:'Vérifier concordance nom/IBAN' },
+  ss:             { label:"Attestation sécurité sociale (Ameli)", validite:'Vérifier numéro SS complet' },
+  attestation_urssaf: { label:"Attestation vigilance URSSAF (intérimaire)", validite:'Valide 6 mois — à renouveler' },
+  visite_med:     { label:"Attestation visite médicale", validite:'Selon fréquence SSTI — min. tous les 5 ans' },
+};
+
+var EPI_CONFIG = {
+  chaussures:      { label:'Chaussures de sécurité S3', norm:'EN ISO 20345', oblig:true, taille:'chaussures' },
+  casque:          { label:'Casque de protection', norm:'EN 397', oblig:true, taille:'' },
+  gilet_hv:        { label:'Gilet haute visibilité', norm:'EN ISO 20471', oblig:false, taille:'' },
+  gants:           { label:'Gants de protection', norm:'EN 388', oblig:false, taille:'vet' },
+  gants_isolants:  { label:'Gants isolants électriques', norm:'EN 60903', oblig:false, taille:'' },
+  lunettes:        { label:'Lunettes de protection', norm:'EN 166', oblig:false, taille:'' },
+  harnais:         { label:'Harnais antichute', norm:'EN 361', oblig:false, taille:'' },
+  genouilleres:    { label:'Genouillères', norm:'EN 14404', oblig:false, taille:'' },
+  masque_p2:       { label:'Masque FFP2', norm:'EN 149', oblig:false, taille:'' },
+  masque_p1:       { label:'Masque FFP1 / poussières', norm:'EN 149', oblig:false, taille:'' },
+  bouchons:        { label:'Bouchons auriculaires / casque antibruit', norm:'EN 352', oblig:false, taille:'' },
+};
+
+// Haversine km
+function haversine(lat1,lon1,lat2,lon2){
+  var R=6371,dL=(lat2-lat1)*Math.PI/180,dG=(lon2-lon1)*Math.PI/180;
+  var a=Math.sin(dL/2)*Math.sin(dL/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dG/2)*Math.sin(dG/2);
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+var CP_COORDS = {
+  '75001':[48.860,2.347],'75002':[48.865,2.349],'75003':[48.863,2.361],'75004':[48.854,2.352],
+  '75005':[48.851,2.345],'75006':[48.850,2.332],'75007':[48.855,2.317],'75008':[48.875,2.310],
+  '75009':[48.877,2.337],'75010':[48.876,2.360],'75011':[48.859,2.380],'75012':[48.841,2.391],
+  '75013':[48.830,2.362],'75014':[48.828,2.325],'75015':[48.841,2.300],'75016':[48.860,2.267],
+  '75017':[48.884,2.311],'75018':[48.892,2.347],'75019':[48.882,2.381],'75020':[48.864,2.397],
+  '92100':[48.897,2.317],'92200':[48.898,2.268],'92300':[48.821,2.235],'92400':[48.889,2.257],
+  '93100':[48.913,2.462],'93200':[48.921,2.380],'93300':[48.931,2.461],'94000':[48.773,2.474],
+  '94200':[48.804,2.430],'94300':[48.813,2.395],'78000':[48.800,2.133],'91000':[48.624,2.430],
+  '95000':[49.034,2.076],'95300':[49.054,2.101],
+};
+function getCoords(cp){
+  if(!cp)return null;
+  if(CP_COORDS[cp])return CP_COORDS[cp];
+  var dpt=cp.slice(0,2);
+  var d={'75':[48.857,2.347],'92':[48.860,2.270],'93':[48.910,2.440],'94':[48.800,2.450],'77':[48.600,2.700],'78':[48.900,2.000],'91':[48.600,2.350],'95':[49.040,2.100]};
+  return d[dpt]||null;
+}
+var ITR_ZONES = [
+  {label:'Z1 ≤5km',val:2.20},{label:'Z2 5→10km',val:4.50},{label:'Z3 10→20km',val:6.80},
+  {label:'Z4 20→30km',val:9.15},{label:'Z5 30→40km',val:11.50},{label:'Z6 40→50km',val:13.85},{label:'Z7 >50km',val:16.20}
+];
+
+function getMeta(c) {
+  return METIERS[c.qualif] || {famille:FAMILLE_DEFAUT,habilitations:[],epi:['chaussures','casque','gilet_hv'],outillage:[],competences:[],formations:[],questions:[]};
+}
+
+// ── FILTRES ──
+function setFilter(type, val, btn) {
+  if(type==='dispo') filterDispo=val; else filterFamille=val;
+  var bar = document.getElementById('filter-'+type);
+  bar.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  renderList();
+}
+
+// ── LISTE ──
+function renderList() {
+  var q = (document.getElementById('search-input').value||'').toLowerCase();
+  var list = DB.filter(function(c) {
+    if (filterDispo!=='tous' && c.dispo!==filterDispo) return false;
+    if (filterFamille!=='tous' && getMeta(c).famille!==filterFamille) return false;
+    if (q) {
+      var hay = nrm(c.nom+c.prenom+c.qualif+(c.ville||'')+(c.notes||''));
+      return hay.indexOf(nrm(q)) !== -1;
+    }
+    return true;
+  });
+  // Trier : disponibles en tête
+  var ordre = {disponible:0,preavis:1,mission:2,veille:3,indisponible:4};
+  list.sort(function(a,b){ return (ordre[a.dispo]||5)-(ordre[b.dispo]||5) || (a.nom||'').localeCompare(b.nom||''); });
+
+  document.getElementById('count-label').textContent = list.length + ' profil' + (list.length>1?'s':'');
+
+  var html = '';
+  if (!list.length) {
+    html = '<div class="empty" style="padding:30px 10px"><div class="icon">🔍</div><p>Aucun résultat</p></div>';
+  }
+  list.forEach(function(c) {
+    var d = DISPO[c.dispo] || DISPO.disponible;
+    var nota = c.notation ? Math.round((c.notation.fiabilite+c.notation.qualite+c.notation.relationnel)/3) : 0;
+    var stars = nota ? '★'.repeat(nota)+'☆'.repeat(5-nota) : '';
+    html += '<div class="item-card'+(currentId===c.id?' selected':'')+'" onclick="openFiche(\''+c.id+'\')">'
+      + '<div class="item-name">'+esc(c.nom)+' '+esc(c.prenom)+'</div>'
+      + '<div class="item-sub">'+esc(c.qualif||'—')+(c.niveau?' · '+esc(c.niveau):'')+'</div>'
+      + '<div class="item-meta">'
+      + '<span class="badge '+d.c+'">'+d.l+'</span>'
+      + (c.taux ? '<span class="badge b-orange">'+c.taux+'€/h</span>' : '')
+      + (c.ville ? '<span style="font-size:9px;color:var(--muted)">📍'+esc(c.ville)+'</span>' : '')
+      + (stars ? '<span style="font-size:10px;color:var(--yellow)">'+stars+'</span>' : '')
+      + '</div></div>';
+  });
+  document.getElementById('list-container').innerHTML = html;
+}
+
+// ── OUVRIR FICHE ──
+function openFiche(id) {
+  currentId = id;
+  sessionStorage.setItem('jtp_last_int', id);
+  document.getElementById('empty-state').style.display = 'none';
+  var panel = document.getElementById('fiche-panel');
+  panel.style.display = 'flex';
+  renderList();
+  renderFiche(id);
+}
+
+function renderFiche(id) {
+  var c = DB.find(function(x){return x.id===id;}); if(!c) return;
+  var d = DISPO[c.dispo] || DISPO.disponible;
+  document.getElementById('fiche-title').textContent = c.nom + ' ' + c.prenom + (c.qualif ? ' — ' + c.qualif : '');
+  var badges = '<span class="badge '+d.c+'">'+d.l+'</span>'
+    + (c.taux ? '<span class="badge b-orange">'+c.taux+' €/h</span>' : '')
+    + (c.exp_annees ? '<span class="badge b-cyan">'+c.exp_annees+' ans exp.</span>' : '');
+  document.getElementById('fiche-badges').innerHTML = badges;
+  renderTab(id, currentTab);
+}
+
+// ── ONGLETS ──
+function switchTab(tab, btn) {
+  currentTab = tab;
+  document.querySelectorAll('.fiche-tab').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  renderTab(currentId, tab);
+}
+
+function renderTab(id, tab) {
+  var c = DB.find(function(x){return x.id===id;}); if(!c) return;
+  var body = document.getElementById('fiche-body');
+  if(tab==='identite') body.innerHTML = renderIdentite(c);
+  else if(tab==='mission') body.innerHTML = renderMission(c);
+  else if(tab==='checklist') body.innerHTML = renderChecklist(c);
+  else if(tab==='habilitations') body.innerHTML = renderHabilitations(c);
+  else if(tab==='competences') body.innerHTML = renderCompetences(c);
+  else if(tab==='marge') body.innerHTML = renderMarge(c);
+  else if(tab==='trajet') body.innerHTML = renderTrajet(c);
+  else if(tab==='historique') body.innerHTML = renderHistoriqueMissions(c);
+  else if(tab==='notation') body.innerHTML = renderNotation(c);
+  else if(tab==='journal') body.innerHTML = renderJournal(c);
+  else if(tab==='comm') body.innerHTML = renderComm(c);
+}
+
+// ══════════════════════════════════════
+// ONGLET IDENTITÉ
+// ══════════════════════════════════════
+function renderIdentite(c) {
+  var QUALIFS = Object.keys(METIERS).concat(['Chef d\'équipe BTP','Coffreur N2','Ferrailleur N2','Grutier','Carreleur','Peintre bâtiment','Étancheur','Charpentier bois','Serrurier métallier','Soudeur']);
+  var qopts = QUALIFS.map(function(q){return '<option'+(c.qualif===q?' selected':'')+' value="'+esc(q)+'">'+esc(q)+'</option>';}).join('');
+  var html = '<div class="sec"><div class="sec-head">ÉTAT CIVIL & CONTACT</div><div class="sec-body">';
+  html += '<div class="form-grid">';
+  html += field('NOM', 'c_nom', c.nom, 'text', 'Dupont');
+  html += field('PRÉNOM', 'c_prenom', c.prenom, 'text', 'Jean');
+  html += '<div class="field"><label>QUALIFICATION</label><select id="c_qualif" onchange="saveField(\'qualif\',this.value)"><option value="">-- Sélectionner --</option>'+qopts+'</select></div>';
+  html += field('NIVEAU', 'c_niveau', c.niveau, 'text', 'N2 / N3 / ETQ');
+  html += field('TÉL', 'c_tel', c.tel, 'tel', '06 00 00 00 00');
+  html += field('EMAIL', 'c_email', c.email, 'email', 'prenom.nom@mail.fr');
+  html += field('CODE POSTAL', 'c_cp', c.cp, 'text', '75019', 'oninput="cpToVille(this.value)"');
+  html += field('VILLE', 'c_ville', c.ville, 'text', 'Paris');
+  html += '</div></div></div>';
+
+  html += '<div class="sec"><div class="sec-head">DISPONIBILITÉ & PROFIL</div><div class="sec-body"><div class="form-grid">';
+  html += '<div class="field"><label>DISPONIBILITÉ</label><select id="c_dispo" onchange="saveField(\'dispo\',this.value)">'
+    + Object.entries(DISPO).map(function(kv){return '<option'+(c.dispo===kv[0]?' selected':'')+' value="'+kv[0]+'">'+kv[1].l+'</option>';}).join('')
+    + '</select></div>';
+  html += field('DATE DISPO', 'c_dispo_date', c.dispo_date, 'date');
+  html += field('TAUX BRUT €/H', 'c_taux', c.taux, 'number', '16.50', 'step="0.5"');
+  html += field('PRÉTENTION €/H', 'c_pretention', c.pretention, 'number', '17.00', 'step="0.5"');
+  html += field('EXP. (ANNÉES)', 'c_exp_annees', c.exp_annees, 'number', '5');
+  html += '<div class="field"><label>SOURCE</label><select id="c_source" onchange="saveField(\'source\',this.value)">'
+    + ['Inscription directe','Indeed','LinkedIn','Bonjob','Cooptation','Candidature spontanée','France Travail','Recommandation'].map(function(s){return '<option'+(c.source===s?' selected':'')+'>'+s+'</option>';}).join('')
+    + '</select></div>';
+  html += field('MOBILITÉ', 'c_mobilite', c.mobilite, 'text', 'IDF / Paris + 15km');
+  html += '<div class="field"><label>PERMIS</label><select id="c_permis" onchange="saveField(\'permis\',this.value)">'
+    + ['','B','B + remorque','C (PL)','B + C','Aucun'].map(function(p){return '<option'+(c.permis===p?' selected':'')+' value="'+p+'">'+p+'</option>';}).join('')
+    + '</select></div>';
+  html += '<div class="field"><label>VÉHICULE</label><select id="c_vehicule" onchange="saveField(\'vehicule\',this.value)">'
+    + ['','oui','non'].map(function(v){return '<option'+(c.vehicule===v?' selected':'')+' value="'+v+'">'+v+'</option>';}).join('')
+    + '</select></div>';
+  html += '<div class="field"><label>LANGUES</label><input id="c_langues" value="'+esc(c.langues||'')+'" placeholder="Français, Anglais…" onblur="saveField(\'langues\',this.value)"/></div>';
+  html += '<div class="field"><label>ACOMPTE</label><select id="c_acompte" onchange="saveField(\'acompte\',this.value)">'
+    + ['non','oui'].map(function(v){return '<option'+(c.acompte===v?' selected':'')+' value="'+v+'">'+v+'</option>';}).join('')
+    + '</select></div>';
+  if (c.acompte==='oui') html += field('MONTANT ACOMPTE €', 'c_acompte_montant', c.acompte_montant, 'number', '150');
+  html += '</div></div></div>';
+
+  html += '<div class="sec"><div class="sec-head">NOTES LIBRES</div><div class="sec-body">';
+  html += '<textarea id="c_notes" rows="4" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:8px;color:var(--text);font-family:var(--sans);font-size:12px;outline:none;resize:vertical" onblur="saveField(\'notes\',this.value)">'+esc(c.notes||'')+'</textarea>';
+  html += '</div></div>';
+
+  // Questions métier
+  var meta = getMeta(c);
+  if (meta.questions && meta.questions.length) {
+    html += '<div class="sec"><div class="sec-head" style="color:var(--cyan)">💬 QUESTIONS MÉTIER — À POSER EN ENTRETIEN</div><div class="sec-body">';
+    html += '<ul style="padding-left:16px">' + meta.questions.map(function(q){return '<li style="font-size:12px;margin-bottom:6px">'+esc(q)+'</li>';}).join('') + '</ul>';
+    html += '</div></div>';
+  }
+  return html;
+}
+
+function field(label, id, val, type, placeholder, extra) {
+  return '<div class="field"><label>'+label+'</label><input id="'+id+'" type="'+(type||'text')+'" value="'+esc(val||'')+'" placeholder="'+(placeholder||'')+'" '+(extra||'')+' onblur="saveField(\''+id.replace('c_','')+'\',this.value)"/></div>';
+}
+
+function cpToVille(val) {
+  if (val.length!==5) return;
+  var map = {'75001':'Paris 1er','75002':'Paris 2e','75003':'Paris 3e','75004':'Paris 4e','75005':'Paris 5e','75006':'Paris 6e','75007':'Paris 7e','75008':'Paris 8e','75009':'Paris 9e','75010':'Paris 10e','75011':'Paris 11e','75012':'Paris 12e','75013':'Paris 13e','75014':'Paris 14e','75015':'Paris 15e','75016':'Paris 16e','75017':'Paris 17e','75018':'Paris 18e','75019':'Paris 19e','75020':'Paris 20e','92100':'Boulogne-Billancourt','92200':'Neuilly-sur-Seine','92300':'Levallois-Perret','92400':'Courbevoie','93100':'Montreuil','93200':'Saint-Denis','93300':'Aubervilliers','94000':'Créteil','94200':'Ivry-sur-Seine','78000':'Versailles','91000':'Évry','95000':'Cergy','95300':'Pontoise'};
+  if (map[val]) document.getElementById('c_ville') && (document.getElementById('c_ville').value = map[val]);
+  else {
+    fetch('https://geo.api.gouv.fr/communes?codePostal='+val+'&fields=nom&limit=1')
+      .then(function(r){return r.json();})
+      .then(function(d){if(d&&d[0]&&document.getElementById('c_ville'))document.getElementById('c_ville').value=d[0].nom;})
+      .catch(function(){});
+  }
+}
+
+// ══════════════════════════════════════
+// ONGLET MISSION EN COURS
+// ══════════════════════════════════════
+function renderMission(c) {
+  var m = c.mission || {};
+  var html = '<div class="sec"><div class="sec-head">MISSION EN COURS</div><div class="sec-body"><div class="form-grid">';
+  html += mfield('CLIENT / ENTREPRISE', 'mis_client', m.client, 'text', 'BATIPRO 93');
+  html += '<div class="field full"><label>ADRESSE CHANTIER</label><input id="mis_adresse" value="'+esc(m.adresse||'')+'" placeholder="15 rue…" onblur="saveMission(\'adresse\',this.value)"/></div>';
+  html += mfield('CONTACT CLIENT', 'mis_contact', m.contact, 'text', 'M. Dupont');
+  html += mfield('TÉL CONTACT', 'mis_contact_tel', m.contact_tel, 'tel', '01 00 00 00 00');
+  html += mfield('DÉBUT MISSION', 'mis_date_debut', m.date_debut, 'date');
+  html += mfield('FIN PRÉVUE', 'mis_date_fin', m.date_fin, 'date');
+  html += '<div class="field"><label>CP CHANTIER</label><input id="mis_cp_chantier" value="'+esc(m.cp_chantier||'')+'" placeholder="75008" onblur="saveMission(\'cp_chantier\',this.value);calcDistanceMission()"/></div>';
+  html += mfield('VILLE CHANTIER', 'mis_ville_chantier', m.ville_chantier, 'text', 'Paris 8');
+  html += '<div class="field full"><label>HORAIRES</label><input id="mis_horaires" value="'+esc(m.horaires||'')+'" placeholder="7h-16h Lundi-Vendredi" onblur="saveMission(\'horaires\',this.value)"/></div>';
+  html += '</div></div></div>';
+
+  // Calcul distance domicile → chantier
+  var c_coords = getCoords(c.cp);
+  var m_coords = m.cp_chantier ? getCoords(m.cp_chantier) : null;
+  if (c_coords && m_coords) {
+    var km = haversine(c_coords[0],c_coords[1],m_coords[0],m_coords[1]);
+    var zone = km<=5?ITR_ZONES[0]:km<=10?ITR_ZONES[1]:km<=20?ITR_ZONES[2]:km<=30?ITR_ZONES[3]:km<=40?ITR_ZONES[4]:km<=50?ITR_ZONES[5]:ITR_ZONES[6];
+    html += '<div class="trajet-card">'
+      + '<div style="font-family:var(--mono);font-size:9px;font-weight:700;color:var(--muted);margin-bottom:6px">DISTANCE DOMICILE → CHANTIER</div>'
+      + '<div class="trajet-km">~'+Math.round(km)+' km</div>'
+      + '<div style="font-size:11px;color:var(--muted2);margin-top:4px">'+esc(c.cp)+' '+esc(c.ville)+'  →  '+esc(m.cp_chantier)+' '+esc(m.ville_chantier)+'</div>'
+      + '<div style="margin-top:8px"><span class="badge b-cyan">'+zone.label+'</span> <span style="font-family:var(--mono);font-size:11px;color:var(--cyan)">ITR : '+zone.val.toFixed(2)+' €/j</span></div>'
+      + '<div class="trajet-btns">'
+      + '<a class="trajet-btn" style="background:var(--blue);color:#fff" href="https://www.google.com/maps/dir/'+esc(c.cp)+'/'+esc(m.cp_chantier)+'" target="_blank">🗺 Google Maps</a>'
+      + '<a class="trajet-btn" style="background:var(--blue-lt);color:var(--blue)" href="https://citymapper.com/directions?startaddress='+esc(c.cp)+'&endaddress='+esc(m.cp_chantier)+'" target="_blank">🚌 Citymapper</a>'
+      + '<a class="trajet-btn" style="background:var(--green-lt);color:var(--green)" href="https://www.ratp.fr/itineraires?origin='+esc(c.cp)+'&destination='+esc(m.cp_chantier)+'" target="_blank">🚇 RATP</a>'
+      + '</div></div>';
+  }
+  return html;
+}
+function mfield(label, id, val, type, placeholder) {
+  return '<div class="field"><label>'+label+'</label><input id="'+id+'" type="'+(type||'text')+'" value="'+esc(val||'')+'" placeholder="'+(placeholder||'')+'" onblur="saveMission(\''+id.replace('mis_','')+'\',this.value)"/></div>';
+}
+
+// ══════════════════════════════════════
+// ONGLET CHECKLIST
+// ══════════════════════════════════════
+function renderChecklist(c) {
+  var checks = c.checks || {};
+  var meta = getMeta(c);
+  var habItems = meta.habilitations || [];
+  var epiIds = meta.epi || ['chaussures','casque','gilet_hv'];
+  var outilItems = meta.outillage || [];
+
+  var totalOblig=0, doneOblig=0;
+  Object.keys(DOCS_LEGAUX).forEach(function(k){totalOblig++;if(checks['doc_'+k])doneOblig++;});
+  habItems.filter(function(h){return h.oblig;}).forEach(function(h){totalOblig++;if(checks['hab_'+h.id])doneOblig++;});
+  epiIds.forEach(function(id){var e=EPI_CONFIG[id];if(e&&e.oblig){totalOblig++;if(checks['epi_'+id])doneOblig++;}});
+
+  var pct = totalOblig ? Math.round(doneOblig/totalOblig*100) : 100;
+  var barColor = pct===100?'var(--green)':pct>=70?'var(--yellow)':'var(--warn)';
+
+  var html = '<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:5px;padding:12px 14px;margin-bottom:14px">'
+    + '<div style="display:flex;justify-content:space-between;margin-bottom:6px">'
+    + '<div style="font-family:var(--mono);font-size:10px;font-weight:700">PROGRESSION OBLIGATOIRES</div>'
+    + '<div style="font-family:var(--mono);font-size:13px;font-weight:700;color:'+barColor+'">'+doneOblig+'/'+totalOblig+' ('+pct+'%)</div>'
+    + '</div><div class="prog-bar"><div class="prog-fill" style="background:'+barColor+';width:'+pct+'%"></div></div>'
+    + '<div style="font-size:9px;color:var(--muted);font-family:var(--mono);margin-top:6px"><span style="color:var(--warn)">●</span> = obligatoire avant démarrage mission</div>'
+    + '</div>';
+
+  // Bloc 1 — Administratif
+  html += '<div class="sec"><div class="sec-head" style="color:var(--warn)">BLOC 1 — ADMINISTRATIF</div><div class="sec-body"><div class="check-grid">';
+  Object.entries(DOCS_LEGAUX).forEach(function(kv){
+    var key='doc_'+kv[0]; var chk=!!checks[key];
+    html += renderCheckItem(key, kv[1].label, true, kv[1].validite, chk, c.id, checks[key+'_date']);
+  });
+  html += '</div></div></div>';
+
+  // Bloc 2 — EPI
+  html += '<div class="sec"><div class="sec-head" style="color:var(--orange)">BLOC 2 — EPI</div><div class="sec-body">';
+  epiIds.forEach(function(eid){
+    var e = EPI_CONFIG[eid]; if(!e) return;
+    var key='epi_'+eid; var chk=!!checks[key];
+    if (eid==='gilet_hv') {
+      var fourni = !!checks['epi_gilet_fourni'], portOblig = !!checks['epi_gilet_port_oblig'];
+      html += '<div class="epi-item">'
+        + '<div class="epi-row"><div class="check-box'+(fourni||portOblig?' checked':'')+'" style="'+(fourni||portOblig?'background:var(--yellow);border-color:var(--yellow)':'')+'" ></div>'
+        + '<div style="flex:1;font-size:11px">'+e.label+' <span style="color:var(--muted);font-size:9px">(situationnel)</span></div></div>'
+        + '<div class="epi-gilet-cases">'
+        + '<div class="epi-gilet-case" onclick="toggleCheck(\''+c.id+'\',\'epi_gilet_fourni\')"><div class="epi-gilet-cb'+(fourni?' checked':'')+'"></div><span>Fourni</span></div>'
+        + '<div class="epi-gilet-case" onclick="toggleCheck(\''+c.id+'\',\'epi_gilet_port_oblig\')"><div class="epi-gilet-cb'+(portOblig?' checked':'')+'"></div><span>Port obligatoire sur ce chantier</span></div>'
+        + '</div><div class="epi-norm">Norme : '+e.norm+'</div></div>';
+    } else {
+      html += '<div class="epi-item'+(e.oblig?' oblig-epi':'')+'">'
+        + '<div class="epi-row" onclick="toggleCheck(\''+c.id+'\',\''+key+'\')" style="cursor:pointer">'
+        + '<div class="check-box'+(chk?' checked':'')+'"></div>'
+        + '<div style="flex:1;font-size:11px">'+e.label+(e.oblig?' <span class="check-oblig-dot">●</span>':'')+'</div>';
+      if (e.taille==='chaussures') {
+        html += '<select onchange="setEPITaille(\''+c.id+'\',\'taille_chaussures_epi\',this.value)" onclick="event.stopPropagation()" style="background:var(--surface3);border:1px solid var(--border);border-radius:3px;padding:2px 5px;color:var(--text);font-size:10px;font-family:var(--mono);outline:none">'
+          + '<option value="">T.</option>'
+          + [36,37,38,39,40,41,42,43,44,45,46,47,48].map(function(t){return '<option'+(checks['taille_chaussures_epi']==t?' selected':'')+' value="'+t+'">'+t+'</option>';}).join('')
+          + '</select>';
+      }
+      html += '</div><div class="epi-norm">Norme : '+e.norm+(e.note?' — '+e.note:'')+'</div>';
+      if(chk) html += '<div class="check-date-row"><input type="date" class="check-date-input" value="'+(checks[key+'_date']||today())+'" onclick="event.stopPropagation()" onchange="setCheckDate(\''+c.id+'\',\''+key+'\',this.value)" title="Date vérification"/></div>';
+      html += '</div>';
+    }
+  });
+  html += '</div></div>';
+
+  // Bloc 3 — Habilitations
+  if (habItems.length) {
+    var cats = []; habItems.forEach(function(h){if(cats.indexOf(h.cat)===-1)cats.push(h.cat);});
+    html += '<div class="sec"><div class="sec-head" style="color:var(--purple)">BLOC 3 — HABILITATIONS & QUALIFICATIONS</div><div class="sec-body">';
+    cats.forEach(function(cat){
+      html += '<div style="font-family:var(--mono);font-size:9px;font-weight:700;color:var(--muted);margin:8px 0 5px;letter-spacing:.4px">'+cat+'</div><div class="check-grid">';
+      habItems.filter(function(h){return h.cat===cat;}).forEach(function(h){
+        var key='hab_'+h.id; var chk=!!checks[key];
+        html += renderCheckItem(key, h.label, h.oblig, h.validite, chk, c.id, checks[key+'_date']);
+      });
+      html += '</div>';
+    });
+    html += '</div></div>';
+  }
+
+  // Bloc 4 — Outillage
+  if (outilItems.length) {
+    html += '<div class="sec"><div class="sec-head" style="color:var(--cyan)">BLOC 4 — OUTILLAGE PROPRE</div><div class="sec-body"><div class="outil-grid">';
+    outilItems.forEach(function(o,i){
+      var key='outil_'+i; var chk=!!checks[key];
+      html += '<div class="outil-item'+(chk?' checked':'')+'" onclick="toggleCheck(\''+c.id+'\',\''+key+'\')">'
+        + '<div class="check-box"></div><span>'+esc(o)+'</span></div>';
+    });
+    html += '</div></div></div>';
+  }
+  return html;
+}
+
+function renderCheckItem(key, label, oblig, validite, chk, cid, dateVal) {
+  return '<div class="check-item'+(chk?' checked':'')+(oblig?' oblig-item':'')+'" onclick="toggleCheck(\''+cid+'\',\''+key+'\')">'
+    + '<div class="check-item-row"><div class="check-box"></div>'
+    + '<div style="flex:1"><div class="check-label">'+esc(label)+(oblig?' <span class="check-oblig-dot">●</span>':'')+'</div>'
+    + '<div class="check-valid-note">⏱ '+esc(validite)+'</div>'
+    + (chk?'<div class="check-date-row"><input type="date" class="check-date-input" value="'+(dateVal||today())+'" onclick="event.stopPropagation()" onchange="setCheckDate(\''+cid+'\',\''+key+'\',this.value)" title="Date obtention"/></div>':'')
+    + '</div></div></div>';
+}
+
+// ══════════════════════════════════════
+// ONGLET HABILITATIONS DÉTAILLÉES
+// ══════════════════════════════════════
+function renderHabilitations(c) {
+  var habs = c.habilitations_detail || [];
+  var vm = c.visite_medicale || {};
+
+  var html = '<div class="vm-block">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
+  html += '<div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text2)">VISITE MÉDICALE</div>';
+  var aptColor = vm.aptitude==='apte'?'var(--green)':vm.aptitude==='inapte'?'var(--warn)':'var(--muted)';
+  html += '<span class="vm-status" style="background:rgba(22,163,74,.12);color:'+aptColor+'">'+esc(vm.aptitude||'—').toUpperCase()+'</span>';
+  html += '</div>';
+  html += '<div class="form-grid">';
+  html += vmfield('APTITUDE', 'vm_aptitude', vm.aptitude, 'select', ['apte','apte aménagé','inapte']);
+  html += vmfield('DATE VISITE', 'vm_date', vm.date, 'date');
+  html += vmfield('EXPIRATION', 'vm_expiration', vm.expiration, 'date');
+  html += vmfield('MÉDECIN / SSTI', 'vm_medecin', vm.medecin, 'text', 'SSTI Paris BTP');
+  html += vmfield('PROCHAIN RDV', 'vm_prochain_rdv', vm.prochain_rdv, 'date');
+  html += '</div></div>';
+
+  // Alertes VM
+  if (vm.expiration) {
+    var exp = new Date(vm.expiration); var diff = Math.round((exp-new Date())/864e5);
+    if (diff < 0) html += '<div class="alert alert-warn"><span class="alert-icon">🔴</span>Visite médicale <strong>EXPIRÉE</strong> depuis '+Math.abs(diff)+' jours</div>';
+    else if (diff < 30) html += '<div class="alert alert-yellow"><span class="alert-icon">⚠</span>Visite médicale expire dans <strong>'+diff+' jours</strong></div>';
+  }
+
+  // Habilitations détaillées
+  html += '<div class="sec"><div class="sec-head" style="color:var(--purple)">HABILITATIONS DÉTAILLÉES'
+    + '<button class="btn btn-outline btn-sm" onclick="addHab(\''+c.id+'\')">+ Ajouter</button></div>';
+  html += '<div class="sec-body">';
+  if (!habs.length) {
+    html += '<div class="empty" style="padding:20px"><p>Aucune habilitation enregistrée</p></div>';
+  } else {
+    html += '<div class="hab-row-head"><span>Habilitation</span><span>N° / Organisme</span><span>Obtention → Expiration</span><span>Statut</span><span></span></div>';
+    habs.forEach(function(h, i) {
+      var status = '', statusColor = '';
+      if (h.date_expiration) {
+        var exp = new Date(h.date_expiration); var diff = Math.round((exp-new Date())/864e5);
+        if (diff < 0) { status='EXPIRÉE'; statusColor='var(--warn)'; }
+        else if (diff < 30) { status=diff+'j'; statusColor='var(--yellow)'; }
+        else { status='✓'; statusColor='var(--green)'; }
+      }
+      html += '<div class="hab-row">'
+        + '<div><div style="font-weight:600;font-size:11px">'+esc(h.label)+'</div>'
+        + '<div style="font-size:9px;color:var(--muted)">'+esc(h.num||'')+'</div></div>'
+        + '<div style="font-size:10px">'+esc(h.organisme||'—')+'</div>'
+        + '<div style="font-size:10px;font-family:var(--mono)">'+fmt(h.date_obtention)+' → '+fmt(h.date_expiration)+'</div>'
+        + '<div style="font-family:var(--mono);font-size:10px;font-weight:700;color:'+statusColor+'">'+status+'</div>'
+        + '<button onclick="delHab(\''+c.id+'\','+i+')" class="btn btn-danger btn-xs">✕</button>'
+        + '</div>';
+    });
+  }
+  html += '</div></div>';
+  return html;
+}
+
+function vmfield(label, id, val, type, opts) {
+  if (type==='select') {
+    return '<div class="field"><label>'+label+'</label><select id="'+id+'" onchange="saveVM(\''+id.replace('vm_','')+'\',this.value)">'
+      + opts.map(function(o){return '<option'+(val===o?' selected':'')+' value="'+o+'">'+o+'</option>';}).join('')
+      + '</select></div>';
+  }
+  return '<div class="field"><label>'+label+'</label><input id="'+id+'" type="'+(type||'text')+'" value="'+esc(val||'')+'" placeholder="'+(opts||'')+'" onblur="saveVM(\''+id.replace('vm_','')+'\',this.value)"/></div>';
+}
+
+// ══════════════════════════════════════
+// ONGLET COMPÉTENCES
+// ══════════════════════════════════════
+function renderCompetences(c) {
+  var meta = getMeta(c); var comp = c.competences || {};
+  if (!meta.competences || !meta.competences.length) {
+    return '<div class="empty"><div class="icon">📋</div><p>Sélectionnez une qualification pour afficher les compétences métier</p></div>';
+  }
+  var html = '';
+  meta.competences.forEach(function(bloc){
+    html += '<div class="sec"><div class="sec-head" style="color:var(--green)">'+esc(bloc.cat)+'</div><div class="sec-body"><div class="check-grid">';
+    bloc.items.forEach(function(item,i){
+      var key='comp_'+nrm(bloc.cat)+'_'+i; var chk=!!comp[key];
+      html += '<div class="outil-item'+(chk?' checked':'')+'" onclick="toggleComp(\''+c.id+'\',\''+key+'\')">'
+        + '<div class="check-box"></div><span style="font-size:11px">'+esc(item)+'</span></div>';
+    });
+    html += '</div></div></div>';
+  });
+  if (meta.formations && meta.formations.length) {
+    html += '<div class="sec"><div class="sec-head" style="color:var(--blue-md)">FORMATIONS & DIPLÔMES</div><div class="sec-body"><div class="check-grid">';
+    meta.formations.forEach(function(f,i){
+      var key='form_'+i; var chk=!!(c.checks&&c.checks[key]);
+      html += '<div class="outil-item'+(chk?' checked':'')+'" onclick="toggleComp(\''+c.id+'\',\''+key+'\')">'
+        + '<div class="check-box"></div><span style="font-size:11px">'+esc(f)+'</span></div>';
+    });
+    html += '</div></div></div>';
+  }
+  return html;
+}
+
+// ══════════════════════════════════════
+// ONGLET MARGE
+// ══════════════════════════════════════
+function renderMarge(c) {
+  var html = '<div class="sec"><div class="sec-head">SIMULATEUR MARGE RAPIDE</div><div class="sec-body">';
+  html += '<div class="form-grid">';
+  html += '<div class="field"><label>TAUX BRUT €/H</label><input id="mg_tb" type="number" step="0.5" value="'+(c.taux||'')+'" placeholder="16.50" oninput="calcMargeRapide()"/></div>';
+  html += '<div class="field"><label>TAUX CLIENT €/H</label><input id="mg_tc" type="number" step="0.5" value="" placeholder="24.50" oninput="calcMargeRapide()"/></div>';
+  html += '<div class="field"><label>HEURES / SEMAINE</label><input id="mg_h" type="number" step="0.5" value="35" oninput="calcMargeRapide()"/></div>';
+  html += '<div class="field"><label>NB SEMAINES</label><input id="mg_s" type="number" value="4" oninput="calcMargeRapide()"/></div>';
+  html += '<div class="field"><label>ITR ZONE</label><select id="mg_itr_zone" onchange="calcMargeRapide()">'
+    + '<option value="0">Sans ITR</option>'
+    + ITR_ZONES.map(function(z){return '<option value="'+z.val+'">'+z.label+' ('+z.val+' €/j)</option>';}).join('')
+    + '</select></div>';
+  html += '<div class="field"><label>NB JOURS ITR/SEM</label><input id="mg_itr_nb" type="number" value="5" oninput="calcMargeRapide()"/></div>';
+  html += '<div class="field"><label>NB PANIERS/SEM</label><input id="mg_pan_nb" type="number" value="5" oninput="calcMargeRapide()"/></div>';
+  html += '</div>';
+
+  html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:16px" id="mg-kpis">'
+    + kpiCard('CA SEMAINE', '—', 'mg_k_ca', 'var(--orange)')
+    + kpiCard('COÛT ETT', '—', 'mg_k_cout', 'var(--blue)')
+    + kpiCard('MARGE €', '—', 'mg_k_marge', 'var(--green)')
+    + kpiCard('MARGE %', '—', 'mg_k_pct', 'var(--green)')
+    + '</div>';
+  html += '<div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:12px">Calcul : IFM 10% · ICP 10% · Charges patronales 43% BTP IDF · HS +25% (36-43e h) · HS +50% (≥44e h)</div>';
+  html += '</div></div>';
+  html += '<div class="sec"><div class="sec-head" style="color:var(--muted)">DÉTAIL BARÈMES</div><div class="sec-body">';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px">';
+  html += barRow('IFM','10% du brut');html += barRow('ICP','10% × (brut + IFM)');
+  html += barRow('Charges patronales','43% base BTP IDF Paris');
+  html += barRow('Heures sup +25%','36e → 43e heure de la semaine');
+  html += barRow('Heures sup +50%','44e heure et au-delà');
+  html += barRow('Limite légale','18 mois max même client/poste (L.1251-5 CT)');
+  html += '</div></div></div>';
+
+  // Auto-calc au chargement
+  html += '<script>setTimeout(calcMargeRapide,50);<\/script>';
+  return html;
+}
+
+function kpiCard(label, val, id, color) {
+  return '<div class="stat-card"><div class="stat-num" id="'+id+'" style="color:'+color+';font-size:18px">'+val+'</div><div class="stat-lbl">'+label+'</div></div>';
+}
+function barRow(label, val) {
+  return '<div style="padding:5px 8px;background:var(--surface2);border:1px solid var(--border2);border-radius:3px"><span style="font-weight:600">'+label+'</span> <span style="color:var(--muted)">'+val+'</span></div>';
+}
+
+function calcMargeRapide() {
+  var tb  = parseFloat(document.getElementById('mg_tb')&&document.getElementById('mg_tb').value||0);
+  var tc  = parseFloat(document.getElementById('mg_tc')&&document.getElementById('mg_tc').value||0);
+  var h   = parseFloat(document.getElementById('mg_h')&&document.getElementById('mg_h').value||35);
+  var s   = parseFloat(document.getElementById('mg_s')&&document.getElementById('mg_s').value||4);
+  var itr = parseFloat(document.getElementById('mg_itr_zone')&&document.getElementById('mg_itr_zone').value||0);
+  var itrNb = parseFloat(document.getElementById('mg_itr_nb')&&document.getElementById('mg_itr_nb').value||5);
+  var panNb = parseFloat(document.getElementById('mg_pan_nb')&&document.getElementById('mg_pan_nb').value||5);
+  if(!tb||!tc) return;
+
+  // Heures semaine avec HS
+  var hn=Math.min(h,35), hs25=Math.max(0,Math.min(h,43)-35), hs50=Math.max(0,h-43);
+  var tbPond = hn*tb + hs25*tb*1.25 + hs50*tb*1.5;
+  var brut = tbPond;
+  var ifm  = brut*0.10;
+  var icp  = (brut+ifm)*0.10;
+  var charges = (brut+ifm)*0.43;
+  var itr_total = itr*itrNb;
+  var pan_total = 10.10*panNb;
+  var cout_sem = brut+ifm+icp+charges+itr_total+pan_total;
+
+  // CA client semaine
+  var ca_sem = tc*h + itr_total + pan_total;
+  var marge_sem = ca_sem - cout_sem;
+  var pct = ca_sem ? (marge_sem/ca_sem*100) : 0;
+
+  function f2(n){return n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
+  var setEl = function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
+  setEl('mg_k_ca', f2(ca_sem));
+  setEl('mg_k_cout', f2(cout_sem));
+  setEl('mg_k_marge', f2(marge_sem));
+  var pEl = document.getElementById('mg_k_pct');
+  if(pEl){pEl.textContent=pct.toFixed(1)+'%';pEl.className='stat-num';pEl.style.color=pct>=18?'var(--green)':pct>=12?'var(--yellow)':'var(--warn)';}
+}
+
+// ══════════════════════════════════════
+// ONGLET TRAJET
+// ══════════════════════════════════════
+function renderTrajet(c) {
+  var m = c.mission || {};
+  var c_coords = getCoords(c.cp);
+  var m_coords = m.cp_chantier ? getCoords(m.cp_chantier) : null;
+
+  var html = '<div class="sec"><div class="sec-head">CALCUL DE TRAJET DOMICILE → CHANTIER</div><div class="sec-body">';
+  html += '<div class="form-grid">';
+  html += '<div class="field"><label>CP DOMICILE</label><input id="tr_cp_dom" value="'+esc(c.cp||'')+'" placeholder="75019" onblur="calcTrajet()"/></div>';
+  html += '<div class="field"><label>VILLE DOMICILE</label><input id="tr_ville_dom" value="'+esc(c.ville||'')+'" placeholder="Paris 19" readonly style="background:var(--surface3)"/></div>';
+  html += '<div class="field"><label>CP CHANTIER</label><input id="tr_cp_chan" value="'+esc(m.cp_chantier||'')+'" placeholder="75008" onblur="calcTrajet()"/></div>';
+  html += '<div class="field"><label>VILLE CHANTIER</label><input id="tr_ville_chan" value="'+esc(m.ville_chantier||'')+'" placeholder="Paris 8" readonly style="background:var(--surface3)"/></div>';
+  html += '</div>';
+  html += '<button class="btn btn-primary" onclick="calcTrajet()" style="margin-top:10px">🧮 Calculer</button>';
+  html += '</div></div>';
+  html += '<div id="trajet-result"></div>';
+
+  html += '<div class="sec"><div class="sec-head" style="color:var(--cyan)">BARÈME ITR/IPD ACOSS</div><div class="sec-body">';
+  html += '<table class="tbl"><thead><tr><th>Zone</th><th>Distance</th><th>Montant/j</th></tr></thead><tbody>';
+  ITR_ZONES.forEach(function(z){
+    html += '<tr><td style="font-family:var(--mono);font-weight:600">'+z.label+'</td><td style="font-size:11px;color:var(--muted)">'+z.label.split(' ')[1]+'</td><td style="font-family:var(--mono);font-weight:700;color:var(--cyan)">'+z.val.toFixed(2)+' €</td></tr>';
+  });
+  html += '</tbody></table></div></div>';
+
+  // Auto-calc si données dispo
+  if (c_coords && m_coords) html += '<script>calcTrajet();<\/script>';
+  return html;
+}
+
+function calcTrajet() {
+  var cpD = (document.getElementById('tr_cp_dom')||{value:''}).value;
+  var cpC = (document.getElementById('tr_cp_chan')||{value:''}).value;
+  var res = document.getElementById('trajet-result');
+  if (!res || !cpD || !cpC) return;
+  var coordD = getCoords(cpD), coordC = getCoords(cpC);
+  if (!coordD || !coordC) { res.innerHTML = '<div class="alert alert-info">📍 Coordonnées non trouvées pour ces codes postaux</div>'; return; }
+  var km = haversine(coordD[0],coordD[1],coordC[0],coordC[1]);
+  var zone = km<=5?ITR_ZONES[0]:km<=10?ITR_ZONES[1]:km<=20?ITR_ZONES[2]:km<=30?ITR_ZONES[3]:km<=40?ITR_ZONES[4]:km<=50?ITR_ZONES[5]:ITR_ZONES[6];
+  res.innerHTML = '<div class="trajet-card">'
+    + '<div style="font-family:var(--mono);font-size:9px;font-weight:700;color:var(--muted);margin-bottom:6px">RÉSULTAT</div>'
+    + '<div style="display:flex;align-items:baseline;gap:10px">'
+    + '<div class="trajet-km">~'+Math.round(km)+' km</div>'
+    + '<span class="badge b-cyan">'+zone.label+'</span>'
+    + '<span style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--cyan)">'+zone.val.toFixed(2)+' €/j</span>'
+    + '</div>'
+    + '<div style="font-size:11px;color:var(--muted2);margin-top:6px">'+cpD+' → '+cpC+'</div>'
+    + '<div class="trajet-btns">'
+    + '<a class="trajet-btn" style="background:var(--blue);color:#fff" href="https://www.google.com/maps/dir/'+cpD+'/'+cpC+'" target="_blank">🗺 Google Maps</a>'
+    + '<a class="trajet-btn" style="background:var(--blue-lt);color:var(--blue)" href="https://citymapper.com/directions?startaddress='+cpD+'&endaddress='+cpC+'" target="_blank">🚌 Citymapper</a>'
+    + '<a class="trajet-btn" style="background:var(--green-lt);color:var(--green)" href="https://www.ratp.fr/itineraires?origin='+cpD+'&destination='+cpC+'" target="_blank">🚇 RATP</a>'
+    + '</div>'
+    + '<div style="font-size:10px;color:var(--muted);margin-top:10px;font-family:var(--mono)">Calcul vol d\'oiseau (Haversine) — distance réelle peut varier de ±20%</div>'
+    + '</div>';
+}
+
+// ══════════════════════════════════════
+// ONGLET HISTORIQUE MISSIONS
+// ══════════════════════════════════════
+function renderHistoriqueMissions(c) {
+  var hist = c.historique_missions || [];
+  var totalSem=0, totalCA=0;
+  hist.forEach(function(m){
+    totalSem += m.nb_semaines||0;
+    totalCA  += m.ca||0;
+  });
+
+  // Alerte 18 mois même client
+  var clientCount = {};
+  hist.forEach(function(m){ if(m.client) clientCount[m.client]=(clientCount[m.client]||0)+(m.nb_semaines||0); });
+  var html = '';
+  Object.entries(clientCount).forEach(function(kv){
+    if(kv[1]>=72) html += '<div class="alert alert-warn"><span class="alert-icon">⚠</span>'+esc(kv[0])+' : '+kv[1]+' semaines cumulées — vérifier limite 18 mois légale (L.1251-5 CT)</div>';
+  });
+
+  html += '<div class="stat-grid">'
+    + '<div class="stat-card"><div class="stat-num" style="color:var(--blue)">'+hist.length+'</div><div class="stat-lbl">MISSIONS</div></div>'
+    + '<div class="stat-card"><div class="stat-num" style="color:var(--green)">'+totalSem+'</div><div class="stat-lbl">SEMAINES</div></div>'
+    + '<div class="stat-card"><div class="stat-num" style="color:var(--orange)">'+fmtCA(totalCA)+'</div><div class="stat-lbl">CA GÉNÉRÉ</div></div>'
+    + '</div>';
+
+  // Mission courante
+  var mc = c.mission || {};
+  if (mc.client) {
+    html += '<div style="background:var(--orange-lt);border:1px solid rgba(249,115,22,.3);border-radius:5px;padding:10px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">'
+      + '<div><div style="font-size:12px;font-weight:600;color:var(--orange)">Mission en cours : '+esc(mc.client)+'</div>'
+      + '<div style="font-size:10px;color:var(--muted)">'+fmt(mc.date_debut)+' → '+fmt(mc.date_fin)+'</div></div>'
+      + '<button class="btn btn-primary btn-sm" onclick="archiverMission(\''+c.id+'\')">✓ Clôturer & Archiver</button>'
+      + '</div>';
+  }
+
+  // Formulaire ajout
+  html += '<div class="sec"><div class="sec-head" style="color:var(--green)">+ AJOUTER MISSION PASSÉE</div><div class="sec-body">';
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px;margin-bottom:8px">';
+  html += '<input id="hm_client" placeholder="Client" style="background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:5px 7px;color:var(--text);font-size:11px;outline:none"/>';
+  html += '<input id="hm_qualif" placeholder="Qualification" style="background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:5px 7px;color:var(--text);font-size:11px;outline:none"/>';
+  html += '<input id="hm_debut" type="date" style="background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:5px 7px;color:var(--text);font-size:11px;outline:none"/>';
+  html += '<input id="hm_fin" type="date" style="background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:5px 7px;color:var(--text);font-size:11px;outline:none"/>';
+  html += '<input id="hm_tc" type="number" placeholder="TC €/h" step="0.5" style="background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:5px 7px;color:var(--text);font-size:11px;outline:none"/>';
+  html += '<input id="hm_tb" type="number" placeholder="TB €/h" step="0.5" style="background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:5px 7px;color:var(--text);font-size:11px;outline:none"/>';
+  html += '<input id="hm_note" placeholder="Note" style="background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:5px 7px;color:var(--text);font-size:11px;outline:none"/>';
+  html += '</div><button class="btn btn-green btn-sm" onclick="addMissionHisto(\''+c.id+'\')">+ Ajouter</button>';
+  html += '</div></div>';
+
+  if (!hist.length) {
+    html += '<div class="empty"><p>Aucune mission archivée</p></div>';
+  } else {
+    var sorted = hist.slice().sort(function(a,b){return (b.date_debut||'').localeCompare(a.date_debut||'');});
+    sorted.forEach(function(m, si) {
+      var ridx = hist.indexOf(m);
+      var tc=parseFloat(m.taux_client||m.tc)||0, tb=parseFloat(m.taux_brut||m.tb)||0;
+      var sem=m.nb_semaines||0;
+      var ca=m.ca||(sem*35*4.33*tc);
+      var marge=m.marge||(tc>0&&tb>0?(tc-tb*(1+0.43+0.10+0.10*1.10))/tc*100:0);
+      html += '<div style="padding:10px 12px;border:1px solid var(--border2);border-radius:5px;margin-bottom:6px;background:var(--surface)">'
+        + '<div style="display:flex;justify-content:space-between;align-items:start">'
+        + '<div><div style="font-size:12px;font-weight:600">'+esc(m.client||'—')+'</div>'
+        + '<div style="font-size:10px;color:var(--muted2);margin-top:2px">'+esc(m.qualif||'—')+' · '+fmt(m.date_debut)+' → '+fmt(m.date_fin)+'</div>'
+        + (m.note?'<div style="font-size:10px;color:var(--muted);font-style:italic;margin-top:2px">'+esc(m.note)+'</div>':'')
+        + '</div>'
+        + '<div style="text-align:right;flex-shrink:0">'
+        + '<div style="font-size:11px;font-family:var(--mono)">'
+        + sem+'s'+(tc?'&nbsp;·&nbsp;'+fmtCA(ca):'')+(marge>0?'&nbsp;·&nbsp;<span style="color:'+(marge>=18?'var(--green)':marge>=12?'var(--yellow)':'var(--warn)')+'">'+Math.round(marge)+'%</span>':'')
+        + '</div>'
+        + '<button onclick="delMissionHisto(\''+c.id+'\','+ridx+')" class="btn btn-danger btn-xs" style="margin-top:4px">✕</button>'
+        + '</div></div></div>';
+    });
+  }
+  return html;
+}
+
+// ══════════════════════════════════════
+// ONGLET NOTATION
+// ══════════════════════════════════════
+function renderNotation(c) {
+  var n = c.notation || {fiabilite:0,qualite:0,relationnel:0,commentaire:''};
+  function stars(field, val) {
+    var html = '<div class="score-bar"><label>'+field.toUpperCase()+'</label><div class="stars">';
+    for(var i=1;i<=5;i++) {
+      html += '<span class="nota-star" onclick="setNota(\''+c.id+'\',\''+field+'\','+i+')">'+(i<=val?'★':'☆')+'</span>';
+    }
+    html += '</div></div>';
+    return html;
+  }
+  var avg = n.fiabilite||n.qualite||n.relationnel ? ((n.fiabilite||0)+(n.qualite||0)+(n.relationnel||0))/3 : 0;
+
+  var html = '<div class="sec"><div class="sec-head">NOTATION INTÉRIMAIRE</div><div class="sec-body">';
+  html += stars('fiabilite', n.fiabilite||0);
+  html += stars('qualite', n.qualite||0);
+  html += stars('relationnel', n.relationnel||0);
+  if (avg) {
+    html += '<div style="margin-top:12px;padding:8px 14px;background:var(--surface2);border-radius:4px;border:1px solid var(--border2);display:inline-flex;align-items:center;gap:10px">'
+      + '<span style="font-family:var(--mono);font-size:10px;color:var(--muted)">MOYENNE</span>'
+      + '<span style="font-size:18px;font-weight:700;font-family:var(--mono);color:var(--yellow)">'+avg.toFixed(1)+'/5</span>'
+      + '</div>';
+  }
+  html += '<div class="field" style="margin-top:12px"><label>COMMENTAIRE INTERNE</label>'
+    + '<textarea id="nota_comment" rows="3" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:8px;color:var(--text);font-family:var(--sans);font-size:12px;outline:none;resize:vertical" onblur="saveNotaComment(\''+c.id+'\',this.value)">'+esc(n.commentaire||'')+'</textarea>'
+    + '</div>';
+  html += '</div></div>';
+  return html;
+}
+
+// ══════════════════════════════════════
+// ONGLET JOURNAL
+// ══════════════════════════════════════
+function renderJournal(c) {
+  var journal = c.journal || [];
+  var html = '<div class="sec"><div class="sec-head">+ NOUVELLE ENTRÉE</div><div class="sec-body">';
+  html += '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">';
+  html += '<select id="j_type" style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:5px 8px;color:var(--text);font-family:var(--mono);font-size:10px;outline:none">'
+    + Object.entries(JTYPES).map(function(kv){return '<option value="'+kv[0]+'">'+kv[1].l+'</option>';}).join('')
+    + '</select>';
+  html += '<input type="date" id="j_date" value="'+today()+'" style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:5px 8px;color:var(--text);font-family:var(--mono);font-size:11px;outline:none"/>';
+  html += '<input id="j_texte" placeholder="Note, action, information…" style="flex:1;min-width:200px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:5px 8px;color:var(--text);font-size:12px;outline:none" onkeydown="if(event.key===\'Enter\')addJournal(\''+c.id+'\')"/>';
+  html += '<button class="btn btn-primary btn-sm" onclick="addJournal(\''+c.id+'\')">+ Ajouter</button>';
+  html += '</div></div></div>';
+
+  if (!journal.length) {
+    html += '<div class="empty"><p>Aucune entrée de journal</p></div>';
+  } else {
+    var sorted = journal.slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+    html += '<div>';
+    sorted.forEach(function(e){
+      var jt = JTYPES[e.type] || JTYPES.note;
+      var ridx = journal.findIndex(function(x){return x.id===e.id;});
+      html += '<div class="entry">'
+        + '<span class="entry-type '+jt.c+'">'+jt.l+'</span>'
+        + '<span class="entry-date">'+fmt(e.date)+'</span>'
+        + '<span class="entry-text">'+esc(e.texte)+'</span>'
+        + '<span class="entry-del" onclick="delJournal(\''+c.id+'\',\''+e.id+'\')">✕</span>'
+        + '</div>';
+    });
+    html += '</div>';
+  }
+  return html;
+}
+
+// ══════════════════════════════════════
+// ONGLET SMS / EMAIL
+// ══════════════════════════════════════
+function renderComm(c) {
+  var nom = c.prenom + ' ' + c.nom;
+  var tpls = {
+    sms: {
+      dispo_confirm: { label:'✅ Conf. dispo', txt:'Bonjour '+c.prenom+', merci de confirmer votre disponibilité pour une mission à partir du [DATE] sur [VILLE]. Répondez OUI ou NON. [AGENCE]' },
+      mission_debut: { label:'🚀 Début mission', txt:'Bonjour '+c.prenom+', votre mission commence lundi [DATE] à [ADRESSE]. Contact client : [NOM] / [TEL]. Bon courage ! [AGENCE]' },
+      releve:        { label:'📋 Relevé heures', txt:'Bonjour '+c.prenom+', merci de remettre votre relevé d\'heures signé pour la semaine passée. [AGENCE]' },
+      rdv:           { label:'📅 RDV agence', txt:'Bonjour '+c.prenom+', pouvez-vous passer à l\'agence le [DATE] à [HEURE] ? Merci. [AGENCE]' },
+    },
+    email: {
+      convocation:   { label:'📧 Convocation', txt:'Objet : Convocation — Mission '+c.qualif+'\n\nBonjour '+c.prenom+',\n\nNous avons le plaisir de vous proposer une mission de '+c.qualif+' débutant le [DATE].\n\nMerci de confirmer votre disponibilité en répondant à ce mail.\n\nCordialement,\n[AGENCE]' },
+      profil_client: { label:'📤 Profil client', txt:'Objet : Profil '+c.qualif+' disponible — [AGENCE]\n\nBonjour [CLIENT],\n\nJe me permets de vous soumettre le profil de M. '+nom+', '+c.qualif+' disponible dès le [DATE].\n\nTaux proposé : '+c.taux+' €/h brut\nMobilité : '+c.mobilite+'\n\nJe reste disponible pour tout renseignement.\n\nCordialement,\n[RESPONSABLE]\n[AGENCE]' },
+    }
+  };
+  var html = '<div class="sec"><div class="sec-head">💬 SMS TEMPLATES</div><div class="sec-body">';
+  html += '<div class="tpl-btns">'
+    + Object.entries(tpls.sms).map(function(kv){return '<button class="tpl-btn" onclick="showComm(\'sms_'+kv[0]+'\')">'+kv[1].label+'</button>';}).join('')
+    + '</div>';
+  html += '</div></div>';
+  html += '<div class="sec"><div class="sec-head">📧 EMAIL TEMPLATES</div><div class="sec-body">';
+  html += '<div class="tpl-btns">'
+    + Object.entries(tpls.email).map(function(kv){return '<button class="tpl-btn" onclick="showComm(\'email_'+kv[0]+'\')">'+kv[1].label+'</button>';}).join('')
+    + '</div>';
+  html += '</div></div>';
+  html += '<div class="sec" id="comm-result" style="display:none"><div class="sec-head">MESSAGE</div><div class="sec-body">'
+    + '<textarea id="comm-text" rows="8" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:8px;color:var(--text);font-family:var(--mono);font-size:11px;outline:none;resize:vertical"></textarea>'
+    + '<div style="display:flex;gap:8px;margin-top:8px">'
+    + '<button class="btn btn-cyan btn-sm" onclick="copyComm()">📋 Copier</button>'
+    + '</div></div></div>';
+
+  // Injecter les templates dans une variable JS
+  html += '<script>window._COMM_TPLS = '+JSON.stringify(Object.assign({},
+    Object.fromEntries(Object.entries(tpls.sms).map(function(kv){return ['sms_'+kv[0],kv[1].txt];})),
+    Object.fromEntries(Object.entries(tpls.email).map(function(kv){return ['email_'+kv[0],kv[1].txt];}))
+  ))+';<\/script>';
+  return html;
+}
+
+function showComm(key) {
+  var el = document.getElementById('comm-result');
+  var ta = document.getElementById('comm-text');
+  if(!el||!ta) return;
+  el.style.display='block';
+  ta.value = (window._COMM_TPLS&&window._COMM_TPLS[key]) || '—';
+  el.scrollIntoView({behavior:'smooth'});
+}
+function copyComm() {
+  var ta = document.getElementById('comm-text');
+  if(!ta) return;
+  navigator.clipboard.writeText(ta.value).then(function(){
+    var btn = event.target; btn.textContent='✓ Copié !'; setTimeout(function(){btn.textContent='📋 Copier';},2000);
+  });
+}
+
+// ══════════════════════════════════════
+// ACTIONS DONNÉES
+// ══════════════════════════════════════
+function saveField(field, val) {
+  var c = DB.find(function(x){return x.id===currentId;}); if(!c) return;
+  c[field] = val;
+  save(); renderList();
+  if(field==='nom'||field==='prenom'||field==='qualif'||field==='dispo'||field==='taux') renderFiche(currentId);
+}
+function saveMission(field, val) {
+  var c = DB.find(function(x){return x.id===currentId;}); if(!c) return;
+  if(!c.mission) c.mission={};
+  c.mission[field] = val;
+  save();
+}
+function saveVM(field, val) {
+  var c = DB.find(function(x){return x.id===currentId;}); if(!c) return;
+  if(!c.visite_medicale) c.visite_medicale={};
+  c.visite_medicale[field] = val;
+  save();
+}
+function toggleCheck(cid, key) {
+  var c = DB.find(function(x){return x.id===cid;}); if(!c) return;
+  if(!c.checks) c.checks={};
+  c.checks[key] = !c.checks[key];
+  save(); renderTab(cid, currentTab);
+}
+function setCheckDate(cid, key, val) {
+  var c = DB.find(function(x){return x.id===cid;}); if(!c) return;
+  if(!c.checks) c.checks={};
+  c.checks[key+'_date'] = val;
+  save();
+}
+function setEPITaille(cid, field, val) {
+  var c = DB.find(function(x){return x.id===cid;}); if(!c) return;
+  if(!c.checks) c.checks={};
+  c.checks[field] = val;
+  save();
+}
+function toggleComp(cid, key) {
+  var c = DB.find(function(x){return x.id===cid;}); if(!c) return;
+  if(!c.competences) c.competences={};
+  c.competences[key] = !c.competences[key];
+  save();
+}
+function setNota(cid, field, val) {
+  var c = DB.find(function(x){return x.id===cid;}); if(!c) return;
+  if(!c.notation) c.notation={};
+  c.notation[field] = val;
+  save(); renderTab(cid, 'notation');
+}
+function saveNotaComment(cid, val) {
+  var c = DB.find(function(x){return x.id===cid;}); if(!c) return;
+  if(!c.notation) c.notation={};
+  c.notation.commentaire = val;
+  save();
+}
+function addJournal(cid) {
+  var type = document.getElementById('j_type').value;
+  var date = document.getElementById('j_date').value;
+  var texte = document.getElementById('j_texte').value.trim();
+  if(!texte) return;
+  var c = DB.find(function(x){return x.id===cid;}); if(!c) return;
+  if(!c.journal) c.journal=[];
+  c.journal.push({id:uid(),type:type,date:date||today(),texte:texte});
+  save(); renderTab(cid,'journal');
+}
+function delJournal(cid, eid) {
+  var c = DB.find(function(x){return x.id===cid;}); if(!c) return;
+  c.journal = (c.journal||[]).filter(function(e){return e.id!==eid;});
+  save(); renderTab(cid,'journal');
+}
+function addMissionHisto(cid) {
+  var client = document.getElementById('hm_client').value.trim();
+  if(!client){alert('Client obligatoire');return;}
+  var c = DB.find(function(x){return x.id===cid;}); if(!c) return;
+  if(!c.historique_missions) c.historique_missions=[];
+  var debut = document.getElementById('hm_debut').value;
+  var fin   = document.getElementById('hm_fin').value;
+  var nbSem = 0;
+  if(debut&&fin){var d1=new Date(debut),d2=new Date(fin);nbSem=Math.max(0,Math.round((d2-d1)/(7*86400000)));}
+  var tc = parseFloat(document.getElementById('hm_tc').value)||0;
+  var tb = parseFloat(document.getElementById('hm_tb').value)||0;
+  var ca  = nbSem * 35 * 4.33 * tc;
+  c.historique_missions.push({client:client,qualif:document.getElementById('hm_qualif').value.trim(),date_debut:debut,date_fin:fin,nb_semaines:nbSem,taux_client:tc,taux_brut:tb,ca:ca,note:document.getElementById('hm_note').value.trim()});
+  save(); renderTab(cid,'historique');
+}
+function delMissionHisto(cid, idx) {
+  if(!confirm('Supprimer ?')) return;
+  var c = DB.find(function(x){return x.id===cid;}); if(!c) return;
+  c.historique_missions.splice(idx,1);
+  save(); renderTab(cid,'historique');
+}
+function archiverMission(cid) {
+  var c = DB.find(function(x){return x.id===cid;}); if(!c||!c.mission||!c.mission.client) return;
+  if(!c.historique_missions) c.historique_missions=[];
+  var m = c.mission;
+  var debut=m.date_debut, fin=m.date_fin;
+  var nbSem=0; if(debut&&fin){var d1=new Date(debut),d2=new Date(fin);nbSem=Math.max(0,Math.round((d2-d1)/(7*86400000)));}
+  c.historique_missions.push({client:m.client,qualif:c.qualif,date_debut:debut,date_fin:fin,nb_semaines:nbSem,taux_client:0,taux_brut:parseFloat(c.taux)||0,ca:0,note:'Mission archivée'});
+  c.mission={};
+  c.dispo='disponible';
+  save(); renderFiche(cid);
+}
+function addHab(cid) {
+  var label = prompt('Libellé habilitation :');
+  if(!label) return;
+  var c = DB.find(function(x){return x.id===cid;}); if(!c) return;
+  if(!c.habilitations_detail) c.habilitations_detail=[];
+  c.habilitations_detail.push({id:'hab_'+uid(),label:label,num:'',date_obtention:'',date_expiration:'',organisme:'',valide:true});
+  save(); renderTab(cid,'habilitations');
+}
+function delHab(cid, idx) {
+  if(!confirm('Supprimer ?')) return;
+  var c = DB.find(function(x){return x.id===cid;}); if(!c) return;
+  c.habilitations_detail.splice(idx,1);
+  save(); renderTab(cid,'habilitations');
+}
+
+// ── NOUVEAU PROFIL ──
+function newInterimaire() {
+  var c = {
+    id:uid(), nom:'NOUVEAU', prenom:'', qualif:'', niveau:'', taux:'', pretention:'',
+    tel:'', email:'', cp:'', ville:'', mobilite:'', vehicule:'', dispo:'disponible', dispo_date:'',
+    source:'Inscription directe', exp_annees:'', langues:'Français', permis:'', acompte:'non', acompte_montant:'',
+    notes:'', mission:{}, checks:{}, habilitations_detail:[], visite_medicale:{},
+    notation:{fiabilite:0,qualite:0,relationnel:0,commentaire:''}, historique_missions:[], competences:{}, journal:[]
+  };
+  DB.unshift(c);
+  save(); openFiche(c.id); renderList();
+}
+
+// ── SUPPRIMER PROFIL ──
+function supprimerProfil() {
+  if(!currentId) return;
+  var c = DB.find(function(x){return x.id===currentId;});
+  document.getElementById('confirm-title').textContent = 'Supprimer le profil';
+  document.getElementById('confirm-msg').textContent = 'Supprimer définitivement ' + (c?c.nom+' '+c.prenom:'ce profil') + ' ?';
+  document.getElementById('confirm-ok-btn').onclick = function() {
+    DB = DB.filter(function(x){return x.id!==currentId;});
+    save(); closeModal('modal-confirm');
+    currentId = null;
+    document.getElementById('fiche-panel').style.display = 'none';
+    document.getElementById('empty-state').style.display = 'block';
+    renderList();
+  };
+  document.getElementById('modal-confirm').classList.add('open');
+}
+
+// ── RELEVÉ D'HEURES ──
+function ouvrirReleve() {
+  if(!currentId) return;
+  var c = DB.find(function(x){return x.id===currentId;});
+  var m = c&&c.mission||{};
+  if(m.client) document.getElementById('rh_client').value = m.client;
+  if(m.adresse) document.getElementById('rh_adresse').value = m.adresse;
+  if(m.contact) document.getElementById('rh_contact').value = m.contact;
+  // Remplir tableau jours
+  var JOURS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+  var tbody = document.getElementById('rh-tbody'); tbody.innerHTML='';
+  JOURS.forEach(function(j,i){
+    var isWE = i>=5;
+    tbody.innerHTML += '<tr style="'+(isWE?'background:rgba(249,115,22,.04)':'')+'">'
+      + '<td style="padding:5px 8px;font-size:11px;border:1px solid var(--border2);'+(isWE?'color:var(--orange);font-weight:700':'')+'">'+j+'</td>'
+      + '<td><input id="rh_j'+i+'_hn" type="number" step="0.5" style="width:55px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:3px;font-family:var(--mono);font-size:11px;text-align:center;outline:none" placeholder="—"/></td>'
+      + '<td><input id="rh_j'+i+'_hs25" type="number" step="0.5" style="width:55px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:3px;font-family:var(--mono);font-size:11px;text-align:center;outline:none" placeholder="—"/></td>'
+      + '<td><input id="rh_j'+i+'_hs50" type="number" step="0.5" style="width:55px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:3px;font-family:var(--mono);font-size:11px;text-align:center;outline:none" placeholder="—"/></td>'
+      + '<td><input id="rh_j'+i+'_hwe" type="number" step="0.5" style="width:55px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:3px;font-family:var(--mono);font-size:11px;text-align:center;outline:none" placeholder="—"/></td>'
+      + '<td style="text-align:center"><input type="checkbox" id="rh_j'+i+'_pan"/></td>'
+      + '</tr>';
+  });
+  document.getElementById('modal-releve').classList.add('open');
+}
+
+function genererReleve() {
+  var c = DB.find(function(x){return x.id===currentId;}); if(!c) return;
+  var ag = JSON.parse(localStorage.getItem('jtp_config')||'{}');
+  var nomAffiche = c.prenom+' '+c.nom;
+  var semaine = document.getElementById('rh_semaine').value;
+  var debut = document.getElementById('rh_date_debut').value;
+  var fin = document.getElementById('rh_date_fin').value;
+  var client = document.getElementById('rh_client').value||'[CLIENT]';
+  var adresse = document.getElementById('rh_adresse').value;
+  var contact = document.getElementById('rh_contact').value;
+  var JOURS_L=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+  var joursData=[]; var totHn=0,totHs25=0,totHs50=0,totHwe=0,totPan=0;
+  for(var ji=0;ji<7;ji++){
+    var jhn=parseFloat((document.getElementById('rh_j'+ji+'_hn')||{value:'0'}).value||0);
+    var jhs25=parseFloat((document.getElementById('rh_j'+ji+'_hs25')||{value:'0'}).value||0);
+    var jhs50=parseFloat((document.getElementById('rh_j'+ji+'_hs50')||{value:'0'}).value||0);
+    var jhwe=parseFloat((document.getElementById('rh_j'+ji+'_hwe')||{value:'0'}).value||0);
+    var jpan=(document.getElementById('rh_j'+ji+'_pan')||{checked:false}).checked;
+    joursData.push({label:JOURS_L[ji],hn:jhn,hs25:jhs25,hs50:jhs50,hwe:jhwe,pan:jpan,we:ji>=5});
+    totHn+=jhn;totHs25+=jhs25;totHs50+=jhs50;totHwe+=jhwe;if(jpan)totPan++;
+  }
+  closeModal('modal-releve');
+
+  var agNom = ag.nom||'JTIPilot — Agence BTP';
+  var win = window.open('','_blank');
+  var h = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"/><title>Relevé heures</title>'
+    + '<style>body{font-family:Arial,sans-serif;max-width:800px;margin:20px auto;color:#1a1a1a;font-size:13px}'
+    + '.header{background:#1E3A5F;color:#fff;padding:14px 18px;border-radius:4px 4px 0 0;display:flex;justify-content:space-between;align-items:center}'
+    + '.ag-nom{font-size:14px;font-weight:700;color:#F97316;font-family:monospace;letter-spacing:1px}'
+    + '.bar{background:#F97316;color:#fff;padding:8px 18px;font-size:12px;font-weight:700;font-family:monospace;letter-spacing:1px}'
+    + 'table{width:100%;border-collapse:collapse}th{background:#1E3A5F;color:#fff;padding:7px;font-size:10px;font-family:monospace}td{padding:6px 8px;border:1px solid #e5e7eb;font-size:12px}'
+    + '.sig{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:16px}.sig-box{border:1px solid #e5e7eb;border-radius:4px;padding:10px;min-height:80px}'
+    + '.footer{margin-top:16px;font-size:10px;color:#9ca3af;border-top:2px solid #F97316;padding-top:8px}'
+    + '@media print{body{margin:5px}button{display:none}}</style></head><body>'
+    + '<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-35deg);font-size:72px;font-weight:900;color:rgba(0,0,0,.04);pointer-events:none;font-family:monospace">'+agNom+'</div>'
+    + '<div style="position:relative;z-index:1">'
+    + '<div class="header"><div class="ag-nom">'+agNom+'</div><div style="font-size:10px;color:#9ca3af">'+(ag.tel||'')+(ag.email?'<br>'+ag.email:'')+'</div></div>'
+    + '<div class="bar">RELEVÉ D\'HEURES — SEMAINE '+(semaine||'--')+(debut?' DU '+fmt(debut):'')+(fin?' AU '+fmt(fin):'')+'</div>'
+    + '<div style="padding:14px">'
+    + '<table style="margin-bottom:12px"><tr><td>Intérimaire</td><td><b>'+nomAffiche+'</b></td><td>Qualification</td><td>'+(c.qualif||'—')+'</td></tr>'
+    + '<tr><td>Entreprise</td><td><b>'+client+'</b></td><td>Contact client</td><td>'+(contact||'—')+'</td></tr>'
+    + (adresse?'<tr><td>Adresse chantier</td><td colspan="3">'+adresse+'</td></tr>':'')
+    + '</table>'
+    + '<table><thead><tr><th style="text-align:left;color:#F97316">JOUR</th><th>H.NORM</th><th style="color:#fbbf24">HS +25%</th><th style="color:#F97316">HS +50%</th><th style="color:#93c5fd">WE/FÉR.</th><th style="color:#86efac">PANIER</th></tr></thead><tbody>';
+  joursData.forEach(function(j){
+    var bg=j.we?'background:#fff8f3':'';
+    h += '<tr style="'+bg+'"><td style="font-size:11px'+(j.we?';color:#ea6307;font-weight:700':'')+'">'+j.label+'</td>'
+      + '<td style="text-align:center;font-family:monospace;font-weight:700">'+(j.hn||'—')+'</td>'
+      + '<td style="text-align:center;font-family:monospace;font-weight:700;color:#92400e">'+(j.hs25||'—')+'</td>'
+      + '<td style="text-align:center;font-family:monospace;font-weight:700;color:#c2410c">'+(j.hs50||'—')+'</td>'
+      + '<td style="text-align:center;font-family:monospace;font-weight:700;color:#1d4ed8">'+(j.hwe||'—')+'</td>'
+      + '<td style="text-align:center;font-size:14px">'+(j.pan?'✓':'')+'</td></tr>';
+  });
+  h += '<tr style="background:#1E3A5F"><td style="color:#F97316;font-family:monospace;font-weight:700;padding:6px 8px">TOTAL</td>'
+    + '<td style="text-align:center;color:#fff;font-family:monospace;font-weight:700">'+totHn+'</td>'
+    + '<td style="text-align:center;color:#fbbf24;font-family:monospace;font-weight:700">'+totHs25+'</td>'
+    + '<td style="text-align:center;color:#F97316;font-family:monospace;font-weight:700">'+totHs50+'</td>'
+    + '<td style="text-align:center;color:#93c5fd;font-family:monospace;font-weight:700">'+totHwe+'</td>'
+    + '<td style="text-align:center;color:#86efac;font-family:monospace;font-weight:700">'+totPan+'</td></tr>'
+    + '</tbody></table>'
+    + '<div class="sig"><div class="sig-box"><div style="font-family:monospace;font-size:10px;font-weight:700;margin-bottom:8px">INTÉRIMAIRE</div><p style="font-size:10px;color:#9ca3af">Nom, signature et date</p></div>'
+    + '<div class="sig-box"><div style="font-family:monospace;font-size:10px;font-weight:700;margin-bottom:8px">REPRÉSENTANT ENTREPRISE</div><p style="font-size:10px;color:#9ca3af">Nom, signature, cachet et date</p></div></div>'
+    + '<div class="footer" style="display:flex;justify-content:space-between"><span>Document généré par JTIpilot © '+agNom+'</span><span>'+new Date().toLocaleDateString('fr-FR')+'</span></div>'
+    + '<div style="text-align:center;margin-top:12px"><button onclick="window.print()" style="background:#F97316;color:#fff;border:none;border-radius:4px;padding:8px 20px;font-family:monospace;font-size:11px;font-weight:700;cursor:pointer">🖨 Imprimer / Télécharger PDF</button></div>'
+    + '</div></div></body></html>';
+  win.document.write(h);
+  win.document.close();
+}
+
+// ── CV PDF ──
+function checkAndGenererCV() {
+  if(!currentId) return;
+  var c = DB.find(function(x){return x.id===currentId;}); if(!c) return;
+  if(!c.qualif){alert('Qualification manquante');return;}
+  genererCV(currentId);
+}
+
+function genererCV(id) {
+  var c = DB.find(function(x){return x.id===id;}); if(!c) return;
+  var meta = getMeta(c); var nom = c.prenom+' '+c.nom;
+  var ag = JSON.parse(localStorage.getItem('jtp_config')||'{}');
+  var agNom = ag.nom||'JTIPilot — Agence BTP';
+  var checks = c.checks||{}, comp = c.competences||{};
+  var habList = (meta.habilitations||[]).filter(function(h){return checks['hab_'+h.id];}).map(function(h){return h.label;});
+  var compList = [];
+  (meta.competences||[]).forEach(function(bloc){
+    bloc.items.forEach(function(item,i){if(comp['comp_'+nrm(bloc.cat)+'_'+i])compList.push(item);});
+  });
+  var d = DISPO[c.dispo]||DISPO.disponible;
+  var win = window.open('','_blank');
+  var h = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"/><title>Profil '+nom+'</title>'
+    +'<style>body{font-family:Arial,sans-serif;max-width:760px;margin:30px auto;color:#222;font-size:13px;line-height:1.6}'
+    +'.header{background:#1E3A5F;color:#fff;padding:14px 18px;border-radius:4px 4px 0 0;display:flex;justify-content:space-between;align-items:center}'
+    +'.ag-nom{font-size:14px;font-weight:700;color:#F97316;font-family:monospace;letter-spacing:1px}'
+    +'.cand-head{background:#f8f9fb;border:1px solid #d1d9e6;border-top:none;padding:14px 18px;margin-bottom:18px}'
+    +'h1{font-size:20px;margin:0 0 3px}h2{font-size:11px;font-weight:700;color:#F97316;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid #F97316;padding-bottom:3px;margin:16px 0 8px}'
+    +'.badge{display:inline-block;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:700;font-family:monospace;margin-right:6px;background:#dcfce7;color:#15803d}'
+    +'ul{margin:4px 0;padding-left:18px}li{margin-bottom:2px}'
+    +'table{width:100%;border-collapse:collapse}td{padding:4px 8px;border-bottom:1px solid #e5e7eb;vertical-align:top}'
+    +'td:first-child{font-weight:600;min-width:140px;color:#374151}'
+    +'.footer{margin-top:28px;padding-top:10px;border-top:2px solid #F97316;font-size:11px;color:#6b7280;display:flex;justify-content:space-between}'
+    +'@media print{button{display:none}}</style></head><body>'
+    +'<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-35deg);font-size:80px;font-weight:900;color:rgba(0,0,0,.03);pointer-events:none;font-family:monospace">'+agNom+'</div>'
+    +'<div style="position:relative;z-index:1">'
+    +'<div class="header"><div class="ag-nom">'+agNom+'</div><div style="font-size:10px;color:#9ca3af">'+(ag.tel||'')+(ag.email?'<br>'+ag.email:'')+'</div></div>'
+    +'<div class="cand-head"><h1>'+nom+'</h1>'
+    +'<div style="font-size:14px;color:#F97316;font-weight:700;margin-bottom:6px">'+(c.qualif||'')+(c.niveau?' — '+c.niveau:'')+'</div>'
+    +'<span class="badge">'+d.l+'</span>'+(c.dispo_date?'<span style="font-size:12px;color:#6b7280"> Disponible le '+fmt(c.dispo_date)+'</span>':'')
+    +(c.taux?'<span class="badge" style="background:#fff7ed;color:#ea6307">'+c.taux+' €/h brut</span>':'')
+    +'<div style="margin-top:8px;font-size:11px;color:#374151">'
+    +((c.cp||c.ville)?'📍 '+c.cp+' '+(c.ville||'')+' ':'')
+    +(c.permis?'🚗 Permis '+c.permis+'&nbsp;&nbsp;':'')
+    +(c.mobilite?'📍 Mobilité : '+c.mobilite:'')
+    +'</div>'
+    +'<div style="margin-top:8px;background:#fff7ed;border:1px solid #F97316;border-radius:3px;padding:4px 10px;font-family:monospace;font-size:10px;font-weight:700;color:#F97316;text-align:center">TRANSMIS LE '+new Date().toLocaleDateString('fr-FR')+'</div>'
+    +'</div>'
+    +(habList.length?'<h2>Habilitations</h2><ul>'+habList.map(function(h){return '<li>'+h+'</li>';}).join('')+'</ul>':'')
+    +(compList.length?'<h2>Compétences</h2><ul>'+compList.slice(0,12).map(function(c){return '<li>'+c+'</li>';}).join('')+'</ul>':'')
+    +(c.exp_annees?'<h2>Expérience</h2><p>'+c.exp_annees+' ans dans le domaine du BTP</p>':'')
+    +(c.langues&&c.langues!=='Français'?'<h2>Langues</h2><p>'+c.langues+'</p>':'')
+    +'<div class="footer"><span>Document généré par JTIpilot &copy; '+agNom+'</span><span>Confidentiel — usage interne</span></div>'
+    +'<div style="text-align:center;margin-top:12px"><button onclick="window.print()" style="background:#F97316;color:#fff;border:none;border-radius:4px;padding:8px 20px;font-family:monospace;font-size:11px;font-weight:700;cursor:pointer">🖨 Imprimer / PDF</button></div>'
+    +'</div></body></html>';
+  win.document.write(h);
+  win.document.close();
+}
+
+// ── IMPORT CV IA ──
+function openImportCV() {
+  document.getElementById('modal-import-cv').classList.add('open');
+}
+function handleCVDrop(e) {
+  e.preventDefault();
+  document.getElementById('cv-drop-zone').classList.remove('drag');
+  var file = e.dataTransfer.files[0];
+  if(file) processCV(file);
+}
+function handleCVFile(inp) {
+  if(inp.files[0]) processCV(inp.files[0]);
+}
+async function processCV(file) {
+  var res = document.getElementById('cv-import-result');
+  res.style.display='block';
+  res.innerHTML='<div class="alert alert-info">⏳ Analyse du CV par IA en cours…</div>';
+  try {
+    var base64 = await new Promise(function(resolve,reject){
+      var r=new FileReader();
+      r.onload=function(){resolve(r.result.split(',')[1]);};
+      r.onerror=reject;
+      r.readAsDataURL(file);
+    });
+    var mediaType = file.type||'application/pdf';
+    var response = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        messages:[{role:'user',content:[
+          {type:'document',source:{type:'base64',media_type:mediaType,data:base64}},
+          {type:'text',text:'Analyse ce CV et extrait en JSON UNIQUEMENT (sans markdown) : nom, prenom, qualif (qualification principale en BTP), niveau (N1/N2/N3/N4/ETQ/Cadre), tel, email, cp, ville, exp_annees (nombre), langues (liste virgule-séparée), permis (B/C/etc ou vide), habilitations (liste labels), notes (1-2 phrases résumé profil). Réponds UNIQUEMENT avec le JSON brut, aucun texte avant ou après.'}
+        ]}]
+      })
+    });
+    var data = await response.json();
+    var txt = (data.content&&data.content[0]&&data.content[0].text)||'{}';
+    var parsed = JSON.parse(txt.replace(/```json|```/g,'').trim());
+    res.innerHTML = '<div class="alert alert-ok">✅ CV analysé — Profil extrait</div>'
+      + '<div style="font-size:11px;font-family:var(--mono);background:var(--surface2);border:1px solid var(--border2);border-radius:4px;padding:10px;margin-top:8px;line-height:2">'
+      + Object.entries(parsed).filter(function(kv){return kv[1]&&(typeof kv[1]==='string'?kv[1].trim():'');}).map(function(kv){
+          return '<b>'+kv[0]+'</b> : '+kv[1];
+        }).join('<br>') + '</div>'
+      + '<button class="btn btn-primary" style="margin-top:10px" onclick="createFromCV('+JSON.stringify(JSON.stringify(parsed))+')">✅ Créer le profil</button>';
+  } catch(err) {
+    res.innerHTML='<div class="alert alert-warn">❌ Erreur : '+err.message+'</div>';
+  }
+}
+function createFromCV(jsonStr) {
+  try {
+    var d = JSON.parse(jsonStr);
+    var c = Object.assign({
+      id:uid(),dispo:'disponible',dispo_date:'',taux:'',pretention:'',source:'Import CV IA',
+      acompte:'non',acompte_montant:'',vehicule:'',mobilite:'',
+      checks:{},habilitations_detail:[],visite_medicale:{},
+      notation:{fiabilite:0,qualite:0,relationnel:0,commentaire:''},
+      historique_missions:[],competences:{},journal:[],mission:{}
+    }, d);
+    if(d.habilitations && Array.isArray(d.habilitations)) {
+      c.habilitations_detail = d.habilitations.map(function(l){return {id:'hai_'+uid(),label:l,num:'',date_obtention:'',date_expiration:'',organisme:'',valide:true};});
+    }
+    DB.unshift(c);
+    save(); closeModal('modal-import-cv'); openFiche(c.id); renderList();
+  } catch(e) { alert('Erreur création : '+e.message); }
+}
+
+// ── EXPORT / IMPORT ──
+function exportJSON() {
+  var blob = new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  var a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download = 'jtipilot_interimaires_'+today()+'.json'; a.click();
+}
+function importJSON(inp) {
+  var file = inp.files[0]; if(!file) return;
+  var r = new FileReader();
+  r.onload = function(e){
+    try {
+      var data = JSON.parse(e.target.result);
+      if(!Array.isArray(data)){alert('Format invalide');return;}
+      var added=0;
+      data.forEach(function(c){
+        if(!DB.find(function(x){return x.id===c.id;})){DB.push(c);added++;}
+      });
+      save(); renderList();
+      alert(added+' profil(s) importé(s)');
+    } catch(err){alert('Erreur lecture JSON : '+err.message);}
+  };
+  r.readAsText(file);
+  inp.value='';
+}
+
+// ── MODALS ──
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(function(m){
+  m.addEventListener('click',function(e){if(e.target===m)closeModal(m.id);});
+});
+</script>
+</body>
+</html>
