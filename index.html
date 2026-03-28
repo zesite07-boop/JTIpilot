@@ -285,8 +285,8 @@ html,body{height:100%;overflow:hidden;font-family:var(--sans);}
   <div class="nav-logo">
     <div class="nav-logo-icon">🏗</div>
     <div>
-      <div class="nav-logo-text">JTIpilot</div>
-      <div class="nav-logo-sub">OUTILS DE PILOTAGE</div>
+      <div class="nav-logo-text" id="nav-agency-name">JTIpilot</div>
+      <div class="nav-logo-sub" id="nav-agency-sub">OUTILS DE PILOTAGE</div>
     </div>
   </div>
 
@@ -386,7 +386,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--sans);}
 <!-- CONTENU IFRAMES -->
 <div class="content" id="content">
   <div id="splash">
-    <div class="splash-title">JTIpilot — OUTILS DE PILOTAGE</div>
+    <div class="splash-title" id="splash-agency-title">JTIpilot — OUTILS DE PILOTAGE</div>
     <div class="splash-sub" id="today-date-sub"></div>
     <div class="splash-kpis" id="splash-kpis">
       <div class="sk-item" onclick="loadWithFilter('candidats','Base Candidats','Vivier &amp; disponibilités','dispo','tous')" style="cursor:pointer" title="Voir tous les candidats">
@@ -918,6 +918,21 @@ setInterval(function() {
 // ─────────────────────────────────────────
 // BACKUP & EXPORT
 // ─────────────────────────────────────────
+// Nom agence : JSON localStorage agence_btp (champ nom), comme candidats2.html
+(function () {
+  try {
+    var ag = JSON.parse(localStorage.getItem('agence_btp') || '{}');
+    var nom = (ag && ag.nom && String(ag.nom).trim()) || 'JTIpilot';
+    var emetteur = (ag && ag.emetteur && String(ag.emetteur).trim()) || '';
+    var el = document.getElementById('nav-agency-name');
+    if (el) el.textContent = nom;
+    var sub = document.getElementById('nav-agency-sub');
+    if (sub && emetteur) sub.textContent = 'par ' + emetteur;
+    var splash = document.getElementById('splash-agency-title');
+    if (splash) splash.textContent = nom + ' — OUTILS DE PILOTAGE';
+  } catch (e) {}
+})();
+
 var BACKUP_KEYS = ['crm_btp_db','cands_btp_v2','flc_clients','jtp_missions','grilles_btp','agence_btp','tdb_cfg','crm_kpi_semaine','tdb_spark_marge','jtp_theme'];
 
 function openBackup() {
