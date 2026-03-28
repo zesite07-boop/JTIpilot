@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<title>Guide Juridique RA BTP Intérim</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+:root{
+  --bg:#f7f6f2;--surface:#ffffff;--surface2:#f2f0eb;--surface3:#e8e4dc;
+  --border:#d8d3c8;--border2:#c4bdb0;
+  --text:#1a1814;--muted:#6b6456;--muted2:#9c9082;
+  --accent:#c0392b;--accent2:#e74c3c;
+  --green:#1a7a4a;--green-bg:#edf7f1;
+  --blue:#1a4a7a;--blue-bg:#edf2f7;
+  --warn:#c0392b;--warn-bg:#fdf0ef;
+  --yellow:#7a5a1a;--yellow-bg:#fdf8ed;
+  --mono:'IBM Plex Mono',monospace;
+  --sans:'IBM Plex Sans',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;line-height:1.6;}
+
+/* HEADER */
+.header{
+  background:var(--accent);
+  color:#fff;
+  padding:28px 40px 20px;
+  position:relative;
+  overflow:hidden;
+}
+.header::after{
+  content:'';position:absolute;right:-40px;top:-40px;
+  width:200px;height:200px;border-radius:50%;
+  background:rgba(255,255,255,.05);
+}
+.header h1{font-family:var(--mono);font-size:18px;font-weight:600;letter-spacing:1px;margin-bottom:4px;}
+.header p{font-size:11px;opacity:.7;font-family:var(--mono);}
+.header-meta{display:flex;gap:20px;margin-top:12px;}
+.header-tag{
+  font-size:10px;font-family:var(--mono);
+  background:rgba(255,255,255,.15);
+  padding:3px 10px;border-radius:2px;
+}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 100px);}
+
+/* NAV */
+.nav{
+  background:var(--surface);border-right:1px solid var(--border);
+  padding:20px 0;position:sticky;top:0;height:calc(100vh - 100px);overflow-y:auto;
+}
+.nav-section{margin-bottom:4px;}
+.nav-section-title{
+  font-family:var(--mono);font-size:9px;font-weight:600;color:var(--muted2);
+  letter-spacing:1.5px;padding:8px 20px 4px;text-transform:uppercase;
+}
+.nav-item{
+  display:block;padding:7px 20px;font-size:11px;color:var(--muted);
+  cursor:pointer;border-left:2px solid transparent;transition:all .12s;
+  font-family:var(--sans);
+}
+.nav-item:hover{color:var(--text);background:var(--surface2);}
+.nav-item.active{color:var(--accent);border-left-color:var(--accent);background:var(--warn-bg);}
+.nav-badge{
+  display:inline-block;font-size:9px;font-family:var(--mono);
+  padding:1px 5px;border-radius:10px;margin-left:6px;
+  background:var(--warn-bg);color:var(--accent);
+}
+
+/* CONTENT */
+.content{padding:32px 40px;max-width:900px;}
+.section{display:none;}
+.section.active{display:block;}
+
+/* SECTION HEADER */
+.section-title{
+  font-family:var(--mono);font-size:13px;font-weight:600;color:var(--accent);
+  letter-spacing:.5px;margin-bottom:6px;
+  padding-bottom:10px;border-bottom:2px solid var(--accent);
+}
+.section-intro{font-size:12px;color:var(--muted);margin-bottom:24px;line-height:1.7;}
+
+/* RULE CARD */
+.rule-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:4px;margin-bottom:12px;overflow:hidden;
+}
+.rule-header{
+  display:grid;grid-template-columns:auto 1fr auto;gap:12px;
+  padding:12px 16px;cursor:pointer;align-items:center;
+  border-bottom:1px solid transparent;transition:background .1s;
+}
+.rule-header:hover{background:var(--surface2);}
+.rule-header.open{background:var(--surface2);border-bottom-color:var(--border);}
+.rule-icon{font-size:18px;width:24px;text-align:center;}
+.rule-title{font-weight:600;font-size:12px;color:var(--text);}
+.rule-sub{font-size:10px;color:var(--muted);margin-top:1px;font-family:var(--mono);}
+.rule-badge{
+  font-size:9px;font-family:var(--mono);font-weight:600;
+  padding:3px 8px;border-radius:2px;white-space:nowrap;
+}
+.rb-warn{background:var(--warn-bg);color:var(--accent);}
+.rb-green{background:var(--green-bg);color:var(--green);}
+.rb-blue{background:var(--blue-bg);color:var(--blue);}
+.rb-yellow{background:var(--yellow-bg);color:var(--yellow);}
+.rule-body{padding:16px;display:none;}
+.rule-body.open{display:block;}
+
+/* BLOCKS inside rule-body */
+.rule-chiffres{
+  background:var(--surface2);border-left:3px solid var(--accent);
+  padding:10px 14px;margin-bottom:12px;border-radius:0 3px 3px 0;
+}
+.rule-chiffres .ch-title{font-family:var(--mono);font-size:9px;font-weight:600;color:var(--accent);letter-spacing:1px;margin-bottom:6px;}
+.rule-chiffres .ch-row{display:flex;justify-content:space-between;font-size:11px;padding:3px 0;border-bottom:1px solid var(--border);}
+.rule-chiffres .ch-row:last-child{border-bottom:none;}
+.rule-chiffres .ch-val{font-family:var(--mono);font-weight:600;color:var(--text);}
+
+.reflexe{
+  display:flex;gap:10px;padding:8px 12px;border-radius:3px;margin-bottom:6px;
+  font-size:11px;line-height:1.6;align-items:flex-start;
+}
+.reflexe.ok{background:var(--green-bg);border-left:3px solid var(--green);}
+.reflexe.ko{background:var(--warn-bg);border-left:3px solid var(--accent);}
+.reflexe.info{background:var(--blue-bg);border-left:3px solid var(--blue);}
+.reflexe.warn{background:var(--yellow-bg);border-left:3px solid var(--yellow);}
+.reflexe-icon{font-size:14px;flex-shrink:0;margin-top:1px;}
+.reflexe-title{font-weight:600;color:var(--text);}
+
+.conse{
+  background:var(--warn-bg);border:1px solid #f5c6c0;
+  border-radius:3px;padding:10px 14px;margin-top:8px;
+  font-size:11px;line-height:1.7;
+}
+.conse-title{font-family:var(--mono);font-size:9px;font-weight:600;color:var(--accent);letter-spacing:.5px;margin-bottom:4px;}
+
+.tip{
+  background:var(--blue-bg);border:1px solid #c0d4e8;
+  border-radius:3px;padding:10px 14px;margin-top:8px;
+  font-size:11px;line-height:1.7;
+}
+.tip-title{font-family:var(--mono);font-size:9px;font-weight:600;color:var(--blue);letter-spacing:.5px;margin-bottom:4px;}
+
+/* SEARCH */
+.search-bar{
+  display:flex;gap:8px;margin-bottom:20px;
+}
+.search-input{
+  flex:1;padding:8px 14px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:3px;font-family:var(--mono);font-size:11px;color:var(--text);
+  outline:none;
+}
+.search-input:focus{border-color:var(--accent);}
+.search-count{font-size:10px;color:var(--muted);font-family:var(--mono);align-self:center;white-space:nowrap;}
+
+/* TABLE */
+.ref-table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:11px;}
+.ref-table th{
+  background:var(--surface2);padding:8px 12px;
+  font-family:var(--mono);font-size:9px;font-weight:600;color:var(--muted);
+  letter-spacing:.5px;text-align:left;border-bottom:2px solid var(--border);
+}
+.ref-table td{padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.5;}
+.ref-table tr:last-child td{border-bottom:none;}
+.ref-table tr:hover td{background:var(--surface2);}
+.ref-table .mono{font-family:var(--mono);font-size:10px;}
+.ref-table .ok{color:var(--green);font-weight:600;}
+.ref-table .ko{color:var(--accent);font-weight:600;}
+
+/* MOTIF TAG */
+.motif{
+  display:inline-block;font-family:var(--mono);font-size:10px;
+  padding:2px 8px;border-radius:2px;margin:2px 2px 2px 0;
+}
+.motif-green{background:var(--green-bg);color:var(--green);}
+.motif-warn{background:var(--warn-bg);color:var(--accent);}
+.motif-blue{background:var(--blue-bg);color:var(--blue);}
+
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>GUIDE JURIDIQUE — RESPONSABLE D'AGENCE BTP INTÉRIM</h1>
+  <p>Référence opérationnelle · Mise à jour 2026 · Code du Travail + ANI Intérim</p>
+  <div class="header-meta">
+    <span class="header-tag">⚡ SITUATIONS À RISQUE</span>
+    <span class="header-tag">✓ BONS RÉFLEXES</span>
+    <span class="header-tag">📋 CHIFFRES CLÉS</span>
+    <span class="header-tag">⚠ CONSÉQUENCES</span>
+  </div>
+</div>
+
+<div class="layout">
+  <nav class="nav">
+    <div class="nav-section">
+      <div class="nav-section-title">CONTRATS</div>
+      <div class="nav-item active" onclick="show('motifs',this)">Motifs de recours <span class="nav-badge">risque</span></div>
+      <div class="nav-item" onclick="show('durees',this)">Durées & renouvellement</div>
+      <div class="nav-item" onclick="show('triangle',this)">Triangle contractuel</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">DROITS INTÉRIMAIRES</div>
+      <div class="nav-item" onclick="show('egalite',this)">Égalité de traitement</div>
+      <div class="nav-item" onclick="show('remuneration',this)">Rémunération obligatoire</div>
+      <div class="nav-item" onclick="show('at',this)">Accidents du travail <span class="nav-badge">risque</span></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">RISQUES JURIDIQUES</div>
+      <div class="nav-item" onclick="show('requalif',this)">Requalification CDI <span class="nav-badge">risque</span></div>
+      <div class="nav-item" onclick="show('delit',this)">Délit de marchandage</div>
+      <div class="nav-item" onclick="show('travail_illegal',this)">Travail illégal</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">RELATION CLIENT</div>
+      <div class="nav-item" onclick="show('mise_dispo',this)">Contrat de mise à dispo</div>
+      <div class="nav-item" onclick="show('responsabilite',this)">Responsabilités partagées</div>
+      <div class="nav-item" onclick="show('impaye',this)">Impayés & recouvrement</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">RÉFÉRENCE RAPIDE</div>
+      <div class="nav-item" onclick="show('chiffres',this)">Tous les chiffres clés</div>
+      <div class="nav-item" onclick="show('checklist',this)">Check-list avant placement</div>
+    </div>
+  </nav>
+
+  <div class="content">
+
+    <!-- BARRE RECHERCHE (visible partout) -->
+    <div class="search-bar">
+      <input class="search-input" id="search-inp" placeholder="Rechercher : requalification, durée, AT, salaire..." oninput="searchAll(this.value)"/>
+      <span class="search-count" id="search-count"></span>
+    </div>
+
+    <!-- ══════════════════════════════════════ -->
+    <!-- 1. MOTIFS DE RECOURS -->
+    <!-- ══════════════════════════════════════ -->
+    <div id="s-motifs" class="section active">
+      <div class="section-title">MOTIFS DE RECOURS — LES 3 SEULS CAS LÉGAUX</div>
+      <div class="section-intro">Un contrat de mission ne peut être conclu que pour l'un des 3 motifs prévus par l'article L.1251-6 du Code du Travail. Tout autre motif = contrat illicite. C'est le premier point de contrôle en cas d'inspection ou de contentieux.</div>
+
+      <div class="rule-card">
+        <div class="rule-header" onclick="toggleRule(this)">
+          <div class="rule-icon">1️⃣</div>
+          <div><div class="rule-title">REMPLACEMENT D'UN SALARIÉ ABSENT</div><div class="rule-sub">Art. L.1251-6 1° — Motif le plus courant en BTP</div></div>
+          <div class="rule-badge rb-green">LÉGAL</div>
+        </div>
+        <div class="rule-body">
+          <div class="rule-chiffres">
+            <div class="ch-title">CONDITIONS STRICTES</div>
+            <div class="ch-row"><span>Salarié nommément désigné</span><span class="ch-val">OBLIGATOIRE dans le contrat</span></div>
+            <div class="ch-row"><span>Motif de l'absence</span><span class="ch-val">À mentionner (maladie, congé, etc.)</span></div>
+            <div class="ch-row"><span>Durée max</span><span class="ch-val">18 mois (mission + renouvellements)</span></div>
+            <div class="ch-row"><span>Remplacement poste supprimé</span><span class="ch-val">INTERDIT — risque requalification</span></div>
+          </div>
+          <div class="reflexe ok"><span class="reflexe-icon">✓</span><div><span class="reflexe-title">Bon réflexe :</span> Toujours noter le nom du salarié remplacé ET son motif d'absence dans le contrat de mise à disposition. En cas de contrôle, c'est la première pièce demandée.</div></div>
+          <div class="reflexe ko"><span class="reflexe-icon">✗</span><div><span class="reflexe-title">Erreur fréquente :</span> Le client dit "remplacer untel" mais le poste a été transformé ou supprimé entre-temps. Vérifier que le salarié est bien prévu de revenir.</div></div>
+          <div class="conse"><div class="conse-title">CONSÉQUENCE SI ILLÉGAL</div>Requalification en CDI de l'intérimaire chez le client utilisateur. Dommages et intérêts. Amende pénale possible (Art. L.1254-1).</div>
+        </div>
+      </div>
+
+      <div class="rule-card">
+        <div class="rule-header" onclick="toggleRule(this)">
+          <div class="rule-icon">2️⃣</div>
+          <div><div class="rule-title">ACCROISSEMENT TEMPORAIRE D'ACTIVITÉ</div><div class="rule-sub">Art. L.1251-6 2° — Motif majoritaire en BTP second œuvre</div></div>
+          <div class="rule-badge rb-green">LÉGAL</div>
+        </div>
+        <div class="rule-body">
+          <div class="rule-chiffres">
+            <div class="ch-title">CONDITIONS</div>
+            <div class="ch-row"><span>Caractère temporaire de l'accroissement</span><span class="ch-val">Doit être justifiable</span></div>
+            <div class="ch-row"><span>Durée max (mission seule)</span><span class="ch-val">18 mois total avec renouvellements</span></div>
+            <div class="ch-row"><span>Chantier spécifique</span><span class="ch-val">Durée du chantier = justification naturelle</span></div>
+          </div>
+          <div class="reflexe ok"><span class="reflexe-icon">✓</span><div><span class="reflexe-title">Avantage BTP :</span> La durée d'un chantier est une justification naturelle de l'accroissement. Faire référence au numéro de chantier ou d'affaire dans le contrat.</div></div>
+          <div class="reflexe warn"><span class="reflexe-icon">⚠</span><div><span class="reflexe-title">Attention :</span> Un client qui renouvelle systématiquement les mêmes intérimaires sur les mêmes postes depuis plusieurs années sur ce motif s'expose à requalification. Votre agence aussi en cas de complicité.</div></div>
+        </div>
+      </div>
+
+      <div class="rule-card">
+        <div class="rule-header" onclick="toggleRule(this)">
+          <div class="rule-icon">3️⃣</div>
+          <div><div class="rule-title">EMPLOI SAISONNIER OU D'USAGE</div><div class="rule-sub">Art. L.1251-6 3° — Rare en BTP standard</div></div>
+          <div class="rule-badge rb-blue">SPÉCIFIQUE</div>
+        </div>
+        <div class="rule-body">
+          <div class="reflexe info"><span class="reflexe-icon">ℹ</span><div>En BTP, ce motif concerne essentiellement les emplois saisonniers (façadiers/ravalement lié aux températures, travaux extérieurs d'été). Peu utilisé pour le second œuvre courant. Si un client le demande hors contexte saisonnier, refuser.</div></div>
+        </div>
+      </div>
+
+      <div class="rule-card" style="border-color:#f5c6c0">
+        <div class="rule-header" onclick="toggleRule(this)">
+          <div class="rule-icon">🚫</div>
+          <div><div class="rule-title">CAS INTERDITS — RECOURS ILLICITE</div><div class="rule-sub">Art. L.1251-10 — Risque pénal direct pour l'ETT</div></div>
+          <div class="rule-badge rb-warn">INTERDIT</div>
+        </div>
+        <div class="rule-body">
+          <div class="reflexe ko"><span class="reflexe-icon">✗</span><div><span class="reflexe-title">Remplacement d'un salarié gréviste :</span> Strictement interdit. Même si le client "formule autrement" la demande. Refuser catégoriquement et documenter le refus.</div></div>
+          <div class="reflexe ko"><span class="reflexe-icon">✗</span><div><span class="reflexe-title">Travaux dangereux sans accord de branche :</span> Certains travaux exposant à des agents chimiques dangereux (amiante, plomb) ne peuvent faire l'objet de missions intérimaires que sous conditions très strictes.</div></div>
+          <div class="reflexe ko"><span class="reflexe-icon">✗</span><div><span class="reflexe-title">Poste sans équivalent en CDI dans l'entreprise :</span> Le recours à l'intérim présuppose que le poste existe en CDI dans l'entreprise utilisatrice. Un poste créé uniquement pour être pourvu en intérim = illicite.</div></div>
+          <div class="conse"><div class="conse-title">RISQUE PÉNAL</div>Amende de 3 750€ par salarié concerné (personne physique). En cas de travail dissimulé associé : jusqu'à 45 000€ d'amende et 3 ans d'emprisonnement (Art. L.1254-1 à L.1254-3).</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════ -->
+    <!-- 2. DURÉES -->
+    <!-- ══════════════════════════════════════ -->
+    <div id="s-durees" class="section">
+      <div class="section-title">DURÉES MAXIMALES & DÉLAIS DE CARENCE</div>
+      <div class="section-intro">La durée de la mission est strictement encadrée. Le dépassement entraîne la requalification automatique. Le délai de carence est le piège le plus fréquent en agence.</div>
+
+      <table class="ref-table">
+        <tr><th>MOTIF</th><th>DURÉE MAX (mission + renouvellements)</th><th>RENOUVELLEMENTS</th></tr>
+        <tr><td>Remplacement salarié absent</td><td class="mono">18 mois</td><td class="mono">2 max</td></tr>
+        <tr><td>Accroissement temporaire</td><td class="mono">18 mois</td><td class="mono">2 max</td></tr>
+        <tr><td>Remplacement chef d'entreprise</td><td class="mono">Durée de l'absence</td><td class="mono">—</td></tr>
+        <tr><td>Emploi saisonnier</td><td class="mono">Non limitée en théorie</td><td class="mono">—</td></tr>
+        <tr><td>Contrat de chantier (BTP)</td><td class="mono">Durée du chantier</td><td class="mono">—</td></tr>
+      </table>
+
+      <div class="rule-card">
+        <div class="rule-header" onclick="toggleRule(this)">
+          <div class="rule-icon">⏱</div>
+          <div><div class="rule-title">DÉLAI DE CARENCE — LA RÈGLE DU TIERS</div><div class="rule-sub">Art. L.1251-36 — Piège n°1 en agence BTP</div></div>
+          <div class="rule-badge rb-warn">CRITIQUE</div>
+        </div>
+        <div class="rule-body">
+          <div class="rule-chiffres">
+            <div class="ch-title">CALCUL DU DÉLAI</div>
+            <div class="ch-row"><span>Mission ≤ 14 jours</span><span class="ch-val">Carence = ½ durée de la mission</span></div>
+            <div class="ch-row"><span>Mission > 14 jours</span><span class="ch-val">Carence = ⅓ durée de la mission</span></div>
+            <div class="ch-row"><span>Exemples pratiques :</span><span class="ch-val"></span></div>
+            <div class="ch-row"><span>Mission 6 semaines (30j ouvrés)</span><span class="ch-val">Carence = 10 jours ouvrés</span></div>
+            <div class="ch-row"><span>Mission 3 mois (65j ouvrés)</span><span class="ch-val">Carence = 22 jours ouvrés</span></div>
+          </div>
+          <div class="reflexe ok"><span class="reflexe-icon">✓</span><div><span class="reflexe-title">Le délai s'applique :</span> Au même poste, dans la même entreprise utilisatrice. Pas à un poste différent, pas à un autre site du même groupe.</div></div>
+          <div class="reflexe ko"><span class="reflexe-icon">✗</span><div><span class="reflexe-title">Exceptions (pas de carence) :</span> Rupture à l'initiative de l'intérimaire, faute grave, cas de force majeure, remplacement d'un salarié absent, commande exceptionnelle à l'exportation.</div></div>
+          <div class="conse"><div class="conse-title">SI DÉLAI NON RESPECTÉ</div>Requalification du contrat de mission en CDI chez le client. L'intérimaire peut saisir directement les prud'hommes contre le client utilisateur.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════ -->
+    <!-- 3. TRIANGLE CONTRACTUEL -->
+    <!-- ══════════════════════════════════════ -->
+    <div id="s-triangle" class="section">
+      <div class="section-title">TRIANGLE CONTRACTUEL — LES 2 CONTRATS OBLIGATOIRES</div>
+      <div class="section-intro">Le travail temporaire repose sur un montage triangulaire avec deux contrats distincts et obligatoires. Une erreur sur l'un se répercute sur l'autre.</div>
+
+      <div class="rule-card">
+        <div class="rule-header" onclick="toggleRule(this)">
+          <div class="rule-icon">📄</div>
+          <div><div class="rule-title">CONTRAT DE MISE À DISPOSITION (ETT → Client)</div><div class="rule-sub">Art. L.1251-42 — À signer AVANT le début de la mission</div></div>
+          <div class="rule-badge rb-blue">OBLIGATOIRE</div>
+        </div>
+        <div class="rule-body">
+          <div class="rule-chiffres">
+            <div class="ch-title">MENTIONS OBLIGATOIRES (Art. L.1251-43)</div>
+            <div class="ch-row"><span>Motif du recours</span><span class="ch-val">Précis et justifié</span></div>
+            <div class="ch-row"><span>Terme de la mission</span><span class="ch-val">Date ou condition (fin chantier)</span></div>
+            <div class="ch-row"><span>Caractéristiques du poste</span><span class="ch-val">Qualif, lieu, horaires, risques</span></div>
+            <div class="ch-row"><span>Taux horaire + charges</span><span class="ch-val">Taux client = base facturation</span></div>
+            <div class="ch-row"><span>Délai de transmission</span><span class="ch-val">2 jours ouvrables après début mission</span></div>
+          </div>
+          <div class="reflexe warn"><span class="reflexe-icon">⚠</span><div><span class="reflexe-title">Délai critique :</span> Le contrat de mise à disposition doit être transmis au client dans les 2 jours ouvrables suivant le début de la mission. Passé ce délai, le client peut contester le contrat.</div></div>
+          <div class="reflexe ok"><span class="reflexe-icon">✓</span><div><span class="reflexe-title">Cohérence obligatoire :</span> Les mentions du contrat de mise à disposition DOIVENT être identiques à celles du contrat de mission signé avec l'intérimaire. Toute divergence = risque de requalification.</div></div>
+        </div>
+      </div>
+
+      <div class="rule-card">
+        <div class="rule-header" onclick="toggleRule(this)">
+          <div class="rule-icon">📋</div>
+          <div><div class="rule-title">CONTRAT DE MISSION (ETT → Intérimaire)</div><div class="rule-sub">Art. L.1251-16 — Transmis dans les 2 jours ouvrables</div></div>
+          <div class="rule-badge rb-blue">OBLIGATOIRE</div>
+        </div>
+        <div class="rule-body">
+          <div class="rule-chiffres">
+            <div class="ch-title">MENTIONS OBLIGATOIRES</div>
+            <div class="ch-row"><span>Motif du recours</span><span class="ch-val">Identique au contrat CMD</span></div>
+            <div class="ch-row"><span>Qualification professionnelle</span><span class="ch-val">Niveau + échelon BTP</span></div>
+            <div class="ch-row"><span>Lieu de mission</span><span class="ch-val">Adresse précise du chantier</span></div>
+            <div class="ch-row"><span>Horaires de travail</span><span class="ch-val">Amplitude + horaires</span></div>
+            <div class="ch-row"><span>Rémunération</span><span class="ch-val">Taux brut + primes éventuelles</span></div>
+            <div class="ch-row"><span>Nom de l'entreprise utilisatrice</span><span class="ch-val">Raison sociale complète</span></div>
+            <div class="ch-row"><span>Période d'essai</span><span class="ch-val">2j si mission ≤1mois / 3j si ≤2mois / 5j si +2mois</span></div>
+          </div>
+          <div class="reflexe ok"><span class="reflexe-icon">✓</span><div><span class="reflexe-title">Période d'essai :</span> Elle est facultative mais si elle est prévue, les durées sont impératives. Ne pas dépasser ces délais si on veut pouvoir mettre fin à la mission sans conséquence.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════ -->
+    <!-- 4. ÉGALITÉ DE TRAITEMENT -->
+    <!-- ══════════════════════════════════════ -->
+    <div id="s-egalite" class="section">
+      <div class="section-title">ÉGALITÉ DE TRAITEMENT — LA RÈGLE DES 3 MOIS</div>
+      <div class="section-intro">Après 3 mois de mission continue dans la même entreprise utilisatrice, l'intérimaire acquiert les mêmes droits aux avantages collectifs que les salariés permanents. C'est la règle la plus souvent ignorée par les agences.</div>
+
+      <div class="rule-card">
+        <div class="rule-header" onclick="toggleRule(this)">
+          <div class="rule-icon">⚖️</div>
+          <div><div class="rule-title">AVANTAGES COLLECTIFS APPLICABLES</div><div class="rule-sub">Art. L.1251-24 — Accès aux avantages de l'EU après 3 mois</div></div>
+          <div class="rule-badge rb-warn">À ANTICIPER</div>
+        </div>
+        <div class="rule-body">
+          <div class="rule-chiffres">
+            <div class="ch-title">CE QUI EST DÛ APRÈS 3 MOIS CONTINUS</div>
+            <div class="ch-row"><span>Tickets restaurant</span><span class="ch-val">Même valeur que les CDI</span></div>
+            <div class="ch-row"><span>Transport (Navigo)</span><span class="ch-val">50% remboursé dès le 1er jour</span></div>
+            <div class="ch-row"><span>Primes liées au poste</span><span class="ch-val">Prime salissure, panier, déplacement</span></div>
+            <div class="ch-row"><span>Accès au restaurant d'entreprise</span><span class="ch-val">Si existant chez l'EU</span></div>
+            <div class="ch-row"><span>Équipements collectifs</span><span class="ch-val">Vestiaires, douches, réfectoire</span></div>
+          </div>
+          <div class="reflexe ok"><span class="reflexe-icon">✓</span><div><span class="reflexe-title">Bon réflexe avant placement :</span> Demander systématiquement au client une liste des avantages en nature dont bénéficient ses salariés CDI sur le même poste. L'intégrer dans la facturation si nécessaire.</div></div>
+          <div class="reflexe warn"><span class="reflexe-icon">⚠</span><div><span class="reflexe-title">Transport (dès le 1er jour) :</span> Le remboursement à 50% du titre de transport est dû dès le début de la mission, sans condition de durée. C'est la charge de l'ETT, remboursée exonérée de charges sur justificatif.</div></div>
+          <div class="tip"><div class="tip-title">IMPACT COMMERCIAL</div>Si un client demande une mission longue (3 mois+) sur un poste avec avantages, vérifier que le taux client intègre le coût de ces avantages. Sinon marge réelle < marge facturée.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════ -->
+    <!-- 5. RÉMUNÉRATION -->
+    <!-- ══════════════════════════════════════ -->
+    <div id="s-remuneration" class="section">
+      <div class="section-title">RÉMUNÉRATION — CE QUI EST OBLIGATOIRE</div>
+      <div class="section-intro">La rémunération d'un intérimaire n'est pas libre. Elle est encadrée par la loi, la convention collective BTP et le principe d'égalité de traitement. Un taux trop bas = risque de contentieux prud'homal.</div>
+
+      <div class="rule-card">
+        <div class="rule-header" onclick="toggleRule(this)">
+          <div class="rule-icon">💶</div>
+          <div><div class="rule-title">PLANCHERS DE RÉMUNÉRATION</div><div class="rule-sub">SMIC + convention collective BTP + égalité de traitement</div></div>
+          <div class="rule-badge rb-blue">RÉFÉRENCE</div>
+        </div>
+        <div class="rule-body">
+          <div class="rule-chiffres">
+            <div class="ch-title">HIÉRARCHIE DES OBLIGATIONS</div>
+            <div class="ch-row"><span>1. SMIC horaire 2026</span><span class="ch-val">≈ 11,88 €/h brut</span></div>
+            <div class="ch-row"><span>2. Minima CC BTP</span><span class="ch-val">Grilles par région + qualification</span></div>
+            <div class="ch-row"><span>3. Rémunération EU (égalité)</span><span class="ch-val">Si > minima CC : s'applique</span></div>
+            <div class="ch-row"><span>IFM (Indemnité Fin Mission)</span><span class="ch-val">10% du brut total — obligatoire</span></div>
+            <div class="ch-row"><span>ICP (Indemnité Congés Payés)</span><span class="ch-val">10% × (brut + IFM) — obligatoire</span></div>
+          </div>
+          <div class="reflexe ok"><span class="reflexe-icon">✓</span><div><span class="reflexe-title">Principe :</span> La rémunération de l'intérimaire ne peut pas être inférieure à ce que perçoit un salarié CDI équivalent chez le client utilisateur, pour le même poste et la même qualification.</div></div>
+          <div class="reflexe ko"><span class="reflexe-icon">✗</span><div><span class="reflexe-title">Erreur à éviter :</span> Proposer un taux brut en dessous du minima de la CC BTP pour la qualification demandée. C'est un motif de saisine directe du conseil de prud'hommes par l'intérimaire.</div></div>
+          <div class="rule-chiffres" style="margin-top:10px">
+            <div class="ch-title">TAUX BRUTS MARCHÉ IDF 2025/2026 (orientatif)</div>
+            <div class="ch-row"><span>Manœuvre / OS</span><span class="ch-val">12,50 – 13,50 €/h</span></div>
+            <div class="ch-row"><span>Ouvrier qualifié N2 (plâtrier, peintre)</span><span class="ch-val">13,50 – 15,00 €/h</span></div>
+            <div class="ch-row"><span>Ouvrier qualifié N3P1 (second œuvre)</span><span class="ch-val">15,00 – 17,00 €/h</span></div>
+            <div class="ch-row"><span>N3P2 / Staffeur / Chef d'équipe</span><span class="ch-val">17,00 – 21,00 €/h</span></div>
+            <div class="ch-row"><span>CVC N3 / Électricien tertiaire N3</span><span class="ch-val">18,00 – 23,00 €/h</span></div>
+            <div class="ch-row"><span>Chef de chantier / Conducteur travaux</span><span class="ch-val">22,00 – 30,00 €/h</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════ -->
+    <!-- 6. AT -->
+    <!-- ══════════════════════════════════════ -->
+    <div id="s-at" class="section">
+      <div class="section-title">ACCIDENTS DU TRAVAIL — RESPONSABILITÉS & RÉFLEXES</div>
+      <div class="section-intro">Le BTP est le secteur le plus accidentogène de France. En tant qu'ETT, vous êtes l'employeur légal de l'intérimaire. Vous partagez la responsabilité avec le client utilisateur. Ce partage doit être EXPLICITEMENT cadré AVANT la mission.</div>
+
+      <div class="rule-card">
+        <div class="rule-header" onclick="toggleRule(this)">
+          <div class="rule-icon">🦺</div>
+          <div><div class="rule-title">QUI EST RESPONSABLE EN CAS D'AT ?</div><div class="rule-sub">Art. L.1251-21 — Partage de responsabilité ETT / EU</div></div>
+          <div class="rule-badge rb-warn">RISQUE DIRECT</div>
+        </div>
+        <div class="rule-body">
+          <div class="rule-chiffres">
+            <div class="ch-title">RÉPARTITION DES RESPONSABILITÉS</div>
+            <div class="ch-row"><span>ETT (vous) : responsabilité administrative</span><span class="ch-val">Déclaration AT, cotisations</span></div>
+            <div class="ch-row"><span>EU (client) : responsabilité opérationnelle</span><span class="ch-val">Conditions réelles de travail</span></div>
+            <div class="ch-row"><span>Faute inexcusable de l'EU</span><span class="ch-val">Majoration rente intérimaire</span></div>
+            <div class="ch-row"><span>Suraccident si EPI non fournis</span><span class="ch-val">Coresponsabilité ETT + EU</span></div>
+          </div>
+          <div class="reflexe ok"><span class="reflexe-icon">✓</span><div><span class="reflexe-title">AVANT la mission (à faire systématiquement) :</span> Demander au client une attestation ou confirmation écrite que les EPI seront fournis, que le salarié sera encadré, et qu'une visite médicale d'aptitude au poste a été programmée si poste à risque.</div></div>
+          <div class="reflexe ok"><span class="reflexe-icon">✓</span><div><span class="reflexe-title">Visite médicale :</span> Tout intérimaire doit bénéficier d'un suivi médical. Pour les postes à risque (travail en hauteur, port de charges, amiante), une visite spécifique est obligatoire AVANT le début de la mission.</div></div>
+          <div class="reflexe ko"><span class="reflexe-icon">✗</span><div><span class="reflexe-title">Ne jamais placer :</span> Un intérimaire sur un poste à risque sans vérifier son aptitude médicale. En cas d'AT sur un poste pour lequel il n'était pas médicalement apte, l'ETT peut être co-mise en cause pénalement.</div></div>
+          <div class="conse"><div class="conse-title">IMPACT FINANCIER DIRECT</div>Chaque AT déclaré augmente le taux de cotisation AT/MP de l'agence. Un taux AT élevé = cotisations plus chères = marge réduite. Surveiller son taux AT comme un indicateur financier.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════ -->
+    <!-- 7. REQUALIFICATION CDI -->
+    <!-- ══════════════════════════════════════ -->
+    <div id="s-requalif" class="section">
+      <div class="section-title">REQUALIFICATION EN CDI — LES 7 CAUSES</div>
+      <div class="section-intro">La requalification est la transformation judiciaire d'un contrat de mission en CDI chez le client utilisateur. Elle est prononcée par les prud'hommes et entraîne des conséquences financières lourdes pour le client ET des risques de réputation pour l'agence.</div>
+
+      <table class="ref-table">
+        <tr><th>#</th><th>CAUSE DE REQUALIFICATION</th><th>RISQUE</th><th>PRÉVENTION</th></tr>
+        <tr><td class="mono">1</td><td>Motif de recours absent ou illicite</td><td class="ko">ÉLEVÉ</td><td>Vérifier avant signature</td></tr>
+        <tr><td class="mono">2</td><td>Dépassement durée maximale (18 mois)</td><td class="ko">ÉLEVÉ</td><td>Alerte automatique à J-30</td></tr>
+        <tr><td class="mono">3</td><td>Délai de carence non respecté</td><td class="ko">ÉLEVÉ</td><td>Calculer à chaque fin de mission</td></tr>
+        <tr><td class="mono">4</td><td>Contrat de mission non transmis dans les 2 jours</td><td class="ko">MOYEN</td><td>Processus de signature dématérialisé</td></tr>
+        <tr><td class="mono">5</td><td>Terme imprécis ou illimité</td><td class="ko">MOYEN</td><td>Toujours mettre une date ou condition claire</td></tr>
+        <tr><td class="mono">6</td><td>Renouvellement au-delà de 2 fois</td><td class="ko">MOYEN</td><td>Comptage rigoureux des renouvellements</td></tr>
+        <tr><td class="mono">7</td><td>Substitution à un poste permanent</td><td class="ko">ÉLEVÉ</td><td>S'assurer que le poste est réellement temporaire</td></tr>
+      </table>
+
+      <div class="rule-card">
+        <div class="rule-header" onclick="toggleRule(this)">
+          <div class="rule-icon">⚖️</div>
+          <div><div class="rule-title">CONSÉQUENCES FINANCIÈRES DE LA REQUALIFICATION</div><div class="rule-sub">Qui paie quoi en cas de décision prud'homale</div></div>
+          <div class="rule-badge rb-warn">IMPACT FINANCIER</div>
+        </div>
+        <div class="rule-body">
+          <div class="rule-chiffres">
+            <div class="ch-title">CE QUE LE CLIENT RISQUE</div>
+            <div class="ch-row"><span>Indemnité requalification (min.)</span><span class="ch-val">1 mois de salaire brut</span></div>
+            <div class="ch-row"><span>Indemnité licenciement sans cause réelle</span><span class="ch-val">Variable selon ancienneté</span></div>
+            <div class="ch-row"><span>Rappels de salaire (différentiels)</span><span class="ch-val">Rétroactif sur toute la période</span></div>
+            <div class="ch-row"><span>Dommages et intérêts</span><span class="ch-val">Appréciation libre du juge</span></div>
+          </div>
+          <div class="tip"><div class="tip-title">IMPACT SUR L'AGENCE</div>Si la requalification est prononcée pour une cause imputable à l'ETT (mauvais motif, dépassement durée, non-transmission contrat), le client peut se retourner contre l'agence. Documenter systématiquement les échanges avec le client.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════ -->
+    <!-- 8. DÉLIT DE MARCHANDAGE -->
+    <!-- ══════════════════════════════════════ -->
+    <div id="s-delit" class="section">
+      <div class="section-title">DÉLIT DE MARCHANDAGE & PRÊT DE MAIN D'ŒUVRE ILLICITE</div>
+      <div class="section-intro">Deux infractions pénales distinctes mais souvent confondues. Le RA doit les connaître pour ne pas s'y exposer et pour identifier les situations à risque chez les clients.</div>
+
+      <div class="rule-card">
+        <div class="rule-header" onclick="toggleRule(this)">
+          <div class="rule-icon">⚠️</div>
+          <div><div class="rule-title">DÉLIT DE MARCHANDAGE (Art. L.8231-1)</div><div class="rule-sub">Prêt de main-d'œuvre à but lucratif non autorisé</div></div>
+          <div class="rule-badge rb-warn">PÉNAL</div>
+        </div>
+        <div class="rule-body">
+          <div class="reflexe ko"><span class="reflexe-icon">✗</span><div><span class="reflexe-title">Définition :</span> Toute opération à but lucratif de fourniture de main-d'œuvre qui a pour effet de causer un préjudice au salarié (conditions de travail dégradées, rémunération inférieure) ou d'éluder des obligations légales.</div></div>
+          <div class="rule-chiffres">
+            <div class="ch-title">SANCTIONS</div>
+            <div class="ch-row"><span>Amende personne physique</span><span class="ch-val">30 000 €</span></div>
+            <div class="ch-row"><span>Emprisonnement</span><span class="ch-val">2 ans</span></div>
+            <div class="ch-row"><span>Amende personne morale</span><span class="ch-val">150 000 €</span></div>
+          </div>
+          <div class="reflexe warn"><span class="reflexe-icon">⚠</span><div><span class="reflexe-title">Cas concrets à surveiller :</span> Client qui demande de placer un intérimaire à un tarif anormalement bas "pour lui rendre service". Client qui veut que l'intérimaire travaille chez une entreprise tierce. Sous-traitance déguisée en intérim.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════ -->
+    <!-- 9. TRAVAIL ILLÉGAL -->
+    <!-- ══════════════════════════════════════ -->
+    <div id="s-travail_illegal" class="section">
+      <div class="section-title">TRAVAIL ILLÉGAL — OBLIGATIONS DE VIGILANCE</div>
+      <div class="section-intro">En tant qu'ETT, vous avez une obligation de vigilance sur vos propres pratiques mais aussi sur celles de vos clients. Un client en infraction peut contaminer votre responsabilité.</div>
+
+      <div class="rule-card">
+        <div class="rule-header" onclick="toggleRule(this)">
+          <div class="rule-icon">🔍</div>
+          <div><div class="rule-title">OBLIGATION DE VIGILANCE VIS-À-VIS DES CLIENTS</div><div class="rule-sub">Art. L.8222-1 — Due diligence obligatoire</div></div>
+          <div class="rule-badge rb-blue">OBLIGATOIRE</div>
+        </div>
+        <div class="rule-body">
+          <div class="rule-chiffres">
+            <div class="ch-title">VÉRIFICATIONS À FAIRE AVANT TOUT NOUVEAU CLIENT</div>
+            <div class="ch-row"><span>Extrait Kbis récent</span><span class="ch-val">Moins de 3 mois</span></div>
+            <div class="ch-row"><span>Attestation URSSAF (cotisations à jour)</span><span class="ch-val">Tous les 6 mois</span></div>
+            <div class="ch-row"><span>Attestation assurance RC Pro</span><span class="ch-val">En cours de validité</span></div>
+            <div class="ch-row"><span>Pour nouveaux clients > 5 000€</span><span class="ch-val">Attestation vigilance obligatoire</span></div>
+          </div>
+          <div class="reflexe ok"><span class="reflexe-icon">✓</span><div><span class="reflexe-title">À faire systématiquement :</span> Conserver ces documents dans le dossier client. En cas de contrôle URSSAF ou inspection du travail, la preuve de votre vigilance vous protège d'une complicité par imprudence.</div></div>
+          <div class="conse"><div class="conse-title">SOLIDARITÉ FINANCIÈRE</div>Si un client est reconnu coupable de travail dissimulé et que vous n'avez pas effectué les vérifications requises, vous pouvez être solidairement responsable du paiement des redressements URSSAF et cotisations.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════ -->
+    <!-- 10. CONTRAT DE MISE À DISPO -->
+    <!-- ══════════════════════════════════════ -->
+    <div id="s-mise_dispo" class="section">
+      <div class="section-title">CONTRAT DE MISE À DISPOSITION — CLAUSES CLÉ</div>
+      <div class="section-intro">Le contrat de mise à disposition est votre bouclier commercial ET juridique. Il fixe les obligations du client, votre facturation, et répartit les responsabilités. Ne jamais démarrer une mission sans contrat signé.</div>
+
+      <div class="rule-card">
+        <div class="rule-header" onclick="toggleRule(this)">
+          <div class="rule-icon">🛡️</div>
+          <div><div class="rule-title">CLAUSES À NÉGOCIER / VÉRIFIER</div><div class="rule-sub">Ce que le contrat doit contenir pour vous protéger</div></div>
+          <div class="rule-badge rb-blue">RÉFÉRENCE</div>
+        </div>
+        <div class="rule-body">
+          <div class="reflexe ok"><span class="reflexe-icon">✓</span><div><span class="reflexe-title">Clause AT/EPI :</span> Le client s'engage à fournir les EPI nécessaires et à assurer les conditions de sécurité conformément au plan de prévention. Cette clause vous protège en cas d'AT.</div></div>
+          <div class="reflexe ok"><span class="reflexe-icon">✓</span><div><span class="reflexe-title">Clause de paiement :</span> Délai de paiement, conditions de règlement, intérêts de retard (légaux ou contractuels). En BTP les retards sont fréquents — cadrer à 30 jours fin de mois.</div></div>
+          <div class="reflexe ok"><span class="reflexe-icon">✓</span><div><span class="reflexe-title">Clause de validation des heures :</span> Le client s'engage à valider les relevés d'heures dans les X jours. La signature du relevé vaut acceptation de la facturation.</div></div>
+          <div class="reflexe ok"><span class="reflexe-icon">✓</span><div><span class="reflexe-title">Clause d'embauche directe :</span> Si le client veut embaucher un intérimaire en CDI, prévoir une indemnité (sauf si la mission dure depuis plus de X mois). Certains réseaux ont des clauses standardisées.</div></div>
+          <div class="reflexe warn"><span class="reflexe-icon">⚠</span><div><span class="reflexe-title">Clause d'exclusivité :</span> Certains clients demandent l'exclusivité sur un intérimaire. Légale mais à bien encadrer — implique que l'ETT garantit la disponibilité.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════ -->
+    <!-- 11. RESPONSABILITÉS PARTAGÉES -->
+    <!-- ══════════════════════════════════════ -->
+    <div id="s-responsabilite" class="section">
+      <div class="section-title">RESPONSABILITÉS PARTAGÉES ETT / ENTREPRISE UTILISATRICE</div>
+
+      <table class="ref-table">
+        <tr><th>OBLIGATION</th><th>ETT (Vous)</th><th>ENTREPRISE UTILISATRICE</th></tr>
+        <tr><td>Déclaration préalable à l'embauche (DPAE)</td><td class="ok">✓ ETT</td><td>—</td></tr>
+        <tr><td>Contrat de mission</td><td class="ok">✓ ETT</td><td>—</td></tr>
+        <tr><td>Bulletin de salaire</td><td class="ok">✓ ETT</td><td>—</td></tr>
+        <tr><td>Cotisations sociales</td><td class="ok">✓ ETT</td><td>—</td></tr>
+        <tr><td>Visite médicale d'embauche</td><td class="ok">✓ ETT</td><td>—</td></tr>
+        <tr><td>Visite médicale poste à risque</td><td class="ok">✓ ETT</td><td class="ok">✓ EU (signalement)</td></tr>
+        <tr><td>Formation sécurité (poste)</td><td>—</td><td class="ok">✓ EU</td></tr>
+        <tr><td>EPI (équipements protection individuelle)</td><td>—</td><td class="ok">✓ EU</td></tr>
+        <tr><td>Respect des horaires contractuels</td><td>—</td><td class="ok">✓ EU</td></tr>
+        <tr><td>Déclaration AT (48h)</td><td class="ok">✓ ETT</td><td class="ok">✓ EU (information)</td></tr>
+        <tr><td>Plan de prévention des risques</td><td class="ok">✓ ETT (signature)</td><td class="ok">✓ EU (rédaction)</td></tr>
+        <tr><td>Facturation</td><td class="ok">✓ ETT</td><td>—</td></tr>
+      </table>
+    </div>
+
+    <!-- ══════════════════════════════════════ -->
+    <!-- 12. IMPAYÉS -->
+    <!-- ══════════════════════════════════════ -->
+    <div id="s-impaye" class="section">
+      <div class="section-title">IMPAYÉS & RECOUVREMENT — PROCÉDURE ÉTAPE PAR ÉTAPE</div>
+      <div class="section-intro">En BTP, les retards de paiement sont structurels. Un client qui dépasse 60 jours sans répondre est un signal fort. Votre démarche doit être progressive mais documentée dès le premier jour de retard.</div>
+
+      <div class="rule-card">
+        <div class="rule-header" onclick="toggleRule(this)">
+          <div class="rule-icon">📅</div>
+          <div><div class="rule-title">PROCÉDURE DE RECOUVREMENT — CHRONOLOGIE</div><div class="rule-sub">Chaque étape doit être tracée et conservée</div></div>
+          <div class="rule-badge rb-blue">PROCÉDURE</div>
+        </div>
+        <div class="rule-body">
+          <div class="rule-chiffres">
+            <div class="ch-title">ÉTAPES PROGRESSIVES</div>
+            <div class="ch-row"><span>J+0 à J+7 après échéance</span><span class="ch-val">Relance téléphonique aimable</span></div>
+            <div class="ch-row"><span>J+8 à J+30</span><span class="ch-val">Email de relance formelle + récapitulatif factures</span></div>
+            <div class="ch-row"><span>J+31 à J+60</span><span class="ch-val">Lettre recommandée AR + mise en demeure</span></div>
+            <div class="ch-row"><span>J+61 à J+90</span><span class="ch-val">Injonction de payer (tribunal de commerce)</span></div>
+            <div class="ch-row"><span>Au-delà de J+90</span><span class="ch-val">Huissier / procédure judiciaire complète</span></div>
+          </div>
+          <div class="reflexe warn"><span class="reflexe-icon">⚠</span><div><span class="reflexe-title">Suspension des missions :</span> Si un client dépasse 60 jours d'impayé, suspendre les nouvelles mises à disposition en attendant régularisation. Communiquer par écrit. Ne jamais continuer à placer pour un client mauvais payeur sans garantie.</div></div>
+          <div class="reflexe ok"><span class="reflexe-icon">✓</span><div><span class="reflexe-title">Intérêts de retard légaux :</span> Automatiquement exigibles dès le lendemain de l'échéance contractuelle. Taux : BCE + 10 points. Indemnité forfaitaire pour frais de recouvrement : 40€ par facture en retard.</div></div>
+          <div class="tip"><div class="tip-title">PRÉVENTION</div>Vérifier la solvabilité du client AVANT la première mission (Societe.com, score Banque de France). Pour les nouveaux clients BTP PME, limiter l'exposition à 2-3 semaines de factures en attente avant d'exiger un premier règlement.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════ -->
+    <!-- 13. CHIFFRES CLÉS -->
+    <!-- ══════════════════════════════════════ -->
+    <div id="s-chiffres" class="section">
+      <div class="section-title">TOUS LES CHIFFRES CLÉS — RÉFÉRENCE RAPIDE</div>
+
+      <table class="ref-table">
+        <tr><th>SUJET</th><th>CHIFFRE / RÈGLE</th><th>BASE LÉGALE</th></tr>
+        <tr><td>Durée max mission (motif général)</td><td class="mono ok">18 mois (mission + renouvellements)</td><td class="mono">L.1251-12</td></tr>
+        <tr><td>Renouvellements max</td><td class="mono ok">2 fois</td><td class="mono">L.1251-35</td></tr>
+        <tr><td>Délai de carence (mission >14j)</td><td class="mono ok">1/3 de la durée de la mission</td><td class="mono">L.1251-36</td></tr>
+        <tr><td>Délai de carence (mission ≤14j)</td><td class="mono ok">1/2 de la durée de la mission</td><td class="mono">L.1251-36</td></tr>
+        <tr><td>Transmission contrat de mission</td><td class="mono ok">2 jours ouvrables après début</td><td class="mono">L.1251-17</td></tr>
+        <tr><td>IFM (Indemnité Fin Mission)</td><td class="mono ok">10% du brut total</td><td class="mono">L.1251-32</td></tr>
+        <tr><td>ICP (Indemnité Congés Payés)</td><td class="mono ok">10% × (brut + IFM)</td><td class="mono">L.1251-19</td></tr>
+        <tr><td>Égalité de traitement avantages</td><td class="mono ok">Après 3 mois continus</td><td class="mono">L.1251-24</td></tr>
+        <tr><td>Remboursement transport</td><td class="mono ok">50% dès le 1er jour</td><td class="mono">L.3261-2</td></tr>
+        <tr><td>Période d'essai (mission ≤1 mois)</td><td class="mono">2 jours ouvrables</td><td class="mono">L.1251-14</td></tr>
+        <tr><td>Période d'essai (1 à 2 mois)</td><td class="mono">3 jours ouvrables</td><td class="mono">L.1251-14</td></tr>
+        <tr><td>Période d'essai (>2 mois)</td><td class="mono">5 jours ouvrables</td><td class="mono">L.1251-14</td></tr>
+        <tr><td>Déclaration AT délai</td><td class="mono ok">48 heures (jours non fériés)</td><td class="mono">L.441-2 CSS</td></tr>
+        <tr><td>Charges patronales BTP Paris</td><td class="mono">≈ 43% du brut</td><td class="mono">URSSAF 2026</td></tr>
+        <tr><td>Contingent heures sup (BTP)</td><td class="mono">220h/an</td><td class="mono">CC BTP</td></tr>
+        <tr><td>Majoration heures sup 36e–43e</td><td class="mono">+25%</td><td class="mono">L.3121-36</td></tr>
+        <tr><td>Majoration heures sup ≥44e</td><td class="mono">+50%</td><td class="mono">L.3121-36</td></tr>
+        <tr><td>Indemnité requalification (min.)</td><td class="mono ko">1 mois de salaire brut</td><td class="mono">L.1251-41</td></tr>
+        <tr><td>Amende prêt illicite main d'œuvre</td><td class="mono ko">30 000€ + 2 ans prison</td><td class="mono">L.8231-1</td></tr>
+        <tr><td>Amende infraction recours illicite</td><td class="mono ko">3 750€ par salarié</td><td class="mono">L.1254-1</td></tr>
+      </table>
+    </div>
+
+    <!-- ══════════════════════════════════════ -->
+    <!-- 14. CHECK-LIST -->
+    <!-- ══════════════════════════════════════ -->
+    <div id="s-checklist" class="section">
+      <div class="section-title">CHECK-LIST AVANT PLACEMENT — À VALIDER SYSTÉMATIQUEMENT</div>
+      <div class="section-intro">Cette check-list doit être mentalement parcourue avant chaque nouveau placement. Elle couvre les 3 moments critiques : avant, pendant, à la fin de la mission.</div>
+
+      <div class="rule-card">
+        <div class="rule-header" onclick="toggleRule(this)">
+          <div class="rule-icon">🔲</div>
+          <div><div class="rule-title">AVANT LA MISSION</div><div class="rule-sub">Valider ces 10 points avant de démarrer</div></div>
+          <div class="rule-badge rb-blue">10 POINTS</div>
+        </div>
+        <div class="rule-body">
+          <div class="reflexe ok"><span class="reflexe-icon">☐</span><div>Motif de recours identifié et légal (remplacement / accroissement / saisonnier)</div></div>
+          <div class="reflexe ok"><span class="reflexe-icon">☐</span><div>Durée max vérifiée — pas de dépassement 18 mois possible</div></div>
+          <div class="reflexe ok"><span class="reflexe-icon">☐</span><div>Délai de carence calculé et respecté si même poste/même client</div></div>
+          <div class="reflexe ok"><span class="reflexe-icon">☐</span><div>Qualification de l'intérimaire correspondant au poste demandé</div></div>
+          <div class="reflexe ok"><span class="reflexe-icon">☐</span><div>Visite médicale d'aptitude valide (ou programmée avant début)</div></div>
+          <div class="reflexe ok"><span class="reflexe-icon">☐</span><div>EPI fournis par le client — confirmation écrite ou email</div></div>
+          <div class="reflexe ok"><span class="reflexe-icon">☐</span><div>Taux horaire ≥ minima CC BTP pour la qualification</div></div>
+          <div class="reflexe ok"><span class="reflexe-icon">☐</span><div>Contrat de mise à disposition signé ou envoyé avant démarrage</div></div>
+          <div class="reflexe ok"><span class="reflexe-icon">☐</span><div>Contrat de mission signé par l'intérimaire (ou envoi dans les 2 jours)</div></div>
+          <div class="reflexe ok"><span class="reflexe-icon">☐</span><div>DPAE effectuée avant le début de la mission</div></div>
+        </div>
+      </div>
+
+      <div class="rule-card">
+        <div class="rule-header" onclick="toggleRule(this)">
+          <div class="rule-icon">🔲</div>
+          <div><div class="rule-title">PENDANT LA MISSION</div><div class="rule-sub">Points de vigilance en cours de mission</div></div>
+          <div class="rule-badge rb-yellow">SUIVI</div>
+        </div>
+        <div class="rule-body">
+          <div class="reflexe ok"><span class="reflexe-icon">☐</span><div>Relevés d'heures validés par le client en temps réel (hebdomadaire)</div></div>
+          <div class="reflexe ok"><span class="reflexe-icon">☐</span><div>Heures supplémentaires signalées et acceptées avant d'être effectuées</div></div>
+          <div class="reflexe ok"><span class="reflexe-icon">☐</span><div>Contact client intermédiaire à J+7 pour s'assurer de la satisfaction</div></div>
+          <div class="reflexe warn"><span class="reflexe-icon">☐</span><div>Si mission >3 mois : vérifier les avantages collectifs dus (tickets resto, etc.)</div></div>
+          <div class="reflexe warn"><span class="reflexe-icon">☐</span><div>Si renouvellement : vérifier numéro de renouvellement (max 2) et durée totale</div></div>
+        </div>
+      </div>
+
+      <div class="rule-card">
+        <div class="rule-header" onclick="toggleRule(this)">
+          <div class="rule-icon">🔲</div>
+          <div><div class="rule-title">FIN DE MISSION</div><div class="rule-sub">Clôture propre = pas de litige</div></div>
+          <div class="rule-badge rb-green">CLÔTURE</div>
+        </div>
+        <div class="rule-body">
+          <div class="reflexe ok"><span class="reflexe-icon">☐</span><div>Calcul et versement IFM (10% brut) dans le solde de tout compte</div></div>
+          <div class="reflexe ok"><span class="reflexe-icon">☐</span><div>Calcul et versement ICP (10% × brut+IFM)</div></div>
+          <div class="reflexe ok"><span class="reflexe-icon">☐</span><div>Attestation Pôle Emploi / France Travail transmise dans les délais</div></div>
+          <div class="reflexe ok"><span class="reflexe-icon">☐</span><div>Certificat de travail remis à l'intérimaire</div></div>
+          <div class="reflexe ok"><span class="reflexe-icon">☐</span><div>Délai de carence calculé pour ce poste chez ce client — noter dans le CRM</div></div>
+          <div class="reflexe ok"><span class="reflexe-icon">☐</span><div>Appel client post-mission : satisfaction + prospection prochaine mission</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /layout -->
+
+<script>
+function show(id,el){
+  document.querySelectorAll('.section').forEach(function(s){s.classList.remove('active');});
+  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
+  document.getElementById('s-'+id).classList.add('active');
+  el.classList.add('active');
+  document.getElementById('search-inp').value='';
+  document.getElementById('search-count').textContent='';
+}
+
+function toggleRule(header){
+  var body=header.nextElementSibling;
+  var isOpen=body.classList.contains('open');
+  header.classList.toggle('open',!isOpen);
+  body.classList.toggle('open',!isOpen);
+}
+
+function searchAll(q){
+  q=q.trim().toLowerCase();
+  if(!q){document.getElementById('search-count').textContent='';return;}
+  var all=document.querySelectorAll('.section');
+  var found=0;
+  all.forEach(function(s){s.classList.remove('active');});
+  // Ouvrir une section "résultats"
+  // Chercher dans tous les textes
+  var hits=[];
+  document.querySelectorAll('.rule-card').forEach(function(card){
+    if(card.textContent.toLowerCase().includes(q))hits.push(card.closest('.section').id);
+  });
+  document.querySelectorAll('.ref-table').forEach(function(t){
+    if(t.textContent.toLowerCase().includes(q))hits.push(t.closest('.section').id);
+  });
+  var uniq=[...new Set(hits)];
+  if(uniq.length>0){
+    document.getElementById(uniq[0]).classList.add('active');
+    // Ouvrir les règles qui matchent
+    document.querySelectorAll('#'+uniq[0]+' .rule-header').forEach(function(h){
+      if(h.parentElement.textContent.toLowerCase().includes(q)){
+        h.classList.add('open');
+        h.nextElementSibling.classList.add('open');
+      }
+    });
+    // Nav highlight
+    document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
+    document.getElementById('search-count').textContent=uniq.length+' section(s) trouvée(s)';
+  } else {
+    document.querySelector('.section').classList.add('active');
+    document.getElementById('search-count').textContent='Aucun résultat';
+  }
+}
+
+// Ouvrir le premier rule par défaut
+document.querySelectorAll('.rule-header').forEach(function(h,i){
+  if(i===0){h.classList.add('open');h.nextElementSibling.classList.add('open');}
+});
+</script>
+</body>
+</html>

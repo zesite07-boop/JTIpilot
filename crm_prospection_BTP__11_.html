@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CRM Prospection BTP</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0f1117;--surface:#181c27;--surface2:#1e2335;--surface3:#242840;
+  --border:#2a3050;--border2:#323860;
+  --accent:#f97316;--blue:#3b82f6;--green:#22c55e;--warn:#ef4444;--yellow:#fbbf24;
+  --text:#e2e8f0;--muted:#64748b;--muted2:#94a3b8;
+  --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;}
+.app{display:grid;grid-template-columns:260px 1fr;min-height:100vh;}
+.sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.sidebar-header{padding:14px 16px;border-bottom:1px solid var(--border);}
+.sidebar-header h2{font-size:13px;font-weight:700;color:var(--accent);font-family:var(--mono);letter-spacing:1px;}
+.sidebar-header p{font-size:10px;color:var(--muted);margin-top:2px;font-family:var(--mono);}
+.sidebar-tabs{display:flex;border-bottom:1px solid var(--border);}
+.sidebar-tab{flex:1;padding:8px 4px;font-family:var(--mono);font-size:10px;font-weight:700;text-align:center;cursor:pointer;color:var(--muted);background:none;border:none;letter-spacing:.5px;transition:all .15s;border-bottom:2px solid transparent;}
+.sidebar-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.sidebar-content{flex:1;overflow-y:auto;padding:8px;}
+.btn-new{width:100%;padding:8px;background:var(--accent);color:#fff;border:none;border-radius:3px;font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;margin-bottom:8px;letter-spacing:.5px;}
+.btn-new:hover{opacity:.85;}
+.filter-bar{display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap;}
+.filter-btn{font-family:var(--mono);font-size:9px;padding:3px 8px;border-radius:2px;border:1px solid var(--border);color:var(--muted);background:none;cursor:pointer;transition:all .15s;}
+.filter-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(249,115,22,.1);}
+.fchip{font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;border:1px solid var(--border);color:var(--muted);background:none;cursor:pointer;transition:all .15s;letter-spacing:.3px;}
+.fchip.active{border-color:var(--accent);color:var(--accent);background:rgba(249,115,22,.12);}
+.fchip:hover{border-color:var(--border2);color:var(--text);}
+.prospect-card{padding:10px 12px;border-radius:3px;border:1px solid var(--border);margin-bottom:5px;cursor:pointer;transition:all .15s;background:var(--surface2);}
+.prospect-card:hover{border-color:var(--border2);}
+.prospect-card.selected{border-color:var(--accent);background:rgba(249,115,22,.07);}
+.pc-header{display:flex;justify-content:space-between;align-items:flex-start;gap:4px;}
+.pc-name{font-size:12px;font-weight:700;line-height:1.3;}
+.pc-status{font-size:9px;font-family:var(--mono);padding:2px 6px;border-radius:2px;font-weight:700;white-space:nowrap;}
+.pc-metier{font-size:10px;color:var(--muted);margin-top:2px;}
+.pc-indicators{display:flex;gap:4px;margin-top:5px;align-items:center;}
+.pc-badge{font-family:var(--mono);font-size:9px;padding:1px 5px;border-radius:2px;}
+.pc-next{font-size:10px;margin-top:4px;font-family:var(--mono);}
+.main{display:flex;flex-direction:column;overflow:hidden;}
+.main-header{padding:14px 20px;border-bottom:1px solid var(--border);background:var(--surface);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+.main-content{flex:1;overflow-y:auto;}
+.dashboard{padding:18px;}
+.dash-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px;}
+.dash-card{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:12px;}
+.dash-card .num{font-size:26px;font-weight:700;font-family:var(--mono);}
+.dash-card .lbl{font-size:10px;color:var(--muted);margin-top:2px;font-family:var(--mono);}
+.dash-section{background:var(--surface);border:1px solid var(--border);border-radius:4px;overflow:hidden;margin-bottom:12px;}
+.dash-sec-head{padding:9px 14px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px;font-weight:700;}
+.today-item{padding:11px 14px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:flex-start;cursor:pointer;transition:background .15s;}
+.today-item:last-child{border-bottom:none;}
+.today-item:hover{background:var(--surface2);}
+.today-type{font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:2px;font-weight:700;min-width:55px;text-align:center;margin-top:2px;}
+.today-body{flex:1;}
+.today-name{font-size:13px;font-weight:600;}
+.today-action{font-size:11px;color:var(--muted);margin-top:1px;}
+.today-date{font-family:var(--mono);font-size:10px;margin-top:2px;}
+.fiche{padding:18px;}
+.fiche-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;}
+.fiche-name{font-size:19px;font-weight:700;margin-bottom:5px;}
+.fiche-meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.fiche-btns{display:flex;gap:6px;flex-shrink:0;}
+.fiche-tabs{display:flex;gap:0;border:1px solid var(--border);border-radius:3px;overflow:hidden;margin-bottom:14px;}
+.fiche-tab{flex:1;padding:8px 6px;font-family:var(--mono);font-size:10px;font-weight:700;text-align:center;cursor:pointer;color:var(--muted);background:var(--surface2);border:none;border-right:1px solid var(--border);letter-spacing:.3px;transition:all .15s;}
+.fiche-tab:last-child{border-right:none;}
+.fiche-tab.active{background:var(--surface3);color:var(--text);}
+.sec{background:var(--surface);border:1px solid var(--border);border-radius:4px;margin-bottom:10px;overflow:hidden;}
+.sec-head{padding:8px 14px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.5px;display:flex;justify-content:space-between;align-items:center;}
+.sec-body{padding:12px 14px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.field{display:flex;flex-direction:column;gap:3px;}
+.field label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;}
+.field input,.field select,.field textarea{background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:6px 9px;color:var(--text);font-family:var(--sans);font-size:12px;outline:none;transition:border-color .15s;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);}
+.field select option{background:var(--surface2);}
+.field textarea{resize:vertical;min-height:48px;font-size:12px;}
+.field-full{grid-column:1/-1;}
+.entry{display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);align-items:flex-start;}
+.entry:last-child{border-bottom:none;}
+.entry-type{font-family:var(--mono);font-size:9px;padding:2px 6px;border-radius:2px;font-weight:700;min-width:50px;text-align:center;margin-top:1px;flex-shrink:0;}
+.entry-date{font-family:var(--mono);font-size:10px;color:var(--muted);min-width:70px;margin-top:1px;flex-shrink:0;}
+.entry-text{font-size:12px;flex:1;line-height:1.5;}
+.entry-del{font-size:13px;cursor:pointer;color:var(--muted);padding:0 3px;}
+.entry-del:hover{color:var(--warn);}
+.besoin-card{border:1px solid var(--border);border-radius:4px;margin-bottom:10px;overflow:hidden;}
+.besoin-header{padding:10px 12px;background:var(--surface2);display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.besoin-header:hover{background:var(--surface3);}
+.besoin-title{font-size:13px;font-weight:700;}
+.besoin-meta{font-size:11px;color:var(--muted);margin-top:2px;}
+.besoin-body{padding:12px;border-top:1px solid var(--border);}
+.cv-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;}
+.cv-table th{font-family:var(--mono);font-size:9px;color:var(--muted);text-align:left;padding:4px 8px;border-bottom:1px solid var(--border);letter-spacing:.5px;}
+.cv-table td{padding:6px 8px;border-bottom:1px solid var(--border);}
+.cv-table tr:last-child td{border-bottom:none;}
+.cv-table tr:hover td{background:rgba(255,255,255,.02);}
+.btn-primary{background:var(--accent);color:#fff;border:none;border-radius:3px;padding:7px 14px;font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;}
+.btn-primary:hover{opacity:.85;}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:3px;padding:5px 10px;font-family:var(--mono);font-size:10px;cursor:pointer;transition:all .15s;}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+.btn-danger{background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:3px;padding:5px 10px;font-family:var(--mono);font-size:10px;cursor:pointer;transition:all .15s;}
+.btn-danger:hover{border-color:var(--warn);color:var(--warn);}
+.btn-add-cv{background:rgba(34,197,94,.1);color:var(--green);border:1px solid rgba(34,197,94,.3);border-radius:3px;padding:4px 10px;font-family:var(--mono);font-size:10px;font-weight:700;cursor:pointer;}
+.btn-add-cv:hover{background:rgba(34,197,94,.2);}
+.s-froid{background:rgba(100,116,139,.2);color:#94a3b8;border:1px solid rgba(100,116,139,.3);}
+.s-tiede{background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.3);}
+.s-chaud{background:rgba(249,115,22,.15);color:#f97316;border:1px solid rgba(249,115,22,.3);}
+.s-client{background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.3);}
+.s-veille{background:rgba(59,130,246,.1);color:#3b82f6;border:1px solid rgba(59,130,246,.2);}
+.t-appel{background:rgba(59,130,246,.15);color:#60a5fa;}
+.t-email{background:rgba(168,85,247,.15);color:#c084fc;}
+.t-cv{background:rgba(34,197,94,.15);color:#4ade80;}
+.t-rdv{background:rgba(249,115,22,.15);color:#fb923c;}
+.t-note{background:rgba(100,116,139,.15);color:#94a3b8;}
+.t-relance{background:rgba(251,191,36,.15);color:#fbbf24;}
+.b-ouvert{background:rgba(249,115,22,.15);color:#f97316;border:1px solid rgba(249,115,22,.3);}
+.b-encours{background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.3);}
+.b-pourvu{background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.3);}
+.b-annule{background:rgba(100,116,139,.15);color:#94a3b8;border:1px solid rgba(100,116,139,.3);}
+.cv-accepte{color:var(--green);font-weight:700;}
+.cv-refuse{color:var(--warn);}
+.cv-silence{color:var(--muted);}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:6px;padding:18px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;}
+.modal h3{font-size:13px;font-weight:700;margin-bottom:14px;font-family:var(--mono);color:var(--accent);letter-spacing:1px;}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;}
+.btn-cancel{background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:3px;padding:7px 14px;font-family:var(--mono);font-size:11px;cursor:pointer;}
+.btn-save{background:var(--accent);color:#fff;border:none;border-radius:3px;padding:7px 14px;font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;}
+.empty{text-align:center;padding:30px;color:var(--muted);}
+.empty .icon{font-size:32px;margin-bottom:10px;}
+.empty p{font-size:12px;font-family:var(--mono);}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+<div class="app">
+<div class="sidebar">
+  <div class="sidebar-header"><h2>CRM PROSPECTION</h2><p>BTP · Second Oeuvre · IDF</p></div>
+  <div class="sidebar-tabs">
+    <button class="sidebar-tab active" id="tab-dash" onclick="showMain('dashboard',this)">TABLEAU</button>
+    <button class="sidebar-tab" id="tab-pros" onclick="showMain('prospects',this)">PROSPECTS</button>
+    <button class="sidebar-tab" id="tab-mis" onclick="showMain('missions',this)">MISSIONS</button>
+    <button class="sidebar-tab" id="tab-kpi" onclick="showMain('kpi',this)">KPI</button>
+  </div>
+  <div class="sidebar-content">
+    <button class="btn-new" onclick="openModalProspect()">+ NOUVEAU PROSPECT</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:4px">
+      <button onclick="exportJSON()" style="padding:6px 4px;background:transparent;color:var(--muted2);border:1px solid var(--border);border-radius:3px;font-family:var(--mono);font-size:10px;font-weight:700;cursor:pointer;" onmouseover="this.style.borderColor='var(--green)';this.style.color='var(--green)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted2)'">JSON EXPORT</button>
+      <button onclick="document.getElementById('import-json').click()" style="padding:6px 4px;background:transparent;color:var(--muted2);border:1px solid var(--border);border-radius:3px;font-family:var(--mono);font-size:10px;font-weight:700;cursor:pointer;" onmouseover="this.style.borderColor='var(--blue)';this.style.color='var(--blue)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted2)'">JSON IMPORT</button>
+    </div>
+    <div style="margin-bottom:8px">
+      <button onclick="document.getElementById('import-cands-json').click()" style="width:100%;padding:6px;background:rgba(249,115,22,.06);color:var(--accent);border:1px solid rgba(249,115,22,.25);border-radius:3px;font-family:var(--mono);font-size:10px;font-weight:700;cursor:pointer;" title="Importer un JSON exporté depuis la Base Candidats BTP">📥 IMPORT BASE CANDIDATS</button>
+      <input type="file" id="import-cands-json" accept=".json" style="display:none" onchange="importCandsJSON(this)"/>
+    </div>
+    <div style="margin-bottom:8px">
+      <button onclick="document.getElementById('import-xlsx').click()" style="width:100%;padding:6px;background:rgba(34,197,94,.08);color:var(--green);border:1px solid rgba(34,197,94,.3);border-radius:3px;font-family:var(--mono);font-size:10px;font-weight:700;cursor:pointer;" onmouseover="this.style.background='rgba(34,197,94,.2)'" onmouseout="this.style.background='rgba(34,197,94,.08)'">IMPORT EXCEL / ANNUCAPT</button>
+    </div>
+    <input type="file" id="import-json" accept=".json" style="display:none" onchange="importJSON(this)"/>
+    <input type="file" id="import-xlsx" accept=".xlsx,.xls,.csv" style="display:none" onchange="importXLSX(this)"/>
+
+    <!-- BARRE DE RECHERCHE -->
+    <div style="position:relative;margin-bottom:6px">
+      <input id="crm-search" type="text" placeholder="🔍  Rechercher..." autocomplete="off"
+        oninput="renderSidebar()"
+        style="width:100%;padding:7px 28px 7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;font-family:var(--sans);outline:none;box-sizing:border-box"/>
+      <button id="crm-search-clear" onclick="clearSearch()" title="Effacer (Échap)"
+        style="display:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0;line-height:1">×</button>
+    </div>
+
+    <!-- PANEL FILTRES (collapsible) -->
+    <div id="filter-panel" style="margin-bottom:6px">
+      <div onclick="toggleFilterPanel()" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;padding:4px 6px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;margin-bottom:4px">
+        <span style="font-family:var(--mono);font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.5px">⚙ FILTRES</span>
+        <span id="filter-badge" style="display:none;background:var(--accent);color:#fff;font-family:var(--mono);font-size:8px;font-weight:700;padding:1px 5px;border-radius:8px">0</span>
+        <span id="filter-chevron" style="font-size:10px;color:var(--muted)">▼</span>
+      </div>
+      <div id="filter-body" style="display:none;padding:8px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;margin-bottom:4px">
+
+        <!-- Statut -->
+        <div style="margin-bottom:8px">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:4px;letter-spacing:.5px">STATUT</div>
+          <div style="display:flex;gap:3px;flex-wrap:wrap">
+            <button class="fchip active" data-ftype="statut" data-fval="" onclick="toggleChip(this)">TOUS</button>
+            <button class="fchip" data-ftype="statut" data-fval="froid" onclick="toggleChip(this)">FROID</button>
+            <button class="fchip" data-ftype="statut" data-fval="tiede" onclick="toggleChip(this)">TIÈDE</button>
+            <button class="fchip" data-ftype="statut" data-fval="chaud" onclick="toggleChip(this)">CHAUD</button>
+            <button class="fchip" data-ftype="statut" data-fval="client" onclick="toggleChip(this)">CLIENT</button>
+            <button class="fchip" data-ftype="statut" data-fval="veille" onclick="toggleChip(this)">VEILLE</button>
+          </div>
+        </div>
+
+        <!-- Métier / Activité -->
+        <div style="margin-bottom:8px">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:4px;letter-spacing:.5px">ACTIVITÉ / MÉTIER</div>
+          <select id="f_filter_metier" onchange="renderSidebar()"
+            style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:4px 6px;color:var(--text);font-family:var(--mono);font-size:10px;outline:none">
+            <option value="">Tous métiers</option>
+            <option>Platrerie / Plaquiste</option>
+            <option>Peinture / Ravalement</option>
+            <option>Electricite</option>
+            <option>Plomberie / Sanitaire</option>
+            <option>CVC / Chauffage</option>
+            <option>Menuiserie / Serrurerie</option>
+            <option>Carrelage / Sol</option>
+            <option>Maconnerie</option>
+            <option>Mixte second oeuvre</option>
+          </select>
+        </div>
+
+        <!-- Zone géographique -->
+        <div style="margin-bottom:8px">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:4px;letter-spacing:.5px">ZONE / DÉPARTEMENT</div>
+          <select id="f_filter_zone" onchange="renderSidebar()"
+            style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:4px 6px;color:var(--text);font-family:var(--mono);font-size:10px;outline:none">
+            <option value="">Toutes zones</option>
+            <optgroup label="Paris">
+              <option value="75">Paris (75)</option>
+            </optgroup>
+            <optgroup label="Petite couronne">
+              <option value="92">Hauts-de-Seine (92)</option>
+              <option value="93">Seine-Saint-Denis (93)</option>
+              <option value="94">Val-de-Marne (94)</option>
+            </optgroup>
+            <optgroup label="Grande couronne">
+              <option value="77">Seine-et-Marne (77)</option>
+              <option value="78">Yvelines (78)</option>
+              <option value="91">Essonne (91)</option>
+              <option value="95">Val-d'Oise (95)</option>
+            </optgroup>
+            <optgroup label="Ville saisie librement">
+              <option value="custom">Rechercher une ville...</option>
+            </optgroup>
+          </select>
+          <input id="f_filter_ville" placeholder="Ville (ex: Boulogne, Nanterre...)" oninput="renderSidebar()"
+            style="display:none;width:100%;margin-top:4px;padding:4px 6px;background:var(--surface);border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:var(--mono);font-size:10px;outline:none;box-sizing:border-box"/>
+        </div>
+
+        <!-- Taille -->
+        <div style="margin-bottom:8px">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:4px;letter-spacing:.5px">TAILLE</div>
+          <div style="display:flex;gap:3px;flex-wrap:wrap">
+            <button class="fchip active" data-ftype="taille" data-fval="" onclick="toggleChip(this)">TOUTES</button>
+            <button class="fchip" data-ftype="taille" data-fval="TPE" onclick="toggleChip(this)">TPE</button>
+            <button class="fchip" data-ftype="taille" data-fval="PME" onclick="toggleChip(this)">PME</button>
+            <button class="fchip" data-ftype="taille" data-fval="ETI" onclick="toggleChip(this)">ETI</button>
+          </div>
+        </div>
+
+        <!-- Besoins ouverts -->
+        <div style="margin-bottom:6px">
+          <div style="display:flex;align-items:center;gap:6px;cursor:pointer" onclick="toggleBesoinFilter()">
+            <div id="f_filter_besoin_box" style="width:14px;height:14px;border:1px solid var(--border);border-radius:2px;background:var(--surface);flex-shrink:0"></div>
+            <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">Avec besoins ouverts seulement</span>
+          </div>
+        </div>
+
+        <!-- Bouton reset -->
+        <button onclick="resetFilters()" style="width:100%;padding:4px;background:transparent;border:1px solid var(--border);border-radius:3px;font-family:var(--mono);font-size:9px;color:var(--muted);cursor:pointer;margin-top:2px">↺ RÉINITIALISER FILTRES</button>
+      </div>
+    </div>
+
+    <!-- TRI + COMPTEUR -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+      <span id="prospect-count" style="font-family:var(--mono);font-size:9px;color:var(--muted)"></span>
+      <select id="crm-sort" onchange="renderSidebar()"
+        style="background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:2px 5px;color:var(--muted);font-family:var(--mono);font-size:9px;outline:none">
+        <option value="next">↑ Prochaine action</option>
+        <option value="alpha">A → Z</option>
+        <option value="za">Z → A</option>
+        <option value="statut">Par statut</option>
+        <option value="recent">Récents d'abord</option>
+        <option value="besoins">Besoins ouverts</option>
+      </select>
+    </div>
+
+    <div id="prospect-list"></div>
+  </div>
+</div>
+<div class="main">
+  <div class="main-header">
+    <div>
+      <div style="font-size:15px;font-weight:700" id="main-title">Tableau de bord</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px" id="main-sub"></div>
+    </div>
+    <button onclick="openMails()" style="padding:7px 14px;background:rgba(168,85,247,.1);color:#c084fc;border:1px solid rgba(168,85,247,.3);border-radius:3px;font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;">✉ MODELES MAILS</button>
+  </div>
+  <div class="main-content">
+    <div id="view-dashboard" class="dashboard"></div>
+    <div id="view-fiche" class="fiche" style="display:none"></div>
+    <div id="view-missions" style="display:none;padding:18px;overflow-y:auto"></div>
+    <div id="view-kpi" style="display:none;padding:18px;overflow-y:auto"></div>
+  </div>
+</div>
+</div>
+
+<!-- MODAL PROSPECT -->
+<div class="modal-overlay" id="modal-prospect">
+  <div class="modal">
+    <h3 id="modal-prospect-title">NOUVEAU PROSPECT</h3>
+    <div class="form-grid">
+      <div class="field field-full"><label>Entreprise *</label><input type="text" id="f_nom" placeholder="SARL Dubois Platrerie"/></div>
+      <div class="field"><label>Corps de metier</label>
+        <select id="f_metier"><option value="">--</option><option>Platrerie / Plaquiste</option><option>Peinture / Ravalement</option><option>Electricite</option><option>Plomberie / Sanitaire</option><option>CVC / Chauffage</option><option>Menuiserie / Serrurerie</option><option>Carrelage / Sol</option><option>Maconnerie</option><option>Mixte second oeuvre</option></select>
+      </div>
+      <div class="field"><label>Statut</label>
+        <select id="f_statut"><option value="froid">Froid</option><option value="tiede">Tiede</option><option value="chaud">Chaud</option><option value="client">Client</option><option value="veille">Veille 90j</option></select>
+      </div>
+      <div class="field"><label>Decideur</label><input type="text" id="f_decideur" placeholder="M. Dubois -- gerant"/></div>
+      <div class="field"><label>Telephone</label><input type="tel" id="f_tel"/></div>
+      <div class="field"><label>Email</label><input type="email" id="f_email"/></div>
+      <div class="field"><label>Zone</label><input type="text" id="f_zone" placeholder="Paris 15e"/></div>
+      <div class="field"><label>Taille</label><select id="f_taille"><option>TPE (1-9)</option><option selected>PME (10-49)</option><option>ETI (50+)</option></select></div>
+      <div class="field field-full"><label>Notes</label><textarea id="f_notes" placeholder="Contexte, chantiers connus, source..."></textarea></div>
+      <div class="field"><label>Prochaine action</label><select id="f_na_type"><option value="appel">Appel</option><option value="email">Email</option><option value="cv">Envoyer CV</option><option value="rdv">RDV</option><option value="relance">Relance</option></select></div>
+      <div class="field"><label>Date</label><input type="date" id="f_na_date"/></div>
+      <div class="field field-full"><label>Detail</label><input type="text" id="f_na_detail" placeholder="ex: Envoyer 2 CV plaquiste N3 + rappeler jeudi 10h"/></div>
+    </div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeModals()">Annuler</button><button class="btn-save" onclick="saveProspect()">ENREGISTRER</button></div>
+  </div>
+</div>
+
+<!-- MODAL BESOIN -->
+<div class="modal-overlay" id="modal-besoin">
+  <div class="modal">
+    <h3>NOUVEAU BESOIN</h3>
+    <div class="form-grid">
+      <div class="field field-full"><label>Qualification *</label><input type="text" id="b_qualif" placeholder="ex: Plaquiste N3P2"/></div>
+      <div class="field"><label>Nombre de personnes</label><input type="number" id="b_nb" value="1" min="1"/></div>
+      <div class="field"><label>Date souhaitee</label><input type="date" id="b_date"/></div>
+      <div class="field"><label>Duree estimee</label><input type="text" id="b_duree" placeholder="ex: 3 semaines, 2 mois"/></div>
+      <div class="field"><label>Statut</label><select id="b_statut"><option value="ouvert">Ouvert</option><option value="encours">En cours</option><option value="pourvu">Pourvu</option><option value="annule">Annule</option></select></div>
+      <div class="field"><label>Taux client propose (EUR/h)</label><input type="number" id="b_taux_client" step="0.01" placeholder="ex: 34.50"/></div>
+      <div class="field"><label>Adresse chantier</label><input type="text" id="b_adresse" placeholder="ex: 12 rue Leconte de Lisle, 75016"/></div>
+      <div class="field"><label>CP chantier</label>
+        <input type="text" id="b_cp" maxlength="5" placeholder="75016" oninput="resoudreBesoinCP(this.value)"
+          style="background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:5px 8px;color:var(--text);font-size:12px;outline:none"/>
+      </div>
+      <div class="field"><label>Ville <span id="b_ville_hint" style="color:var(--cyan);font-size:10px;font-family:var(--mono)"></span></label>
+        <input type="text" id="b_ville" placeholder="(auto)" readonly
+          style="background:var(--surface3);border:1px solid var(--border);border-radius:3px;padding:5px 8px;color:var(--cyan);font-size:11px;font-family:var(--mono);outline:none"/>
+      </div>
+      <div class="field field-full" style="flex-direction:column;gap:6px">
+        <label>Horaires <span id="b_hor_preview" style="color:var(--yellow);font-size:10px;font-family:var(--mono);margin-left:8px;font-weight:700"></span></label>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px">
+          <div><div style="font-size:9px;color:var(--muted);font-family:var(--mono);margin-bottom:2px">DÉBUT MATIN</div>
+            <select id="bh_dm" onchange="buildBesoinHoraires()" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:3px 5px;color:var(--text);font-size:10px;font-family:var(--mono);outline:none">
+              <option value="">--</option><option>06h00</option><option>06h30</option><option>07h00</option><option>07h30</option><option>08h00</option><option>08h30</option><option>09h00</option>
+            </select></div>
+          <div><div style="font-size:9px;color:var(--muted);font-family:var(--mono);margin-bottom:2px">FIN MATIN</div>
+            <select id="bh_fm" onchange="buildBesoinHoraires()" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:3px 5px;color:var(--text);font-size:10px;font-family:var(--mono);outline:none">
+              <option value="">--</option><option>11h30</option><option>12h00</option><option>12h30</option><option>13h00</option>
+            </select></div>
+          <div><div style="font-size:9px;color:var(--muted);font-family:var(--mono);margin-bottom:2px">DÉBUT APM</div>
+            <select id="bh_dam" onchange="buildBesoinHoraires()" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:3px 5px;color:var(--text);font-size:10px;font-family:var(--mono);outline:none">
+              <option value="">--</option><option>12h00</option><option>12h30</option><option>13h00</option><option>13h30</option><option>14h00</option>
+            </select></div>
+          <div><div style="font-size:9px;color:var(--muted);font-family:var(--mono);margin-bottom:2px">FIN JOURNÉE</div>
+            <select id="bh_fj" onchange="buildBesoinHoraires()" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:3px 5px;color:var(--text);font-size:10px;font-family:var(--mono);outline:none">
+              <option value="">--</option><option>15h30</option><option>16h00</option><option>16h30</option><option>17h00</option><option>17h30</option><option>18h00</option><option>18h30</option><option>19h00</option>
+            </select></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px">
+          <div><div style="font-size:9px;color:var(--muted);font-family:var(--mono);margin-bottom:2px">JOURS</div>
+            <select id="bh_jr" onchange="buildBesoinHoraires()" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:3px 5px;color:var(--text);font-size:10px;font-family:var(--mono);outline:none">
+              <option value="">--</option><option value="Lun-Ven">Lun au Ven</option><option value="Lun-Sam">Lun au Sam</option><option value="Lun-Jeu">Lun au Jeu</option><option value="Mar-Sam">Mar au Sam</option><option value="3x8">3×8</option><option value="Nuit">Nuit</option>
+            </select></div>
+          <div><div style="font-size:9px;color:var(--muted);font-family:var(--mono);margin-bottom:2px">PAUSE</div>
+            <select id="bh_pa" onchange="buildBesoinHoraires()" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:3px 5px;color:var(--text);font-size:10px;font-family:var(--mono);outline:none">
+              <option value="">Sans coupure</option><option value="30min">30 min</option><option value="45min">45 min</option><option value="1h">1h</option><option value="1h30">1h30</option>
+            </select></div>
+          <div><div style="font-size:9px;color:var(--muted);font-family:var(--mono);margin-bottom:2px">BASE</div>
+            <select id="bh_base" onchange="buildBesoinHoraires()" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:3px 5px;color:var(--text);font-size:10px;font-family:var(--mono);outline:none">
+              <option value="">--</option><option value="base 35h">35h</option><option value="base 37h">37h</option><option value="base 39h">39h</option><option value="base 40h">40h</option>
+            </select></div>
+        </div>
+        <input id="b_horaires" placeholder="Horaires libres ou générés ci-dessus..."
+          style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:5px 8px;color:var(--text);font-family:var(--mono);font-size:11px;outline:none"
+          oninput="document.getElementById('b_hor_preview').textContent=this.value"/>
+      </div>
+      <div class="field field-full"><label>Habilitations requises</label><input type="text" id="b_habilit" placeholder="ex: AIPR, habilitation elec BR, travail en hauteur"/></div>
+      <div class="field field-full"><label>Notes</label><textarea id="b_notes" placeholder="Chantier, adresse, conditions particulieres..."></textarea></div>
+    </div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeModals()">Annuler</button><button class="btn-save" onclick="saveBesoin()">ENREGISTRER</button></div>
+  </div>
+</div>
+
+<!-- MODAL CV -->
+<div class="modal-overlay" id="modal-cv">
+  <div class="modal">
+    <h3>CV ENVOYE</h3>
+    <div class="form-grid">
+      <div class="field field-full"><label>Candidat (nom / reference) *</label><input type="text" id="cv_candidat" placeholder="ex: M. Martin -- plaquiste N3P2 -- 06 xx xx"/></div>
+      <div class="field"><label>Date envoi</label><input type="date" id="cv_date"/></div>
+      <div class="field"><label>Taux horaire brut candidat (EUR/h)</label><input type="number" id="cv_taux" step="0.01" placeholder="ex: 15.50"/></div>
+      <div class="field"><label>Taux client facture (EUR/h)</label><input type="number" id="cv_taux_client" step="0.01" placeholder="ex: 34.00"/></div>
+      <div class="field"><label>Retour client</label><select id="cv_retour"><option value="silence">Sans reponse</option><option value="accepte">Accepte</option><option value="refuse">Refuse</option></select></div>
+      <div class="field"><label>Mission demarree ?</label><select id="cv_mission"><option value="non">Non</option><option value="oui">Oui</option></select></div>
+      <div class="field field-full"><label>Notes</label><textarea id="cv_notes" placeholder="Motif refus, feedback client, profil alternatif..."></textarea></div>
+    </div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeModals()">Annuler</button><button class="btn-save" onclick="saveCV()">ENREGISTRER</button></div>
+  </div>
+</div>
+
+<script>
+var DB=JSON.parse(localStorage.getItem('crm_btp_v2')||'[]');
+var FSTATE={statut:'',taille:'',metier:'',zone:'',ville:'',besoin:false};
+var currentPid=null,currentFilter='tous',currentFicheTab='journal',editingPid=null,currentBesoinPid=null,currentCVBesoinIdx=null;
+function save(){localStorage.setItem('crm_btp_v2',JSON.stringify(DB));}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,5);}
+function today(){return new Date().toISOString().slice(0,10);}
+function fmt(d){if(!d)return '--';var p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
+function isOD(d){return d&&d<today();}
+function isTD(d){return d===today();}
+var STATUS={froid:{l:'FROID',c:'s-froid'},tiede:{l:'TIEDE',c:'s-tiede'},chaud:{l:'CHAUD',c:'s-chaud'},client:{l:'CLIENT',c:'s-client'},veille:{l:'VEILLE',c:'s-veille'}};
+var JTYPES={appel:{l:'APPEL',c:'t-appel'},email:{l:'EMAIL',c:'t-email'},cv:{l:'CV',c:'t-cv'},rdv:{l:'RDV',c:'t-rdv'},note:{l:'NOTE',c:'t-note'},relance:{l:'RELANCE',c:'t-relance'}};
+var BSTAT={ouvert:{l:'OUVERT',c:'b-ouvert'},encours:{l:'EN COURS',c:'b-encours'},pourvu:{l:'POURVU',c:'b-pourvu'},annule:{l:'ANNULE',c:'b-annule'}};
+document.getElementById('f_na_date').value=today();
+document.getElementById('b_date').value=today();
+document.getElementById('cv_date').value=today();
+document.getElementById('main-sub').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+renderAll();
+function renderAll(){renderSidebar();renderDashboard();if(currentPid)renderFiche(currentPid);}
+
+// Raccourcis clavier
+document.addEventListener('keydown',function(e){
+  // Escape : vider recherche ou fermer modal
+  if(e.key==='Escape'){
+    var modals=document.querySelectorAll('.modal-overlay.open');
+    if(modals.length){closeModals();return;}
+    var s=document.getElementById('crm-search');
+    if(s&&s.value){s.value='';renderSidebar();s.focus();return;}
+  }
+  // Ctrl+F ou / : focus recherche
+  if((e.ctrlKey&&e.key==='f')||(!e.ctrlKey&&!e.altKey&&!e.metaKey&&e.key==='/'&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='TEXTAREA')){
+    var s=document.getElementById('crm-search');
+    if(s){e.preventDefault();s.focus();s.select();}
+  }
+});
+function setFilter(f,btn){currentFilter=f;document.querySelectorAll('.filter-btn').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');renderSidebar();}
+function renderSidebar(){
+  var list=document.getElementById('prospect-list');
+  if(!list) return;
+
+  // Lecture état filtres
+  var q=(document.getElementById('crm-search')||{value:''}).value.trim().toLowerCase();
+  var sortVal=(document.getElementById('crm-sort')||{value:'next'}).value;
+  var fMetier=(document.getElementById('f_filter_metier')||{value:''}).value;
+  var fZone=(document.getElementById('f_filter_zone')||{value:''}).value;
+  var fVille=(document.getElementById('f_filter_ville')||{value:''}).value.trim().toLowerCase();
+
+  // Bouton clear recherche
+  var clearBtn=document.getElementById('crm-search-clear');
+  if(clearBtn) clearBtn.style.display=q?'block':'none';
+
+  // Afficher/masquer champ ville libre
+  var villeInput=document.getElementById('f_filter_ville');
+  if(villeInput) villeInput.style.display=(fZone==='custom')?'block':'none';
+
+  // Filtrage
+  var arr=DB.filter(function(p){
+    // Statut (via FSTATE)
+    if(FSTATE.statut&&p.statut!==FSTATE.statut) return false;
+    // Métier
+    if(fMetier&&p.metier!==fMetier) return false;
+    // Zone / département
+    if(fZone&&fZone!=='custom'){
+      var pZone=(p.zone||'');
+      // Cherche le dép dans zone OU cp OU notes
+      var hay=[pZone,(p.cp||''),(p.notes||'')].join(' ');
+      if(hay.indexOf(fZone)<0) return false;
+    }
+    // Ville libre
+    if(fZone==='custom'&&fVille){
+      var hay2=[p.zone,p.ville,p.notes,p.nom].filter(Boolean).join(' ').toLowerCase();
+      if(hay2.indexOf(fVille)<0) return false;
+    }
+    // Taille
+    if(FSTATE.taille&&!(p.taille||'').includes(FSTATE.taille)) return false;
+    // Besoins ouverts seulement
+    if(FSTATE.besoin){
+      var bo=(p.besoins||[]).filter(function(b){return b.statut==='ouvert'||b.statut==='encours';}).length;
+      if(!bo) return false;
+    }
+    // Recherche texte multi-mots
+    if(q){
+      var hay3=[p.nom,p.metier,p.zone,p.decideur,p.tel,p.email,p.notes,p.ville,p.cp].filter(Boolean).join(' ').toLowerCase();
+      if(!q.split(' ').filter(Boolean).every(function(w){return hay3.indexOf(w)>=0;})) return false;
+    }
+    return true;
+  });
+
+  // Tri
+  if(sortVal==='alpha') arr.sort(function(a,b){return(a.nom||'').localeCompare(b.nom||'','fr');});
+  else if(sortVal==='za') arr.sort(function(a,b){return(b.nom||'').localeCompare(a.nom||'','fr');});
+  else if(sortVal==='statut'){var ord={client:0,chaud:1,tiede:2,veille:3,froid:4};arr.sort(function(a,b){return(ord[a.statut]||4)-(ord[b.statut]||4);});}
+  else if(sortVal==='recent') arr.sort(function(a,b){return(b.createdAt||'').localeCompare(a.createdAt||'');});
+  else if(sortVal==='besoins') arr.sort(function(a,b){var ba=(b.besoins||[]).filter(function(x){return x.statut==='ouvert'||x.statut==='encours';}).length;var aa=(a.besoins||[]).filter(function(x){return x.statut==='ouvert'||x.statut==='encours';}).length;return ba-aa;});
+  else arr.sort(function(a,b){return(a.nextDate||'9999').localeCompare(b.nextDate||'9999');});
+
+  // Compteur + badge filtres actifs
+  var nbActifs=[FSTATE.statut,fMetier,(fZone&&fZone!=='custom'?fZone:''),fVille,FSTATE.taille,FSTATE.besoin?'1':''].filter(Boolean).length+(q?1:0);
+  var badge=document.getElementById('filter-badge');
+  if(badge){badge.textContent=nbActifs;badge.style.display=nbActifs>0?'inline':'none';}
+  var countEl=document.getElementById('prospect-count');
+  if(countEl) countEl.textContent=arr.length+' / '+DB.length+(nbActifs>0?' ('+nbActifs+' filtre'+(nbActifs>1?'s':'')+'actif'+(nbActifs>1?'s':'')+')'  :'');
+
+  if(!arr.length){
+    list.innerHTML='<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px;font-family:var(--mono)">Aucun résultat<br><button onclick="resetFilters()" style="margin-top:8px;padding:4px 10px;background:transparent;border:1px solid var(--border);border-radius:3px;font-family:var(--mono);font-size:9px;color:var(--muted);cursor:pointer">↺ Réinitialiser</button></div>';
+    return;
+  }
+
+  // Highlight recherche texte
+  function hl(txt){
+    if(!q||!txt) return txt||'';
+    try{
+      var re=new RegExp('('+q.replace(/[-[\]{}()*+?.,\^$|#\s]/g,'\$&')+')', 'gi');
+      return String(txt).replace(re,'<mark style="background:rgba(249,115,22,.35);color:var(--text);border-radius:2px;padding:0 1px">$1</mark>');
+    }catch(e){return txt;}
+  }
+
+  list.innerHTML=arr.map(function(p){
+    var st=STATUS[p.statut]||STATUS.froid;
+    var bo=(p.besoins||[]).filter(function(b){return b.statut==='ouvert'||b.statut==='encours';}).length;
+    var hasMission=(p.besoins||[]).some(function(b){return(b.cvs||[]).some(function(cv){return cv.mission==='oui';});});
+    var nx='';
+    if(p.nextDate){
+      var cl=isOD(p.nextDate)?'color:var(--warn)':isTD(p.nextDate)?'color:var(--yellow)':'color:var(--muted)';
+      var ic=isOD(p.nextDate)?'! ':isTD(p.nextDate)?'▶ ':'○ ';
+      nx='<div class="pc-next" style="'+cl+'">'+ic+(p.nextType||'').toUpperCase()+' — '+fmt(p.nextDate)+'</div>';
+    }
+    return '<div class="prospect-card'+(currentPid===p.id?' selected':'')+'" data-pid="'+p.id+'" onclick="openFiche(this.dataset.pid)" style="cursor:pointer">'
+      +'<div class="pc-header"><div class="pc-name">'+hl(p.nom)+'</div><span class="pc-status '+st.c+'">'+st.l+'</span></div>'
+      +'<div class="pc-metier">'+hl(p.metier||'--')+' — '+hl(p.zone||'IDF')+'</div>'
+      +'<div class="pc-indicators">'
+      +(bo>0?'<span class="pc-badge b-ouvert">'+bo+' besoin'+(bo>1?'s':'')+'</span>':'')
+      +(hasMission?'<span class="pc-badge" style="background:rgba(234,179,8,.15);color:var(--yellow);border:1px solid rgba(234,179,8,.3)">⚙ mission</span>':'')
+      +(p.decideur?'<span style="font-size:9px;color:var(--muted2);font-family:var(--mono);margin-left:2px">'+hl(p.decideur)+'</span>':'')
+      +'</div>'+nx+'</div>';
+  }).join('');
+}
+
+function clearSearch(){
+  var el=document.getElementById('crm-search');
+  if(el){el.value='';el.focus();}
+  renderSidebar();
+}
+
+function toggleFilterPanel(){
+  var body=document.getElementById('filter-body');
+  var chev=document.getElementById('filter-chevron');
+  if(!body) return;
+  var open=body.style.display!=='none';
+  body.style.display=open?'none':'block';
+  if(chev) chev.textContent=open?'▼':'▲';
+}
+
+function toggleChip(btn){
+  var ftype=btn.dataset.ftype;
+  var fval=btn.dataset.fval;
+  // Pour statut et taille : sélection exclusive
+  document.querySelectorAll('.fchip[data-ftype="'+ftype+'"]').forEach(function(c){c.classList.remove('active');});
+  btn.classList.add('active');
+  FSTATE[ftype]=fval;
+  // Compatibilité avec l'ancien currentFilter
+  if(ftype==='statut') currentFilter=fval||'tous';
+  renderSidebar();
+}
+
+function toggleBesoinFilter(){
+  FSTATE.besoin=!FSTATE.besoin;
+  var box=document.getElementById('f_filter_besoin_box');
+  if(box){
+    box.style.background=FSTATE.besoin?'var(--accent)':'var(--surface)';
+    box.style.borderColor=FSTATE.besoin?'var(--accent)':'var(--border)';
+    box.innerHTML=FSTATE.besoin?'<span style="color:#fff;font-size:10px;line-height:14px;display:block;text-align:center">✓</span>':'';
+  }
+  renderSidebar();
+}
+
+function resetFilters(){
+  FSTATE={statut:'',taille:'',metier:'',zone:'',ville:'',besoin:false};
+  currentFilter='tous';
+  var s=document.getElementById('crm-search');if(s)s.value='';
+  var fm=document.getElementById('f_filter_metier');if(fm)fm.value='';
+  var fz=document.getElementById('f_filter_zone');if(fz)fz.value='';
+  var fv=document.getElementById('f_filter_ville');if(fv){fv.value='';fv.style.display='none';}
+  var box=document.getElementById('f_filter_besoin_box');if(box){box.style.background='var(--surface)';box.style.borderColor='var(--border)';box.innerHTML='';}
+  document.querySelectorAll('.fchip').forEach(function(c){c.classList.remove('active');});
+  document.querySelectorAll('.fchip[data-fval=""]').forEach(function(c){c.classList.add('active');});
+  renderSidebar();
+}
+function renderDashboard(){
+  var dash=document.getElementById('view-dashboard');
+  var total=DB.length,chauds=DB.filter(function(p){return p.statut==='chaud';}).length,clients=DB.filter(function(p){return p.statut==='client';}).length;
+  var retard=DB.filter(function(p){return p.nextDate&&isOD(p.nextDate);}).length;
+  var bo=DB.reduce(function(acc,p){return acc+(p.besoins||[]).filter(function(b){return b.statut==='ouvert'||b.statut==='encours';}).length;},0);
+  var misCount=DB.reduce(function(acc,p){return acc+(p.besoins||[]).reduce(function(a2,b){return a2+(b.cvs||[]).filter(function(cv){return cv.mission==='oui';}).length;},0);},0);
+  // + base candidats
+  try{var cdb=JSON.parse(localStorage.getItem('base_btp')||'[]');misCount+=cdb.filter(function(c){return c.dispo==='mission';}).length;}catch(e){}
+  var actJ=DB.filter(function(p){return p.nextDate&&(isTD(p.nextDate)||isOD(p.nextDate));}).sort(function(a,b){return(a.nextDate||'').localeCompare(b.nextDate||'');});
+  var bU=[];DB.forEach(function(p){(p.besoins||[]).forEach(function(b){if((b.statut==='ouvert'||b.statut==='encours')&&b.date&&(isOD(b.date)||isTD(b.date))){bU.push({b:b,pnom:p.nom,pid:p.id});}});});
+  var aHtml=actJ.length?actJ.map(function(p){var t=JTYPES[p.nextType]||JTYPES.note;var od=isOD(p.nextDate);return '<div class="today-item" onclick="openFiche(\''+p.id+'\')"><span class="today-type '+t.c+'">'+t.l+'</span><div class="today-body"><div class="today-name">'+p.nom+' <span style="font-size:11px;color:var(--muted);font-weight:400">- '+(p.metier||'BTP')+'</span></div><div class="today-action">'+(p.nextDetail||'--')+'</div><div class="today-date" style="'+(od?'color:var(--warn)':'color:var(--muted)')+'">'+(od?'RETARD - ':'')+fmt(p.nextDate)+'</div></div></div>';}).join(''):'<div style="padding:16px;text-align:center;color:var(--muted);font-size:11px;font-family:var(--mono)">Rien a traiter aujourd\'hui</div>';
+  var bHtml=bU.length?bU.map(function(x){var od=isOD(x.b.date);return '<div class="today-item" onclick="openFiche(\''+x.pid+'\')"><span class="today-type b-ouvert">BESOIN</span><div class="today-body"><div class="today-name">'+x.pnom+' <span style="font-size:11px;color:var(--muted);font-weight:400">- '+x.b.qualif+'</span></div><div class="today-action">'+x.b.nb+' pers. - '+(x.b.duree||'duree ?')+(x.b.habilit?' - '+x.b.habilit:'')+'</div><div class="today-date" style="'+(od?'color:var(--warn)':'color:var(--yellow)')+'">'+(od?'DATE DEPASSEE - ':'')+fmt(x.b.date)+'</div></div></div>';}).join(''):'<div style="padding:16px;text-align:center;color:var(--muted);font-size:11px;font-family:var(--mono)">Aucun besoin urgent</div>';
+  dash.innerHTML='<div class="dash-grid"><div class="dash-card"><div class="num" style="color:var(--text)">'+total+'</div><div class="lbl">PROSPECTS</div></div><div class="dash-card"><div class="num" style="color:var(--accent)">'+chauds+'</div><div class="lbl">CHAUDS</div></div><div class="dash-card"><div class="num" style="color:var(--green)">'+clients+'</div><div class="lbl">CLIENTS</div></div><div class="dash-card" onclick="document.getElementById(\'tab-mis\').click()" style="cursor:pointer"><div class="num" style="color:'+(misCount>0?'var(--yellow)':'var(--muted)')+'">'+misCount+'</div><div class="lbl">MISSIONS ACTIVES</div></div><div class="dash-card"><div class="num" style="color:'+(retard>0?'var(--warn)':'var(--muted)')+'">'+retard+'</div><div class="lbl">EN RETARD</div></div><div class="dash-card"><div class="num" style="color:'+(bo>0?'var(--yellow)':'var(--muted)')+'">'+bo+'</div><div class="lbl">BESOINS OUVERTS</div></div></div><div class="dash-section" style="margin-bottom:10px"><div class="dash-sec-head" style="color:var(--accent)">ACTIONS A TRAITER</div>'+aHtml+'</div><div class="dash-section"><div class="dash-sec-head" style="color:var(--yellow)">BESOINS URGENTS (date passee ou aujourd\'hui)</div>'+bHtml+'</div>';
+}
+function showMain(v,btn){
+  document.querySelectorAll('.sidebar-tab').forEach(function(t){t.classList.remove('active');});btn.classList.add('active');
+  document.getElementById('view-dashboard').style.display='none';
+  document.getElementById('view-fiche').style.display='none';
+  document.getElementById('view-missions').style.display='none';
+  document.getElementById('view-kpi').style.display='none';
+  if(v==='dashboard'){document.getElementById('view-dashboard').style.display='block';document.getElementById('main-title').textContent='Tableau de bord';currentPid=null;renderSidebar();renderDashboard();}
+  else if(v==='missions'){document.getElementById('view-missions').style.display='block';document.getElementById('main-title').textContent='Missions actives';renderMissions();}
+  else if(v==='kpi'){document.getElementById('view-kpi').style.display='block';document.getElementById('main-title').textContent='KPI & Pilotage';renderKPI();}
+  else{document.getElementById('view-fiche').style.display='block';document.getElementById('main-title').textContent='Prospects';if(currentPid)renderFiche(currentPid);else if(DB.length)openFiche(DB[0].id);else document.getElementById('view-fiche').innerHTML='<div class="empty"><div class="icon">?</div><p>Creez votre premier prospect</p></div>';}
+}
+function openFiche(id){currentPid=id;currentFicheTab='journal';document.getElementById('view-dashboard').style.display='none';document.getElementById('view-fiche').style.display='block';document.getElementById('main-title').textContent=(DB.find(function(p){return p.id===id;})||{}).nom||'Fiche';renderFiche(id);renderSidebar();}
+function switchFicheTab(tab){currentFicheTab=tab;renderFiche(currentPid);}
+function renderFiche(id){
+  var p=DB.find(function(x){return x.id===id;});if(!p)return;
+  var st=STATUS[p.statut]||STATUS.froid;
+  var nc=p.nextDate?(isOD(p.nextDate)?'var(--warn)':isTD(p.nextDate)?'var(--yellow)':'var(--muted2)'):'var(--muted)';
+  var tabs=[['journal','JOURNAL'],['besoins','BESOINS & CV'],['next','PROCHAINE ACTION']];
+  var tabsHtml=tabs.map(function(t){return '<button class="fiche-tab'+(currentFicheTab===t[0]?' active':'')+'" onclick="switchFicheTab(\''+t[0]+'\')">'+t[1]+'</button>';}).join('');
+  var bodyHtml='';
+  if(currentFicheTab==='journal'){
+    var jArr=(p.journal||[]).slice().reverse();
+    var jHtml=jArr.length?jArr.map(function(e,i){var t=JTYPES[e.type]||JTYPES.note;var ri=(p.journal.length-1)-i;return '<div class="entry"><span class="entry-type '+t.c+'">'+t.l+'</span><span class="entry-date">'+fmt(e.date)+'</span><span class="entry-text">'+e.texte+'</span><span class="entry-del" onclick="delJEntry(\''+id+'\','+ri+')">x</span></div>';}).join(''):'<div style="color:var(--muted);font-size:12px;padding:6px 0">Aucune action enregistree</div>';
+    bodyHtml='<div class="sec"><div class="sec-head" style="color:var(--green)">+ AJOUTER UNE ACTION</div><div class="sec-body"><div style="display:grid;grid-template-columns:auto auto 1fr auto;gap:7px;align-items:end"><div class="field"><label>Type</label><select id="j_type">'+Object.entries(JTYPES).map(function(kv){return '<option value="'+kv[0]+'">'+kv[1].l+'</option>';}).join('')+'</select></div><div class="field"><label>Date</label><input type="date" id="j_date" value="'+today()+'"/></div><div class="field"><label>Detail</label><input type="text" id="j_texte" placeholder="ex: Appel M. Dubois -- interesse, demande 2 plaquistes N3 pour 15 mars"/></div><div style="padding-bottom:1px"><button class="btn-primary" onclick="addJEntry(\''+id+'\')">AJOUTER</button></div></div></div></div><div class="sec"><div class="sec-head" style="color:var(--blue)">JOURNAL <span style="font-weight:400;color:var(--muted)">'+(p.journal||[]).length+' entrees</span></div><div class="sec-body">'+jHtml+'</div></div>';
+  } else if(currentFicheTab==='besoins'){
+    var besoins=p.besoins||[];
+    var bHtml=besoins.length?besoins.map(function(b,bi){
+      var bs=BSTAT[b.statut]||BSTAT.ouvert;
+      var cvs=b.cvs||[];
+      var cvRows=cvs.map(function(cv,ci){
+        var rCls=cv.retour==='accepte'?'cv-accepte':cv.retour==='refuse'?'cv-refuse':'cv-silence';
+        var rLbl=cv.retour==='accepte'?'Accepte':cv.retour==='refuse'?'Refuse':'Sans reponse';
+        var mg='--';if(cv.taux&&cv.tauxClient){mg=((cv.tauxClient-parseFloat(cv.taux)*2.05)/cv.tauxClient*100).toFixed(1)+'%';}
+        return '<tr><td>'+cv.candidat+'</td><td style="font-family:var(--mono);font-size:11px">'+fmt(cv.date)+'</td><td style="font-family:var(--mono);font-size:11px">'+(cv.taux?cv.taux+' E/h':'--')+'</td><td style="font-family:var(--mono);font-size:11px">'+(cv.tauxClient?cv.tauxClient+' E/h':'--')+'</td><td style="font-family:var(--mono);font-size:11px">'+mg+'</td><td class="'+rCls+'" style="font-family:var(--mono);font-size:10px">'+rLbl+'</td><td style="font-family:var(--mono);font-size:10px;color:'+(cv.mission==='oui'?'var(--yellow)':'var(--muted)')+'">'+(cv.mission==='oui'?'Demarree':'Non')+'</td><td><span style="cursor:pointer;color:var(--muted);font-size:12px" onclick="delCV(\''+id+'\','+bi+','+ci+')">x</span></td></tr>';
+      }).join('');
+      return '<div class="besoin-card"><div class="besoin-header" onclick="toggleBesoin(this)"><div><div class="besoin-title">'+b.qualif+' <span style="font-size:11px;color:var(--muted);font-weight:400">- '+b.nb+' pers.</span></div><div class="besoin-meta">Souhaite le '+fmt(b.date)+' — '+(b.duree||'durée ?')+(b.habilit?' — '+b.habilit:'')+(b.horaires?' — ⏰'+b.horaires:'')+(b.adresse?' — 📍'+b.adresse:'')+'</div></div><div style="display:flex;gap:8px;align-items:center"><span class="pc-status '+bs.c+'" style="font-size:10px">'+bs.l+'</span><select onclick="event.stopPropagation()" onchange="changeBesoinStatut(\''+id+'\','+bi+',this.value)" style="background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:3px 6px;color:var(--text);font-size:10px;font-family:var(--mono)">'+Object.entries(BSTAT).map(function(kv){return '<option value="'+kv[0]+'"'+(b.statut===kv[0]?' selected':'')+'>'+kv[1].l+'</option>';}).join('')+'</select><button class="btn-ghost" onclick="event.stopPropagation();delBesoin(\''+id+'\','+bi+')">x</button></div></div><div class="besoin-body" style="display:none">'+(b.notes?'<div style="font-size:12px;color:var(--muted2);margin-bottom:10px;line-height:1.6">'+b.notes+'</div>':'')+(b.tauxClient?'<div style="font-size:12px;color:var(--accent);font-family:var(--mono);margin-bottom:8px">Taux client : '+b.tauxClient+' E/h</div>':'')+'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.5px">CV ENVOYES ('+cvs.length+')</div><button class="btn-add-cv" onclick="openModalCV(\''+id+'\','+bi+')">+ CV ENVOYE</button></div>'+(cvs.length?'<table class="cv-table"><thead><tr><th>CANDIDAT</th><th>DATE</th><th>TAUX BRUT</th><th>TAUX CLIENT</th><th>MARGE EST.</th><th>RETOUR</th><th>MISSION</th><th></th></tr></thead><tbody>'+cvRows+'</tbody></table>':'<div style="font-size:11px;color:var(--muted);padding:6px 0">Aucun CV envoye sur ce besoin</div>')+'</div></div>';
+    }).join(''):'<div class="empty" style="padding:20px"><div class="icon">?</div><p>Aucun besoin enregistre</p></div>';
+    bodyHtml='<div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="btn-primary" onclick="openModalBesoin(\''+id+'\')">+ NOUVEAU BESOIN</button></div>'+bHtml;
+  } else if(currentFicheTab==='next'){
+    bodyHtml='<div class="sec"><div class="sec-head" style="color:var(--yellow)">PROCHAINE ACTION <span style="font-weight:400;font-size:10px;color:'+nc+'">'+(p.nextDate?(isOD(p.nextDate)?'RETARD - ':isTD(p.nextDate)?'AUJOURD\'HUI - ':'')+fmt(p.nextDate):'')+'</span></div><div class="sec-body"><div class="form-grid"><div class="field"><label>Type</label><select id="na_type" onchange="updateNext(\''+id+'\')">'+Object.entries(JTYPES).filter(function(kv){return kv[0]!=='note';}).map(function(kv){return '<option value="'+kv[0]+'"'+(p.nextType===kv[0]?' selected':'')+'>'+kv[1].l+'</option>';}).join('')+'</select></div><div class="field"><label>Date</label><input type="date" id="na_date" value="'+(p.nextDate||'')+'" onchange="updateNext(\''+id+'\')"/></div><div class="field field-full"><label>Detail</label><input type="text" id="na_detail" value="'+(p.nextDetail||'')+'" placeholder="ex: Envoyer 2 CV plaquiste N3" onchange="updateNext(\''+id+'\')"/></div></div></div></div><div class="sec"><div class="sec-head" style="color:var(--muted)">STATUT PROSPECT</div><div class="sec-body"><div style="display:flex;gap:6px;flex-wrap:wrap">'+Object.entries(STATUS).map(function(kv){return '<button onclick="setStatut(\''+id+'\',\''+kv[0]+'\')" style="padding:5px 12px;border-radius:3px;cursor:pointer;font-family:var(--mono);font-size:10px;font-weight:700;border:1px solid var(--border);background:'+(p.statut===kv[0]?'var(--surface3)':'transparent')+';'+(p.statut===kv[0]?'border-color:var(--accent);':'')+'" class="'+kv[1].c+'">'+kv[1].l+'</button>';}).join('')+'</div>'+(p.notes?'<div style="margin-top:10px;font-size:12px;color:var(--muted2);background:var(--surface2);padding:10px;border-radius:3px;line-height:1.7">'+p.notes+'</div>':'')+'</div></div>';
+  }
+  document.getElementById('view-fiche').innerHTML='<div class="fiche-top"><div><div class="fiche-name">'+p.nom+'</div><div class="fiche-meta"><span class="pc-status '+st.c+'" style="font-size:11px;padding:3px 10px">'+st.l+'</span><span style="font-size:12px;color:var(--muted)">'+(p.metier||'--')+'</span><span style="font-size:12px;color:var(--muted)">'+(p.taille||'')+'</span>'+(p.tel?'<span style="font-size:12px;color:var(--blue)">Tel: '+p.tel+'</span>':'')+(p.email?'<span style="font-size:12px;color:var(--blue)">'+p.email+'</span>':'')+(p.decideur?'<span style="font-size:12px;color:var(--muted2)">'+p.decideur+'</span>':'')+(p.zone?'<span style="font-size:12px;color:var(--muted2)">'+p.zone+'</span>':'')+'</div></div><div class="fiche-btns"><button class="btn-ghost" onclick="openModalProspect(\''+id+'\')">Modifier</button><button class="btn-danger" onclick="deleteProspect(\''+id+'\')">Supprimer</button></div></div><div class="fiche-tabs">'+tabsHtml+'</div>'+bodyHtml;
+}
+function toggleBesoin(h){var b=h.nextElementSibling;b.style.display=b.style.display==='none'?'block':'none';}
+function openModalBesoin(pid){
+  currentBesoinPid=pid;
+  ['b_qualif','b_duree','b_habilit','b_notes','b_adresse','b_cp','b_horaires'].forEach(function(i){var el=document.getElementById(i);if(el)el.value='';});
+  var bVilEl=document.getElementById('b_ville');if(bVilEl)bVilEl.value='';
+  var bHintEl=document.getElementById('b_ville_hint');if(bHintEl)bHintEl.textContent='';
+  var bPrevEl=document.getElementById('b_hor_preview');if(bPrevEl)bPrevEl.textContent='';
+  ['bh_dm','bh_fm','bh_dam','bh_fj','bh_jr','bh_pa','bh_base'].forEach(function(i){var el=document.getElementById(i);if(el)el.value='';});
+  document.getElementById('b_nb').value='1';document.getElementById('b_date').value=today();document.getElementById('b_statut').value='ouvert';document.getElementById('b_taux_client').value='';
+  document.getElementById('modal-besoin').classList.add('open');
+}
+function saveBesoin(){
+  var q=document.getElementById('b_qualif').value.trim();if(!q){alert('Qualification obligatoire');return;}
+  var p=DB.find(function(x){return x.id===currentBesoinPid;});if(!p)return;
+  if(!p.besoins)p.besoins=[];
+  var bRue=(document.getElementById('b_adresse')||{value:''}).value.trim();
+  var bCp=(document.getElementById('b_cp')||{value:''}).value.trim();
+  var bVil=(document.getElementById('b_ville')||{value:''}).value.trim();
+  var bAdrFull=bRue&&bCp&&bVil?(bRue+', '+bCp+' '+bVil):bRue||(bCp&&bVil?bCp+' '+bVil:'');
+  p.besoins.push({id:uid(),qualif:q,nb:parseInt(document.getElementById('b_nb').value)||1,date:document.getElementById('b_date').value,duree:document.getElementById('b_duree').value,statut:document.getElementById('b_statut').value,habilit:document.getElementById('b_habilit').value,notes:document.getElementById('b_notes').value,tauxClient:document.getElementById('b_taux_client').value,horaires:(document.getElementById('b_horaires')||{value:''}).value,adresse:bAdrFull,cp:bCp,ville:bVil,cvs:[]});
+  save();closeModals();currentFicheTab='besoins';renderFiche(currentBesoinPid);renderSidebar();renderDashboard();
+}
+function delBesoin(pid,bi){
+  if(!confirm('Supprimer ce besoin ?'))return;
+  var p=DB.find(function(x){return x.id===pid;});if(!p)return;
+  p.besoins.splice(bi,1);save();renderFiche(pid);renderSidebar();renderDashboard();
+}
+function changeBesoinStatut(pid,bi,val){
+  var p=DB.find(function(x){return x.id===pid;});if(!p)return;
+  p.besoins[bi].statut=val;save();renderSidebar();renderDashboard();
+}
+function openModalCV(pid,bi){
+  currentBesoinPid=pid;currentCVBesoinIdx=bi;
+  ['cv_candidat','cv_notes'].forEach(function(i){document.getElementById(i).value='';});
+  ['cv_taux','cv_taux_client'].forEach(function(i){document.getElementById(i).value='';});
+  document.getElementById('cv_date').value=today();document.getElementById('cv_retour').value='silence';document.getElementById('cv_mission').value='non';
+  var p=DB.find(function(x){return x.id===pid;});
+  if(p&&p.besoins[bi]&&p.besoins[bi].tauxClient)document.getElementById('cv_taux_client').value=p.besoins[bi].tauxClient;
+  document.getElementById('modal-cv').classList.add('open');
+}
+function saveCV(){
+  var c=document.getElementById('cv_candidat').value.trim();if(!c){alert('Nom candidat obligatoire');return;}
+  var p=DB.find(function(x){return x.id===currentBesoinPid;});if(!p)return;
+  var b=p.besoins[currentCVBesoinIdx];if(!b)return;
+  if(!b.cvs)b.cvs=[];
+  b.cvs.push({id:uid(),candidat:c,date:document.getElementById('cv_date').value,taux:document.getElementById('cv_taux').value,tauxClient:document.getElementById('cv_taux_client').value,retour:document.getElementById('cv_retour').value,mission:document.getElementById('cv_mission').value,notes:document.getElementById('cv_notes').value});
+  if(!p.journal)p.journal=[];
+  var tx=document.getElementById('cv_taux').value;
+  p.journal.push({id:uid(),type:'cv',date:document.getElementById('cv_date').value,texte:'CV envoye : '+c+' -> '+b.qualif+(tx?' - '+tx+'E/h brut':'')});
+  save();closeModals();currentFicheTab='besoins';renderFiche(currentBesoinPid);renderSidebar();renderDashboard();
+}
+function delCV(pid,bi,ci){
+  if(!confirm('Supprimer ce CV ?'))return;
+  var p=DB.find(function(x){return x.id===pid;});if(!p)return;
+  p.besoins[bi].cvs.splice(ci,1);save();renderFiche(pid);
+}
+function addJEntry(id){
+  var t=document.getElementById('j_texte').value.trim();if(!t)return;
+  var p=DB.find(function(x){return x.id===id;});if(!p)return;
+  if(!p.journal)p.journal=[];
+  p.journal.push({id:uid(),type:document.getElementById('j_type').value,date:document.getElementById('j_date').value||today(),texte:t});
+  document.getElementById('j_texte').value='';
+  save();renderFiche(id);renderDashboard();
+}
+function delJEntry(pid,idx){
+  if(!confirm('Supprimer cette entree ?'))return;
+  var p=DB.find(function(x){return x.id===pid;});if(!p)return;
+  p.journal.splice(idx,1);save();renderFiche(pid);
+}
+function openModalProspect(id){
+  editingPid=id||null;
+  document.getElementById('modal-prospect-title').textContent=id?'MODIFIER PROSPECT':'NOUVEAU PROSPECT';
+  if(id){
+    var p=DB.find(function(x){return x.id===id;});if(!p)return;
+    document.getElementById('f_nom').value=p.nom||'';document.getElementById('f_metier').value=p.metier||'';document.getElementById('f_statut').value=p.statut||'froid';document.getElementById('f_decideur').value=p.decideur||'';document.getElementById('f_tel').value=p.tel||'';document.getElementById('f_email').value=p.email||'';document.getElementById('f_zone').value=p.zone||'';document.getElementById('f_taille').value=p.taille||'PME (10-49)';document.getElementById('f_notes').value=p.notes||'';document.getElementById('f_na_type').value=p.nextType||'appel';document.getElementById('f_na_date').value=p.nextDate||today();document.getElementById('f_na_detail').value=p.nextDetail||'';
+  } else {
+    ['f_nom','f_decideur','f_tel','f_email','f_zone','f_notes','f_na_detail'].forEach(function(i){document.getElementById(i).value='';});
+    document.getElementById('f_metier').value='';document.getElementById('f_statut').value='froid';document.getElementById('f_taille').value='PME (10-49)';document.getElementById('f_na_type').value='appel';document.getElementById('f_na_date').value=today();
+  }
+  document.getElementById('modal-prospect').classList.add('open');
+}
+function saveProspect(){
+  var nom=document.getElementById('f_nom').value.trim();if(!nom){alert('Nom entreprise obligatoire');return;}
+  if(editingPid){
+    var p=DB.find(function(x){return x.id===editingPid;});if(!p)return;
+    p.nom=nom;p.metier=document.getElementById('f_metier').value;p.statut=document.getElementById('f_statut').value;p.decideur=document.getElementById('f_decideur').value;p.tel=document.getElementById('f_tel').value;p.email=document.getElementById('f_email').value;p.zone=document.getElementById('f_zone').value;p.taille=document.getElementById('f_taille').value;p.notes=document.getElementById('f_notes').value;p.nextType=document.getElementById('f_na_type').value;p.nextDate=document.getElementById('f_na_date').value;p.nextDetail=document.getElementById('f_na_detail').value;
+    save();closeModals();renderFiche(editingPid);renderSidebar();renderDashboard();
+  } else {
+    var np={id:uid(),nom:nom,metier:document.getElementById('f_metier').value,statut:document.getElementById('f_statut').value,decideur:document.getElementById('f_decideur').value,tel:document.getElementById('f_tel').value,email:document.getElementById('f_email').value,zone:document.getElementById('f_zone').value,taille:document.getElementById('f_taille').value,notes:document.getElementById('f_notes').value,nextType:document.getElementById('f_na_type').value,nextDate:document.getElementById('f_na_date').value,nextDetail:document.getElementById('f_na_detail').value,journal:[],besoins:[],createdAt:today()};
+    DB.push(np);save();closeModals();openFiche(np.id);renderDashboard();
+  }
+}
+function deleteProspect(id){
+  if(!confirm('Supprimer ce prospect ?'))return;
+  DB=DB.filter(function(p){return p.id!==id;});currentPid=null;save();
+  document.getElementById('view-fiche').innerHTML='<div class="empty"><div class="icon">?</div><p>Selectionnez un prospect</p></div>';
+  renderSidebar();renderDashboard();
+}
+function setStatut(id,s){var p=DB.find(function(x){return x.id===id;});if(!p)return;p.statut=s;save();renderFiche(id);renderSidebar();renderDashboard();}
+function updateNext(id){var p=DB.find(function(x){return x.id===id;});if(!p)return;p.nextType=document.getElementById('na_type').value;p.nextDate=document.getElementById('na_date').value;p.nextDetail=document.getElementById('na_detail').value;save();renderSidebar();renderDashboard();}
+function exportJSON(){
+  var date=today().replace(/-/g,'');
+  var data=JSON.stringify({version:2,exportDate:today(),prospects:DB},null,2);
+  var blob=new Blob([data],{type:'application/json'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='crm_btp_'+date+'.json';a.click();URL.revokeObjectURL(a.href);
+}
+function importJSON(input){
+  var file=input.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var data=JSON.parse(e.target.result);
+      var imported=data.prospects||data;
+      if(!Array.isArray(imported)){alert('Fichier invalide.');return;}
+      var nb=imported.length;
+      // Choix : fusion ou remplacement
+      var choix=confirm('FUSION ou REMPLACEMENT ?\n\n'
+        +'OK  = FUSION (recommande) : ajoute les nouveaux, conserve les existants\n'
+        +'ANNULER = annuler l\'import\n\n'
+        +'Fichier : '+nb+' prospects | CRM actuel : '+DB.length+' prospects');
+      if(!choix) return;
+      // Mode fusion
+      var existing=new Set();
+      DB.forEach(function(p){existing.add(p.nom.toLowerCase().replace(/[^a-z0-9]/g,''));});
+      var added=0,skipped=0;
+      imported.forEach(function(p){
+        var key=(p.nom||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+        if(!p.nom||existing.has(key)){skipped++;return;}
+        existing.add(key);
+        if(!p.journal) p.journal=[];
+        if(!p.besoins) p.besoins=[];
+        DB.push(p);
+        added++;
+      });
+      save();currentPid=null;
+      renderAll();
+      alert('Import termine :\n- '+added+' prospects ajoutes\n- '+skipped+' doublons ignores\n- Total CRM : '+DB.length+' prospects');
+    }catch(err){alert('Erreur de lecture du fichier JSON : '+err);}
+    input.value='';
+  };
+  reader.readAsText(file);
+}
+
+// ── IMPORT XLSX ────────────────────────────────────────────────────────────────
+var xlsxWorkbook = null;
+var xlsxRows = [];
+
+var NAF_METIER_JS = {
+  '4321A':'Électricité','4322A':'Plomberie / Sanitaire','4322B':'CVC / Chauffage',
+  '4329A':'Plâtrerie / Plaquiste','4331Z':'Plâtrerie / Plaquiste',
+  '4332A':'Menuiserie / Serrurerie','4332B':'Menuiserie / Serrurerie','4332C':'Menuiserie / Serrurerie',
+  '4333Z':'Carrelage / Sol','4334Z':'Peinture / Ravalement',
+  '4339Z':'Mixte second œuvre','4399A':'Mixte second œuvre','4399B':'Mixte second œuvre',
+  '4399C':'Mixte second œuvre','4399D':'Mixte second œuvre',
+  '4391A':'Mixte second œuvre','4391B':'Mixte second œuvre',
+  '4311Z':'Maçonnerie','4312A':'Maçonnerie','4120A':'Mixte second œuvre','4120B':'Mixte second œuvre'
+};
+
+function a2mJS(act,naf){
+  var n=(naf||'').trim().toUpperCase();
+  if(NAF_METIER_JS[n]) return NAF_METIER_JS[n];
+  var a=(act||'').toLowerCase();
+  if(a.indexOf('plâtr')>=0||a.indexOf('platr')>=0||a.indexOf('staff')>=0) return 'Plâtrerie / Plaquiste';
+  if(a.indexOf('peintur')>=0||a.indexOf('ravalement')>=0) return 'Peinture / Ravalement';
+  if(a.indexOf('électr')>=0||a.indexOf('electr')>=0) return 'Électricité';
+  if(a.indexOf('plomb')>=0||a.indexOf('sanitaire')>=0) return 'Plomberie / Sanitaire';
+  if(a.indexOf('chauffage')>=0||a.indexOf('cvc')>=0) return 'CVC / Chauffage';
+  if(a.indexOf('menuiser')>=0||a.indexOf('serrur')>=0) return 'Menuiserie / Serrurerie';
+  if(a.indexOf('carrelage')>=0) return 'Carrelage / Sol';
+  if(a.indexOf('maçon')>=0||a.indexOf('macon')>=0) return 'Maçonnerie';
+  return 'Mixte second œuvre';
+}
+
+function zoneJS(cp){
+  if(!cp) return '';
+  var dep=String(cp).trim().substring(0,2);
+  var z={'75':'Paris','77':'Seine-et-Marne','78':'Yvelines','91':'Essonne','92':'Hauts-de-Seine','93':'Seine-Saint-Denis','94':'Val-de-Marne','95':"Val-d'Oise"};
+  return z[dep]||'IDF';
+}
+
+function cleanTelJS(v){
+  if(!v) return '';
+  var t=String(v).replace(/[^\d]/g,'');
+  if(t.length===10&&t[0]==='0') return t.match(/.{1,2}/g).join(' ');
+  return String(v).trim().substring(0,20);
+}
+
+function cleanDirJS(v){
+  if(!v) return '';
+  var f=String(v).split('\n')[0].trim();
+  return f.replace(/\([^)]*\)\s*/g,'').trim().substring(0,80);
+}
+
+function autoDetectColumns(headers){
+  var h=headers.map(function(x){return String(x||'').toLowerCase();});
+  function find(keywords){
+    for(var i=0;i<h.length;i++){
+      for(var k=0;k<keywords.length;k++){
+        if(h[i].indexOf(keywords[k])>=0) return String(i);
+      }
+    }
+    return '';
+  }
+  return {
+    nom: find(['société','societe','raison','company','entreprise','nom']),
+    dir: find(['dirigeant','gerant','gérant','president','directeur','responsable']),
+    act: find(['activité','activite','activity','secteur']),
+    naf: find(['naf','code naf']),
+    tel: find(['tél. n°1','tél','telephone','tel ','phone','fixe']),
+    mob: find(['mobile','tél. n°2','portable','cell']),
+    email: find(['email','mail','courriel']),
+    cp: find(['c.p.','code postal','cp','postal','zip']),
+    vil: find(['ville','city','commune']),
+    eff: find(['effectif','employe','salarié','staff']),
+    com: find(['commentaire','note','observation','remarque'])
+  };
+}
+
+function importXLSX(input){
+  var file=input.files[0]; if(!file) return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var data=new Uint8Array(e.target.result);
+    xlsxWorkbook=XLSX.read(data,{type:'array'});
+    var sheetSel=document.getElementById('map_sheet');
+    sheetSel.innerHTML=xlsxWorkbook.SheetNames.map(function(s){return '<option>'+s+'</option>';}).join('');
+    previewXLSX();
+    document.getElementById('modal-import-xlsx').classList.add('open');
+  };
+  reader.readAsArrayBuffer(file);
+  input.value='';
+}
+
+function previewXLSX(){
+  if(!xlsxWorkbook) return;
+  var sheetName=document.getElementById('map_sheet').value||xlsxWorkbook.SheetNames[0];
+  var ws=xlsxWorkbook.Sheets[sheetName];
+  var data=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+  // Trouver la ligne d'en-tête (première ligne avec plusieurs valeurs non nulles)
+  var headerIdx=0;
+  for(var i=0;i<Math.min(5,data.length);i++){
+    var nonEmpty=data[i].filter(function(x){return String(x||'').trim()!='';}).length;
+    if(nonEmpty>=3){headerIdx=i;break;}
+  }
+  var headers=data[headerIdx];
+  xlsxRows=data.slice(headerIdx+1).filter(function(r){return r.some(function(x){return String(x||'').trim()!='';});});
+
+  // Remplir selects mapping
+  var opts='<option value="">-- ignorer --</option>'+headers.map(function(h,i){return '<option value="'+i+'">'+h+'</option>';}).join('');
+  ['nom','dir','act','naf','tel','mob','email','cp','vil','eff','com'].forEach(function(id){
+    document.getElementById('map_'+id).innerHTML=opts;
+  });
+
+  // Auto-détection
+  var auto=autoDetectColumns(headers);
+  Object.keys(auto).forEach(function(k){
+    var el=document.getElementById('map_'+k);
+    if(el && auto[k]!=='') el.value=auto[k];
+  });
+
+  var preview=document.getElementById('xlsx-preview');
+  preview.innerHTML='<b>Fichier chargé</b> — '+xlsxRows.length+' lignes · '+headers.length+' colonnes<br>'
+    +'<span style="color:var(--muted)">En-têtes détectées : '+headers.filter(function(x){return x;}).join(' · ')+'</span>';
+
+  document.getElementById('xlsx-mapping').style.display='block';
+  document.getElementById('btn-do-import').style.display='inline-block';
+  document.getElementById('xlsx-count').textContent='Lignes à traiter : '+xlsxRows.length;
+}
+
+function doImportXLSX(){
+  var g=function(id){var v=document.getElementById('map_'+id).value; return v===''?null:parseInt(v);};
+  var dedup=document.getElementById('xlsx-dedup').checked;
+  var iNom=g('nom'),iDir=g('dir'),iAct=g('act'),iNaf=g('naf'),iTel=g('tel'),iMob=g('mob');
+  var iEm=g('email'),iCp=g('cp'),iVil=g('vil'),iEff=g('eff'),iCom=g('com');
+  if(iNom===null){alert('Colonne Société obligatoire');return;}
+
+  var existing=new Set();
+  if(dedup) DB.forEach(function(p){existing.add(p.nom.toLowerCase().replace(/[^a-z0-9]/g,''));});
+
+  var added=0,skipped=0;
+  xlsxRows.forEach(function(row){
+    var nom=String(row[iNom]||'').trim();
+    if(!nom) return;
+    var key=nom.toLowerCase().replace(/[^a-z0-9]/g,'');
+    if(dedup&&existing.has(key)){skipped++;return;}
+    existing.add(key);
+    var cp=iCp!==null?String(row[iCp]||''):'';
+    var act=iAct!==null?String(row[iAct]||''):'';
+    var naf=iNaf!==null?String(row[iNaf]||''):'';
+    var eff=iEff!==null?row[iEff]:'';
+    var taille='PME (10-49)';
+    try{var n=parseInt(eff);if(!isNaN(n)) taille=n<10?'TPE (1-9)':n<50?'PME (10-49)':'ETI (50+)';}catch(e){}
+    DB.push({id:uid(),nom:nom,
+      metier:a2mJS(act,naf),statut:'froid',
+      decideur:iDir!==null?cleanDirJS(row[iDir]):'',
+      tel:iTel!==null?cleanTelJS(row[iTel]):'',
+      mobile:iMob!==null?cleanTelJS(row[iMob]):'',
+      email:iEm!==null?String(row[iEm]||''):'',
+      zone:zoneJS(cp),cp:cp.substring(0,5),
+      ville:iVil!==null?String(row[iVil]||''):'',
+      taille:taille,notes:iCom!==null?String(row[iCom]||''):'',
+      nextType:'appel',nextDate:'',nextDetail:'',
+      journal:[],besoins:[],source:'Import Excel',createdAt:today()});
+    added++;
+  });
+  save();closeModals();renderAll();
+  alert('Import terminé :\n- '+added+' prospects ajoutés\n- '+skipped+' doublons ignorés');
+}
+
+// ── MODELES MAILS ──────────────────────────────────────────────────────────────
+var MAILS=[
+  {id:'cv_dispo',label:'CV dispo',color:'t-cv',
+   sujet:'[AGENCE] — Profils disponibles — [DATE]',
+   corps:`Bonjour,
+
+Merci de trouver ci-après des profils d'intérimaires disponibles à dater du [DATE].
+
+Si l'un d'entre eux retient votre attention, n'hésitez pas à contacter notre agence. Leur disponibilité est confirmée à la date de cet email — nous vous invitons à nous faire un retour si un démarrage rapide doit être envisagé.
+
+Vous remerciant de votre confiance,
+
+Cordialement,
+[SIGNATURE]`},
+  {id:'prise_contact',label:'Prise de contact',color:'t-appel',
+   sujet:'[AGENCE] — Prise de contact — [METIER] BTP Intérim',
+   corps:`Bonjour,
+
+Je me permets de vous contacter en ma qualité de Responsable d'Agence BTP Intérim.
+
+Forts de notre expertise dans la délégation de techniciens et d'ETAM BTP second œuvre, nous serions heureux de vous accompagner dans vos besoins en main-d'œuvre qualifiée.
+
+Si vous avez actuellement des besoins en intérim ou en placement direct, n'hésitez pas à me contacter afin que nous puissions vous faire des propositions adaptées.
+
+Dans l'attente,
+Cordialement,
+[SIGNATURE]`},
+  {id:'rdv_suivi',label:'Suivi RDV',color:'t-rdv',
+   sujet:'[AGENCE] — Suite à notre entretien du [DATE]',
+   corps:`Bonjour [PRENOM_NOM],
+
+Suite à notre rendez-vous du [DATE], je tenais à vous remercier pour le temps accordé.
+
+Comme convenu, je reviens vers vous avec [DETAIL : ex. 2 profils plaquistes N3P2 disponibles].
+
+N'hésitez pas à me contacter pour tout besoin complémentaire.
+
+Cordialement,
+[SIGNATURE]`},
+  {id:'relance_cv',label:'Relance CV',color:'t-relance',
+   sujet:'Relance — profils envoyés le [DATE]',
+   corps:`Bonjour [PRENOM_NOM],
+
+Je me permets de revenir vers vous suite à l'envoi de profils le [DATE] concernant votre besoin en [QUALIFICATION].
+
+Avez-vous eu l'occasion d'en prendre connaissance ? Ces candidats sont toujours disponibles à ce jour.
+
+Dans l'attente de votre retour,
+Cordialement,
+[SIGNATURE]`},
+  {id:'valid_heures',label:'Validation heures',color:'t-note',
+   sujet:'Validation relevé d\'heures — Sem. [N° SEMAINE]',
+   corps:`Bonjour,
+
+À l'approche de la fin du mois, nous devons procéder au calcul des heures de M./Mme [NOM INTERIMAIRE] afin d'éditer sa fiche de paie.
+
+Nous constatons à ce jour que les heures de la semaine [N° SEMAINE] n'ont pas été validées par tampon ou signature explicite. Pourriez-vous nous faire parvenir le relevé validé par retour d'email (scan ou photo) ?
+
+Dans l'attente,
+Cordialement,
+[SIGNATURE]`},
+  {id:'poursuite_contrat',label:'Poursuite contrat',color:'t-email',
+   sujet:'Poursuite de contrat — [NOM INTERIMAIRE]',
+   corps:`Bonjour,
+
+[NOM INTERIMAIRE] est actuellement en contrat chez vous. Pourriez-vous m'indiquer par retour d'email la durée ou les dates envisagées pour la poursuite de son contrat ?
+
+Dans l'attente,
+Cordialement,
+[SIGNATURE]`}
+];
+
+// CP_VILLES_IDF simplifié pour CRM (résolution CP→ville)
+var CP_VILLES_IDF_CRM={'75001':'Paris 1er','75002':'Paris 2e','75003':'Paris 3e','75004':'Paris 4e','75005':'Paris 5e','75006':'Paris 6e','75007':'Paris 7e','75008':'Paris 8e','75009':'Paris 9e','75010':'Paris 10e','75011':'Paris 11e','75012':'Paris 12e','75013':'Paris 13e','75014':'Paris 14e','75015':'Paris 15e','75016':'Paris 16e','75017':'Paris 17e','75018':'Paris 18e','75019':'Paris 19e','75020':'Paris 20e','92100':'Boulogne-Billancourt','92200':'Neuilly-sur-Seine','92300':'Levallois-Perret','92400':'Courbevoie','92500':'Rueil-Malmaison','92600':'Asnières-sur-Seine','92700':'Colombes','92800':'Puteaux','93100':'Montreuil','93200':'Saint-Denis','93300':'Aubervilliers','93400':'Saint-Ouen','93500':'Pantin','94000':'Créteil','94200':'Ivry-sur-Seine','94300':'Vincennes','94400':'Vitry-sur-Seine','78000':'Versailles','91000':'Évry','95000':'Cergy'};
+
+var _besoinCPTimer=null;
+function resoudreBesoinCP(val){
+  var villeEl=document.getElementById('b_ville');
+  var hintEl=document.getElementById('b_ville_hint');
+  if(!villeEl||val.length<5){if(villeEl)villeEl.value='';return;}
+  var vLocale=CP_VILLES_IDF_CRM[val]||'';
+  if(vLocale){villeEl.value=vLocale;if(hintEl)hintEl.textContent='→ '+vLocale;return;}
+  clearTimeout(_besoinCPTimer);
+  _besoinCPTimer=setTimeout(function(){
+    fetch('https://geo.api.gouv.fr/communes?codePostal='+val+'&fields=nom&limit=1')
+      .then(function(r){return r.json();})
+      .then(function(d){if(d&&d[0]){if(villeEl)villeEl.value=d[0].nom;if(hintEl)hintEl.textContent='→ '+d[0].nom;}})
+      .catch(function(){});
+  },300);
+}
+
+function buildBesoinHoraires(){
+  var dm=(document.getElementById('bh_dm')||{value:''}).value;
+  var fm=(document.getElementById('bh_fm')||{value:''}).value;
+  var dam=(document.getElementById('bh_dam')||{value:''}).value;
+  var fj=(document.getElementById('bh_fj')||{value:''}).value;
+  var jr=(document.getElementById('bh_jr')||{value:''}).value;
+  var pa=(document.getElementById('bh_pa')||{value:''}).value;
+  var base=(document.getElementById('bh_base')||{value:''}).value;
+  var parts=[];
+  if(dm&&fm&&dam&&fj){parts.push(dm+'-'+fm);parts.push(dam+'-'+fj);}
+  else if(dm&&fj){parts.push(dm+'-'+fj);}
+  var s=parts.join(' / ');
+  if(jr) s+=' — '+jr;
+  if(pa&&pa!=='') s+=' (pause '+pa+')';
+  if(base) s+=' / '+base;
+  var el=document.getElementById('b_horaires');
+  if(el&&s.trim()){el.value=s;var prev=document.getElementById('b_hor_preview');if(prev)prev.textContent=s;}
+}
+
+// fillVars CRM — remplace les variables dans les templates mail
+function fillVarsCRM(txt, p){
+  var ag=JSON.parse(localStorage.getItem('agence_btp')||'{}');
+  var dateStr=new Date().toLocaleDateString('fr-FR');
+  // Agence
+  txt=txt.replace(/\[AGENCE\]/g,ag.nom||'')
+    .replace(/\[PRENOM_RA\]/g,ag.emetteur||'')
+    .replace(/\[TEL_AGENCE\]/g,ag.tel||'')
+    .replace(/\[EMAIL_AGENCE\]/g,ag.email||'')
+    .replace(/\[SIGNATURE\]/g,(ag.emetteur||'')+' — '+(ag.nom||'')+'\nTél. : '+(ag.tel||'')+'\n'+(ag.email||''))
+    .replace(/\[DATE\]/g,dateStr);
+  if(p){
+    txt=txt.replace(/\[CLIENT\]/g,p.nom||'')
+      .replace(/\[SOCIETE\]/g,p.nom||'')
+      .replace(/\[PRENOM_NOM\]/g,p.decideur||p.nom||'')
+      .replace(/\[CONTACT\]/g,p.decideur||'')
+      .replace(/\[TEL_CLIENT\]/g,p.tel||'')
+      .replace(/\[EMAIL_CLIENT\]/g,p.email||'')
+      .replace(/\[METIER\]/g,p.metier||'BTP')
+      .replace(/\[ZONE\]/g,p.zone||'');
+  }
+  return txt;
+}
+
+var currentMailIdx=0;
+function openMails(){
+  currentMailIdx=0;
+  renderMails();
+  document.getElementById('modal-mails').classList.add('open');
+}
+function renderMails(){
+  var bar=document.getElementById('mail-tabs-bar');
+  bar.innerHTML=MAILS.map(function(m,i){
+    return '<button onclick="switchMail('+i+')" style="padding:4px 10px;border-radius:2px;border:1px solid var(--border);cursor:pointer;font-family:var(--mono);font-size:10px;font-weight:700;background:'+(currentMailIdx===i?'var(--surface3)':'transparent')+';color:'+(currentMailIdx===i?'var(--text)':'var(--muted)')+'" class="'+m.color+'">'+m.label+'</button>';
+  }).join('');
+  var m=MAILS[currentMailIdx];
+  var p=currentPid?DB.find(function(x){return x.id===currentPid;}):null;
+  var sujet=fillVarsCRM(m.sujet,p);
+  var corps=fillVarsCRM(m.corps,p);
+  var candInfo=p
+    ?'<div style="font-size:11px;color:var(--cyan);font-family:var(--mono);margin-bottom:8px">Client : <b>'+p.nom+'</b>'+(p.decideur?' — '+p.decideur:'')+(p.tel?' — '+p.tel:'')+'</div>'
+    :'<div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:8px">Ouvrez une fiche prospect pour pré-remplir les variables</div>';
+  document.getElementById('mail-content').innerHTML=
+    candInfo
+    +'<div style="margin-bottom:8px"><div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:3px;display:flex;justify-content:space-between"><span>OBJET</span><button onclick="copyMailSujet()" style="background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:2px;padding:2px 8px;font-family:var(--mono);font-size:9px;cursor:pointer">COPIER OBJET</button></div>'
+    +'<input id="mail-sujet" value="'+sujet.replace(/"/g,'\x22')+'" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:8px 10px;font-size:12px;color:var(--text);font-family:var(--sans);outline:none"/></div>'
+    +'<div><div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:3px;display:flex;justify-content:space-between"><span>CORPS</span><button onclick="copyMail()" style="background:rgba(249,115,22,.1);color:var(--accent);border:1px solid rgba(249,115,22,.3);border-radius:2px;padding:2px 8px;font-family:var(--mono);font-size:9px;cursor:pointer;font-weight:700">COPIER CORPS</button></div>'
+    +'<textarea id="mail-body" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:10px;color:var(--text);font-size:12px;font-family:var(--sans);line-height:1.7;resize:vertical;min-height:220px;outline:none">'+corps+'</textarea></div>'
+    +'<div style="font-size:9px;color:var(--muted);font-family:var(--mono);margin-top:8px">Variables : <span style="color:var(--yellow)">[AGENCE] [PRENOM_RA] [TEL_AGENCE] [CLIENT] [CONTACT] [PRENOM_NOM] [DATE] [SIGNATURE]</span></div>';
+}
+function switchMail(i){currentMailIdx=i;renderMails();}
+function copyMailSujet(){
+  var t=document.getElementById('mail-sujet');if(!t)return;
+  navigator.clipboard.writeText(t.value).then(function(){}).catch(function(){t.select();document.execCommand('copy');});
+}
+function copyMail(){
+  var t=document.getElementById('mail-body').value;
+  navigator.clipboard.writeText(t).then(function(){alert('Corps copié dans le presse-papier');}).catch(function(){
+    document.getElementById('mail-body').select();document.execCommand('copy');alert('Corps copié');
+  });
+}
+
+
+// ── KPI & PILOTAGE ─────────────────────────────────────────────────────────────
+// Benchmarks calibrés sur activité RIS 2023 (onglet STATS du fichier Pilotage)
+// RIS mai 2023 : 60 commandes, 61 cibles contactées, 19 profils envoyés, 11 pourvus
+// SMS stats : 84 envois → ~3 rappels | Emailing 318-420 → 1-3 réponses/mail
+var KPI_OBJECTIFS = {
+  appels_semaine: 40,       // cible RA actif : 40 appels/sem (diffus)
+  rdv_semaine: 3,           // objectif 3 RDV client/sem
+  cv_semaine: 8,            // 8 CV envoyés/sem (ratio RIS : 19 profils sur 8 sem ≈ 2-3/sem, cible ambitieuse)
+  taux_transfo_rdv: 15,     // % prospects contactés → RDV (benchmark BTP intérim)
+  taux_transfo_client: 30,  // % RDV → client actif
+  taux_pourvoi: 55,         // % commandes pourvues (RIS : 11/60 = 18% mais période démarrage)
+  taux_reponse_email: 1,    // % emailing → réponse (RIS : 1-3/318 ≈ 0.5-1%)
+  marge_cible: 13,          // % marge diffus cible
+  delai_relance: 7,         // jours max avant relance prospect tiède
+};
+
+function kpiCard(label, val, unit, objectif, couleur, detail, tendance) {
+  var pct = objectif ? Math.min(100, Math.round(val / objectif * 100)) : null;
+  var barColor = pct === null ? couleur : pct >= 80 ? 'var(--green)' : pct >= 50 ? 'var(--yellow)' : 'var(--warn)';
+  var bar = pct !== null ? '<div style="height:3px;background:var(--surface3);border-radius:2px;margin-top:6px"><div style="height:3px;background:'+barColor+';border-radius:2px;width:'+pct+'%;transition:width .4s"></div></div><div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:3px">'+pct+'% objectif</div>' : '';
+  var trend = tendance ? '<span style="font-size:10px;margin-left:6px;color:'+(tendance>0?'var(--green)':'var(--warn)')+';">'+(tendance>0?'↑':'↓')+' '+Math.abs(tendance)+unit+'</span>' : '';
+  return '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:14px 16px;min-width:0">'
+    +'<div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.8px;margin-bottom:6px">'+label+'</div>'
+    +'<div style="font-size:26px;font-weight:700;color:'+couleur+';line-height:1">'+val+'<span style="font-size:13px;color:var(--muted);font-weight:400;margin-left:3px">'+unit+'</span>'+trend+'</div>'
+    +(detail?'<div style="font-size:11px;color:var(--muted2);margin-top:4px;line-height:1.5">'+detail+'</div>':'')+bar+'</div>';
+}
+
+function kpiSection(titre, couleur, cards) {
+  return '<div style="margin-bottom:20px">'
+    +'<div style="font-family:var(--mono);font-size:10px;font-weight:700;color:'+couleur+';letter-spacing:1px;margin-bottom:10px;border-bottom:1px solid var(--border);padding-bottom:6px">'+titre+'</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:10px">'+cards.join('')+'</div></div>';
+}
+
+// ── ONGLET MISSIONS ACTIVES ────────────────────────────────────
+function renderMissions(){
+  var el=document.getElementById('view-missions');
+  if(!el)return;
+
+  // Collecter toutes les missions actives depuis les CVs acceptés
+  var missions=[];
+  DB.forEach(function(p){
+    (p.besoins||[]).forEach(function(b,bi){
+      (b.cvs||[]).forEach(function(cv,ci){
+        if(cv.mission==='oui'){
+          // Calculer marge
+          var mg='--';
+          if(cv.taux&&cv.tauxClient){
+            mg=((cv.tauxClient-parseFloat(cv.taux)*2.05)/cv.tauxClient*100).toFixed(1)+'%';
+          }
+          // Jours restants si date fin connue
+          var joursR='';
+          if(cv.date_fin){
+            var df=new Date(cv.date_fin);var now=new Date();
+            var diff=Math.round((df-now)/86400000);
+            joursR=diff>0?diff+' j':diff===0?"Fin aujourd'hui":'TERMINÉ';
+          }
+          missions.push({
+            client:p.nom,pid:p.id,
+            qualif:b.qualif,
+            candidat:cv.candidat,
+            tauxCand:cv.taux||'--',
+            tauxClient:cv.tauxClient||'--',
+            marge:mg,
+            dateDebut:cv.date_debut||cv.date||'',
+            dateFin:cv.date_fin||'',
+            joursR:joursR,
+            horaires:b.horaires||'',
+            adresse:b.adresse||'',
+            contact:cv.contact_mission||''
+          });
+        }
+      });
+    });
+  });
+
+  // Aussi collecter depuis les candidats base_btp (localStorage)
+  var candMissions=[];
+  try{
+    var candDB=JSON.parse(localStorage.getItem('cands_btp_v2')||'[]');
+    candDB.forEach(function(c){
+      var mis=c.mission||{};
+      if(mis.client&&c.dispo==='mission'){
+        var mg='--';
+        if(c.taux&&mis.taux_client){
+          mg=((parseFloat(mis.taux_client)-parseFloat(c.taux)*2.05)/parseFloat(mis.taux_client)*100).toFixed(1)+'%';
+        }
+        var joursR='';
+        if(mis.date_fin){
+          var df2=new Date(mis.date_fin);var now2=new Date();
+          var diff2=Math.round((df2-now2)/86400000);
+          joursR=diff2>0?diff2+' j restants':diff2===0?"Fin aujourd'hui":'TERMINÉE';
+        }
+        candMissions.push({
+          client:mis.client,
+          qualif:c.qualif||'',
+          candidat:c.prenom+' '+c.nom.charAt(0)+'.',
+          tel:c.tel||'',
+          tauxCand:c.taux||'--',
+          tauxClient:mis.taux_client||'--',
+          marge:mg,
+          dateDebut:mis.date_debut||'',
+          dateFin:mis.date_fin||'',
+          joursR:joursR,
+          horaires:mis.horaires||'',
+          adresse:mis.adresse||'',
+          contact:mis.contact||'',
+          contact_tel:mis.contact_tel||''
+        });
+      }
+    });
+  }catch(e){}
+
+  // Stats
+  var total=missions.length+candMissions.length;
+  var finProche=(missions.concat(candMissions)).filter(function(m){
+    if(!m.dateFin)return false;
+    var df=new Date(m.dateFin);var now=new Date();
+    return (df-now)/86400000<=7;
+  }).length;
+
+  // Calcul CA estimé
+  var caEst=0;
+  missions.concat(candMissions).forEach(function(m){
+    var tc=parseFloat(m.tauxClient);
+    if(!isNaN(tc)) caEst+=tc*39*5; // base 39h × 5 jours semaine
+  });
+
+  var statsHtml='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px">'
+    +'<div style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:12px;text-align:center"><div style="font-size:24px;font-weight:700;color:var(--green)">'+total+'</div><div style="font-size:10px;color:var(--muted);font-family:var(--mono)">MISSIONS ACTIVES</div></div>'
+    +'<div style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:12px;text-align:center"><div style="font-size:24px;font-weight:700;color:'+(finProche>0?'var(--warn)':'var(--muted)')+'">'+finProche+'</div><div style="font-size:10px;color:var(--muted);font-family:var(--mono)">FIN DANS ≤7 JOURS</div></div>'
+    +'<div style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:12px;text-align:center"><div style="font-size:24px;font-weight:700;color:var(--accent)">'+candMissions.length+'</div><div style="font-size:10px;color:var(--muted);font-family:var(--mono)">BASE CANDIDATS</div></div>'
+    +'<div style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:12px;text-align:center"><div style="font-size:18px;font-weight:700;color:var(--yellow)">'+(caEst>0?Math.round(caEst/1000)+'k€':'--')+'</div><div style="font-size:10px;color:var(--muted);font-family:var(--mono)">CA ESTIMÉ/SEM.</div></div>'
+    +'</div>';
+
+  function missionRow(m, fromCand){
+    var alertCls='';
+    if(m.dateFin){var df=new Date(m.dateFin);var diff=(df-new Date())/86400000;if(diff<=3)alertCls='color:var(--warn)';else if(diff<=7)alertCls='color:var(--yellow)';}
+    var mgColor=m.marge==='--'?'var(--muted)':parseFloat(m.marge)<10?'var(--warn)':parseFloat(m.marge)<12?'var(--yellow)':'var(--green)';
+    return '<tr style="border-bottom:1px solid var(--border);font-size:12px">'
+      +'<td style="padding:7px 6px"><span style="font-weight:700;color:var(--text)">'+m.candidat+'</span>'+(m.tel?'<br><span style="font-size:10px;color:var(--muted);font-family:var(--mono)">'+m.tel+'</span>':'')+'</td>'
+      +'<td style="padding:7px 6px;color:var(--cyan)">'+m.qualif+'</td>'
+      +'<td style="padding:7px 6px"><span style="font-weight:700;color:'+(fromCand?'var(--accent)':'var(--blue)')+'">'+m.client+'</span>'+(m.adresse?'<br><span style="font-size:10px;color:var(--muted)">📍'+m.adresse+'</span>':'')+'</td>'
+      +'<td style="padding:7px 6px;font-family:var(--mono);font-size:11px">'+fmt(m.dateDebut)+'</td>'
+      +'<td style="padding:7px 6px;font-family:var(--mono);font-size:11px;'+alertCls+'">'+(m.dateFin?fmt(m.dateFin):'--')+(m.joursR?'<br><span style="font-size:10px">('+m.joursR+')</span>':'')+'</td>'
+      +'<td style="padding:7px 6px;font-family:var(--mono);font-size:11px">'+(m.horaires||'--')+'</td>'
+      +'<td style="padding:7px 6px;font-family:var(--mono);font-size:11px;color:'+mgColor+'">'+m.marge+'</td>'
+      +'<td style="padding:7px 6px;font-size:11px;color:var(--muted2)">'+(m.contact||'--')+(m.contact_tel?'<br><span style="font-family:var(--mono);font-size:10px">'+m.contact_tel+'</span>':'')+'</td>'
+      +'</tr>';
+  }
+
+  var tableHead='<table style="width:100%;border-collapse:collapse"><thead><tr style="border-bottom:2px solid var(--border)">'
+    +'<th style="padding:6px;text-align:left;font-family:var(--mono);font-size:9px;color:var(--muted);font-weight:700">CANDIDAT</th>'
+    +'<th style="padding:6px;text-align:left;font-family:var(--mono);font-size:9px;color:var(--muted);font-weight:700">QUALIF.</th>'
+    +'<th style="padding:6px;text-align:left;font-family:var(--mono);font-size:9px;color:var(--muted);font-weight:700">CLIENT / ADRESSE</th>'
+    +'<th style="padding:6px;text-align:left;font-family:var(--mono);font-size:9px;color:var(--muted);font-weight:700">DÉBUT</th>'
+    +'<th style="padding:6px;text-align:left;font-family:var(--mono);font-size:9px;color:var(--muted);font-weight:700">FIN / RESTE</th>'
+    +'<th style="padding:6px;text-align:left;font-family:var(--mono);font-size:9px;color:var(--muted);font-weight:700">HORAIRES</th>'
+    +'<th style="padding:6px;text-align:left;font-family:var(--mono);font-size:9px;color:var(--muted);font-weight:700">MARGE</th>'
+    +'<th style="padding:6px;text-align:left;font-family:var(--mono);font-size:9px;color:var(--muted);font-weight:700">CONTACT CLIENT</th>'
+    +'</tr></thead><tbody>';
+
+  var rows=missions.map(function(m){return missionRow(m,false);}).join('')
+    +candMissions.map(function(m){return missionRow(m,true);}).join('');
+
+  var tableEnd='</tbody></table>';
+
+  var legend='<div style="display:flex;gap:16px;margin-top:10px;font-size:10px;font-family:var(--mono);color:var(--muted)">'
+    +'<span style="color:var(--blue)">■ CRM</span>'
+    +'<span style="color:var(--accent)">■ Base candidats</span>'
+    +'<span style="color:var(--warn)">■ Fin ≤3j</span>'
+    +'<span style="color:var(--yellow)">■ Fin ≤7j</span>'
+    +'<span style="color:var(--green)">■ Marge ≥12%</span>'
+    +'</div>';
+
+  el.innerHTML='<div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.5px;margin-bottom:12px">TABLEAU DE BORD MISSIONS</div>'
+    +statsHtml
+    +(total>0
+      ? '<div style="overflow-x:auto">'+tableHead+rows+tableEnd+'</div>'+legend
+      : '<div style="text-align:center;padding:40px;color:var(--muted);font-size:12px;font-family:var(--mono)">Aucune mission active. Passez des CVs en statut Mission demarree dans l\'onglet BESOINS CV pour les voir ici.</div>'
+    );
+}
+// ── FIN MISSIONS ─────────────────────────────────────────────────
+
+function renderKPI() {
+  var div = document.getElementById('view-kpi');
+  var now = today();
+  var semDebut = new Date(); semDebut.setDate(semDebut.getDate() - semDebut.getDay() + 1);
+  var semStr = semDebut.toISOString().split('T')[0];
+  var moisStr = now.substring(0,7);
+
+  // Calculs sur DB
+  var total = DB.length;
+  var parStatut = {froid:0,tiede:0,chaud:0,client:0,veille:0};
+  DB.forEach(function(p){ if(parStatut[p.statut]!==undefined) parStatut[p.statut]++; });
+
+  // Actions de la semaine courante (journal)
+  var actSem = {appel:0,email:0,rdv:0,cv_push:0,relance:0,note:0};
+  var actMois = {appel:0,email:0,rdv:0,cv_push:0,relance:0,note:0};
+  var actTotal = {appel:0,email:0,rdv:0,cv_push:0,relance:0,note:0};
+  DB.forEach(function(p){
+    (p.journal||[]).forEach(function(e){
+      var t = e.type||'note';
+      if(actTotal[t]!==undefined) actTotal[t]++;
+      if(e.date && e.date >= moisStr) { if(actMois[t]!==undefined) actMois[t]++; }
+      if(e.date && e.date >= semStr)  { if(actSem[t]!==undefined) actSem[t]++; }
+    });
+  });
+
+  // Besoins & CV
+  var besoinsOuverts=0, besoinsPourvus=0, besoinsTotal=0;
+  var cvTotal=0, cvAcceptes=0, cvRefuses=0, cvSilence=0, missionsOui=0;
+  var marges=[];
+  DB.forEach(function(p){
+    (p.besoins||[]).forEach(function(b){
+      besoinsTotal++;
+      if(b.statut==='ouvert'||b.statut==='encours') besoinsOuverts++;
+      if(b.statut==='pourvu') besoinsPourvus++;
+      (b.cvs||[]).forEach(function(cv){
+        cvTotal++;
+        if(cv.retour==='accepte') cvAcceptes++;
+        else if(cv.retour==='refuse') cvRefuses++;
+        else cvSilence++;
+        if(cv.mission==='oui') missionsOui++;
+        if(cv.taux && cv.tauxClient) {
+          var br = parseFloat(cv.taux);
+          var cli = parseFloat(cv.tauxClient);
+          if(!isNaN(br)&&!isNaN(cli)&&cli>0) marges.push(((cli - br*2.05)/cli*100));
+        }
+      });
+    });
+  });
+
+  // Taux de conversion pipeline
+  var txRdv = total>0 ? Math.round(parStatut.chaud/total*100) : 0;
+  var txClient = (parStatut.chaud+parStatut.client)>0 ? Math.round(parStatut.client/(parStatut.chaud+parStatut.client)*100) : 0;
+  var txPourvoi = besoinsTotal>0 ? Math.round(besoinsPourvus/besoinsTotal*100) : 0;
+  var txCV = cvTotal>0 ? Math.round(cvAcceptes/cvTotal*100) : 0;
+  var margeAvg = marges.length>0 ? (marges.reduce(function(a,b){return a+b;},0)/marges.length).toFixed(1) : '--';
+
+  // Retard actions
+  var enRetard = DB.filter(function(p){return p.nextDate && isOD(p.nextDate);}).length;
+  var sansSuivi = DB.filter(function(p){
+    return (p.statut==='chaud'||p.statut==='tiede') && (!p.nextDate || isOD(p.nextDate));
+  }).length;
+
+  // Par zone et par métier (top 3)
+  var parZone={}, parMetier={};
+  DB.filter(function(p){return p.statut==='client';}).forEach(function(p){
+    if(p.zone) parZone[p.zone]=(parZone[p.zone]||0)+1;
+    if(p.metier) parMetier[p.metier]=(parMetier[p.metier]||0)+1;
+  });
+  var topZone = Object.entries(parZone).sort(function(a,b){return b[1]-a[1];}).slice(0,3).map(function(e){return e[0].replace('Seine-Saint-Denis','93').replace('Seine-et-Marne','77').replace('Val-de-Marne','94').replace('Val-d\'Oise','95').replace('Hauts-de-Seine','92')+' ('+e[1]+')';}).join(' · ')||'--';
+  var topMetier = Object.entries(parMetier).sort(function(a,b){return b[1]-a[1];}).slice(0,3).map(function(e){return e[0].split(' ')[0]+'('+e[1]+')';}).join(' · ')||'--';
+
+  // Objectif semaine — badge d'avancement
+  var semScore = Math.min(100,Math.round((actSem.appel/KPI_OBJECTIFS.appels_semaine*40 + actSem.rdv/KPI_OBJECTIFS.rdv_semaine*30 + actSem.cv_push/KPI_OBJECTIFS.cv_semaine*30)));
+
+  var scoreColor = semScore>=80?'var(--green)':semScore>=50?'var(--yellow)':'var(--warn)';
+  var scoreLabel = semScore>=80?'EN FORME':semScore>=50?'EN COURS':'A ACCELERER';
+
+  // Benchmarks RIS affichés en tooltip
+  var bRIS = '<span style="font-size:10px;color:var(--muted);font-family:var(--mono)"> · ref RIS 2023</span>';
+
+  var html = '';
+
+  // Score semaine
+  html += '<div style="background:var(--surface2);border:1px solid '+scoreColor+';border-radius:6px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:18px">'
+    +'<div style="font-size:36px;font-weight:700;color:'+scoreColor+'">'+semScore+'<span style="font-size:14px;font-weight:400">%</span></div>'
+    +'<div><div style="font-family:var(--mono);font-size:11px;font-weight:700;color:'+scoreColor+'">SCORE SEMAINE — '+scoreLabel+'</div>'
+    +'<div style="font-size:11px;color:var(--muted);margin-top:3px">'
+    +'Appels '+actSem.appel+'/'+KPI_OBJECTIFS.appels_semaine
+    +' · RDV '+actSem.rdv+'/'+KPI_OBJECTIFS.rdv_semaine
+    +' · CV '+actSem.cv_push+'/'+KPI_OBJECTIFS.cv_semaine+'</div>'
+    +'<div style="font-size:10px;color:var(--muted);margin-top:2px;font-family:var(--mono)">Semaine du '+fmt(semStr)+'</div></div>'
+    +'<div style="margin-left:auto;text-align:right"><div style="font-size:10px;color:var(--muted);font-family:var(--mono)">RETARD</div>'
+    +'<div style="font-size:20px;font-weight:700;color:'+(enRetard>0?'var(--warn)':'var(--muted)')+'">'+enRetard+'</div>'
+    +'<div style="font-size:10px;color:var(--muted);font-family:var(--mono)">actions</div></div></div>';
+
+  // Section 1 — Activité semaine
+  html += kpiSection('ACTIVITE — SEMAINE EN COURS', 'var(--accent)', [
+    kpiCard('APPELS', actSem.appel, 'appels', KPI_OBJECTIFS.appels_semaine, 'var(--blue)', 'Obj: '+KPI_OBJECTIFS.appels_semaine+'/sem · ref RIS: ~8-10/j', null),
+    kpiCard('RDV CLIENT', actSem.rdv, 'RDV', KPI_OBJECTIFS.rdv_semaine, 'var(--accent)', 'Obj: 3/sem · 1 RDV = ~3h effort', null),
+    kpiCard('CV ENVOYES', actSem.cv_push, 'CV', KPI_OBJECTIFS.cv_semaine, 'var(--yellow)', 'Obj: 8/sem · ref RIS: 2-3/sem (démarrage)', null),
+    kpiCard('EMAILS', actSem.email, 'emails', null, 'var(--muted2)', 'Mailing + relances', null),
+  ]);
+
+  // Section 2 — Activité mois
+  html += kpiSection('ACTIVITE — MOIS EN COURS', 'var(--blue)', [
+    kpiCard('APPELS', actMois.appel, '', null, 'var(--blue)', 'Ce mois', null),
+    kpiCard('RDV', actMois.rdv, '', null, 'var(--accent)', 'Ce mois', null),
+    kpiCard('CV PUSH', actMois.cv_push, '', null, 'var(--yellow)', 'Ce mois', null),
+    kpiCard('RELANCES', actMois.relance, '', null, 'var(--muted2)', 'Ce mois', null),
+    kpiCard('TOTAL ACTIONS', actMois.appel+actMois.email+actMois.rdv+actMois.cv_push+actMois.relance, '', null, 'var(--muted)', 'Toutes catégories', null),
+  ]);
+
+  // Section 3 — Pipeline
+  html += kpiSection('PIPELINE DE CONVERSION', 'var(--green)', [
+    kpiCard('PROSPECTS', total, '', null, 'var(--text)', 'Base totale importée', null),
+    kpiCard('TIÈDES', parStatut.tiede, '', null, 'var(--yellow)', 'Contactés, intérêt détecté', null),
+    kpiCard('CHAUDS', parStatut.chaud, '', null, 'var(--accent)', 'RDV ou besoin exprimé', null),
+    kpiCard('CLIENTS', parStatut.client, '', null, 'var(--green)', 'Au moins 1 commande', null),
+    kpiCard('TX CHAUD', txRdv, '%', KPI_OBJECTIFS.taux_transfo_rdv, 'var(--accent)', 'Froid→Chaud · obj: '+KPI_OBJECTIFS.taux_transfo_rdv+'%', null),
+    kpiCard('TX CLIENT', txClient, '%', KPI_OBJECTIFS.taux_transfo_client, 'var(--green)', 'Chaud→Client · obj: '+KPI_OBJECTIFS.taux_transfo_client+'%', null),
+    kpiCard('SANS SUIVI', sansSuivi, '', null, sansSuivi>5?'var(--warn)':'var(--muted)', 'Chauds/tièdes sans action planifiée', null),
+  ]);
+
+  // Section 4 — Commandes & CV
+  html += kpiSection('COMMANDES & PLACEMENTS', 'var(--yellow)', [
+    kpiCard('BESOINS', besoinsTotal, '', null, 'var(--muted)', 'Enregistrés au total', null),
+    kpiCard('OUVERTS', besoinsOuverts, '', null, 'var(--yellow)', 'En cours de pourvoi', null),
+    kpiCard('POURVUS', besoinsPourvus, '', null, 'var(--green)', 'Commandes satisfaites', null),
+    kpiCard('TX POURVOI', txPourvoi, '%', KPI_OBJECTIFS.taux_pourvoi, 'var(--green)', 'Obj: '+KPI_OBJECTIFS.taux_pourvoi+'% · ref RIS démarrage: 18%', null),
+    kpiCard('CV ENVOYÉS', cvTotal, '', null, 'var(--muted)', 'Toutes commandes', null),
+    kpiCard('TX ACCEPT. CV', txCV, '%', 40, 'var(--yellow)', 'CV acceptés/envoyés', null),
+    kpiCard('MISSIONS', missionsOui, '', null, 'var(--green)', 'Démarrées', null),
+    kpiCard('MARGE MOY.', margeAvg!='--'?margeAvg:0, '%', KPI_OBJECTIFS.marge_cible, 'var(--accent)', 'Sur CV renseignés · obj: '+KPI_OBJECTIFS.marge_cible+'%', null),
+  ]);
+
+  // Section 5 — Totaux historiques
+  html += kpiSection('HISTORIQUE TOTAL', 'var(--muted)', [
+    kpiCard('APPELS', actTotal.appel, '', null, 'var(--blue)', 'Depuis création', null),
+    kpiCard('RDV', actTotal.rdv, '', null, 'var(--accent)', 'Depuis création', null),
+    kpiCard('CV PUSH', actTotal.cv_push, '', null, 'var(--yellow)', 'Depuis création', null),
+    kpiCard('EMAILS', actTotal.email, '', null, 'var(--muted2)', 'Depuis création', null),
+    kpiCard('TOP ZONES', 0, '', null, 'var(--muted)', topZone, null).replace('>0<','>&nbsp;<'),
+    kpiCard('TOP METIERS', 0, '', null, 'var(--muted)', topMetier, null).replace('>0<','>&nbsp;<'),
+  ]);
+
+  // Section 6 — Objectifs modifiables
+  html += '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:14px 16px;margin-bottom:20px">'
+    +'<div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.8px;margin-bottom:10px">OBJECTIFS HEBDOMADAIRES — MODIFIABLES</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px">'
+    +['appels_semaine','rdv_semaine','cv_semaine'].map(function(k){
+      var labels={'appels_semaine':'Appels/sem','rdv_semaine':'RDV/sem','cv_semaine':'CV/sem'};
+      return '<div class="field"><label>'+labels[k]+'</label>'
+        +'<input type="number" value="'+KPI_OBJECTIFS[k]+'" min="0" step="1" '
+        +'onchange="KPI_OBJECTIFS[\''+k+'\']=parseInt(this.value)||0;renderKPI()" '
+        +'style="width:100%;background:var(--surface3);border:1px solid var(--border);border-radius:3px;padding:4px 8px;color:var(--text);font-family:var(--mono);font-size:13px;"/></div>';
+    }).join('')+'</div></div>';
+
+  // Note méthodologique
+  html += '<div style="font-size:10px;color:var(--muted);font-family:var(--mono);line-height:1.8;padding:10px;border-top:1px solid var(--border)">'
+    +'Benchmarks : ref activité RIS Intérim mai-juin 2023 (60 commandes · 61 cibles · 19 CV push · 11 pourvus) + SMS stats (84 envois/camp.) + objectifs RA diffus BTP IDF<br>'
+    +'Score semaine = 40% appels + 30% RDV + 30% CV push · Les KPI se mettent à jour en temps réel à chaque action enregistrée dans le journal</div>';
+
+  div.innerHTML = html;
+}
+
+function closeModals(){document.querySelectorAll('.modal-overlay').forEach(function(m){m.classList.remove('open');});editingPid=null;}
+
+// ── IMPORT JSON BASE CANDIDATS ───────────────────────────────────
+function importCandsJSON(input){
+  var file=input.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var data=JSON.parse(e.target.result);
+      var imported=data.candidats||data;
+      if(!Array.isArray(imported)){
+        alert('Fichier invalide — ce bouton est réservé aux exports de la Base Candidats BTP.');
+        input.value='';return;
+      }
+      var existing=[];
+      try{existing=JSON.parse(localStorage.getItem('cands_btp_v2')||'[]');}catch(ex){}
+      var added=0,updated=0,skipped=0;
+      imported.forEach(function(c){
+        if(!c.nom){skipped++;return;}
+        var key=(c.nom||'').toUpperCase()+(c.prenom||'').toUpperCase();
+        var idx=existing.findIndex(function(x){return (x.nom||'').toUpperCase()+(x.prenom||'').toUpperCase()===key;});
+        if(idx>=0){
+          var old=existing[idx];
+          existing[idx]=Object.assign({},c,{journal:old.journal||c.journal||[],checks:old.checks||c.checks||{},competences:old.competences||c.competences||{}});
+          updated++;
+        } else {
+          if(!c.journal)c.journal=[];if(!c.checks)c.checks={};if(!c.competences)c.competences={};
+          existing.push(c);added++;
+        }
+      });
+      localStorage.setItem('cands_btp_v2',JSON.stringify(existing));
+      input.value='';
+      var misView=document.getElementById('view-missions');
+      if(misView&&misView.style.display!=='none') renderMissions();
+      renderDashboard();
+      alert('Import OK : '+added+' nouveaux, '+updated+' maj, '+skipped+' ignorés. Total : '+existing.length+' candidats. Onglet MISSIONS affiche ceux en statut mission.');
+    }catch(err){alert('Erreur : '+err.message);input.value='';}
+  };
+  reader.readAsText(file,'UTF-8');
+}
+// ── FIN IMPORT CANDIDATS ─────────────────────────────────────────
+document.querySelectorAll('.modal-overlay').forEach(function(o){o.addEventListener('click',function(e){if(e.target===this)closeModals();});});
+</script>
+
+<!-- MODAL IMPORT XLSX -->
+<div class="modal-overlay" id="modal-import-xlsx">
+  <div class="modal" style="width:600px">
+    <h3>IMPORT EXCEL / ANNUCAPT</h3>
+    <div id="xlsx-preview" style="font-size:12px;color:var(--muted2);margin-bottom:14px;line-height:1.8"></div>
+    <div id="xlsx-mapping" style="display:none">
+      <div class="form-grid" style="margin-bottom:12px">
+        <div class="field"><label>Colonne Société *</label><select id="map_nom"></select></div>
+        <div class="field"><label>Colonne Dirigeant</label><select id="map_dir"></select></div>
+        <div class="field"><label>Colonne Activité</label><select id="map_act"></select></div>
+        <div class="field"><label>Colonne Code NAF</label><select id="map_naf"></select></div>
+        <div class="field"><label>Colonne Téléphone</label><select id="map_tel"></select></div>
+        <div class="field"><label>Colonne Mobile</label><select id="map_mob"></select></div>
+        <div class="field"><label>Colonne Email</label><select id="map_email"></select></div>
+        <div class="field"><label>Colonne Code Postal</label><select id="map_cp"></select></div>
+        <div class="field"><label>Colonne Ville</label><select id="map_vil"></select></div>
+        <div class="field"><label>Colonne Effectif</label><select id="map_eff"></select></div>
+        <div class="field"><label>Colonne Commentaire</label><select id="map_com"></select></div>
+        <div class="field"><label>Onglet à importer</label><select id="map_sheet" onchange="previewXLSX()"></select></div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;font-family:var(--mono)" id="xlsx-count"></div>
+      <label style="font-size:11px;font-family:var(--mono);color:var(--muted2);display:flex;gap:8px;align-items:center;margin-bottom:10px">
+        <input type="checkbox" id="xlsx-dedup" checked/> Ignorer les doublons (même nom société)
+      </label>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModals()">Annuler</button>
+      <button class="btn-save" id="btn-do-import" style="display:none" onclick="doImportXLSX()">IMPORTER</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MAILS -->
+<div class="modal-overlay" id="modal-mails">
+  <div class="modal" style="width:640px">
+    <h3>MODELES DE MAILS</h3>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px" id="mail-tabs-bar"></div>
+    <div id="mail-content"></div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeModals()">Fermer</button></div>
+  </div>
+</div>
+
+</body>
+</html>

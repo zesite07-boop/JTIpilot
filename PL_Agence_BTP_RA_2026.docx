@@ -1,0 +1,351 @@
+**P&L AGENCE BTP INTÉRIM**
+
+Guide de référence --- Franchise / Réseau · IDF
+
+*Responsable d\'Agence · Mars 2026*
+
+**1. ARCHITECTURE DU COMPTE DE RÉSULTAT**
+
+Le P&L d\'une agence de travail temporaire BTP repose sur une logique
+simple : le CA généré par les heures facturées doit couvrir (1) la masse
+salariale intérimaire, (2) les frais de structure fixes, (3) la
+redevance franchise, et (4) ta rémunération. Ce qui reste est le RBE ---
+le seul indicateur qui intéresse la direction générale.
+
+**Structure des flux**
+
+-   CA = Heures facturées × Taux client (TTC exclu)
+
+    -   Masse salariale = Salaire brut × 2,053 (charges 43% + IFM 10% +
+        ICP 11%)
+
+    -   Marge brute = CA − Masse salariale
+
+    -   RBE = Marge brute − Frais fixes − Redevances − Rémunération RA
+
+**Coefficient multiplicateur**
+
+Le coefficient de facturation est le ratio Taux client ÷ Taux brut. En
+BTP IDF 2025/2026 :
+
+-   × 2,05 --- plancher absolu : couvre juste la masse salariale, zéro
+    marge
+
+-   × 2,2 --- objectif standard second œuvre qualifié (N3 plâtrier,
+    peintre N3P2)
+
+-   × 2,4 --- profils rares ou tensions fortes (CVC, électricien N3,
+    staffeur)
+
+-   × 2,6+ --- possible sur profils très qualifiés avec forte valeur
+    ajoutée
+
+  ------------------------------------ ------------- ----------- -----------
+  **LIGNE DE COMPTE**                  **MONTANT**   **SIGNÉ**   **% CA**
+
+  **CHIFFRE D\'AFFAIRES**              **XX XXX €**  **+XX XXX   100%
+                                                     €**         
+
+  *--- Salaires bruts intérimaires*    XX XXX €      −XX XXX €   \~30%
+
+  *--- Charges patronales (43%)*       X XXX €       −X XXX €    \~13%
+
+  *--- IFM (10% brut)*                 X XXX €       −X XXX €    \~3%
+
+  *--- ICP (10% × brut+IFM)*           X XXX €       −X XXX €    \~3%
+
+  **MASSE SALARIALE INTÉRIMAIRE**      **XX XXX €**  **−XX XXX   \~49%
+                                                     €**         
+
+  **MARGE BRUTE**                      **XX XXX €**  **+XX XXX   ≥18%
+                                                     €**         
+
+  *--- Loyer + charges*                X XXX €       −X XXX €    
+
+  *--- Permanents (brut + 45%          X XXX €       −X XXX €    
+  charges)*                                                      
+
+  *--- Redevance franchise (% CA)*     X XXX €       −X XXX €    
+
+  *--- Royalties marketing (% CA)*     XXX €         −XXX €      
+
+  *--- Logiciels / ATS / CRM*          XXX €         −XXX €      
+
+  *--- Téléphonie + Internet*          XXX €         −XXX €      
+
+  *--- Véhicule(s)*                    XXX €         −XXX €      
+
+  *--- Assurances*                     XXX €         −XXX €      
+
+  *--- Divers / fournitures*           XXX €         −XXX €      
+
+  *--- Expert-comptable*               XXX €         −XXX €      
+
+  *--- Droit d\'entrée amorti (÷60     XXX €         −XXX €      
+  mois)*                                                         
+
+  *--- Rémunération RA (brut + 45%)*   X XXX €       −X XXX €    
+
+  **TOTAL FRAIS FIXES**                **XX XXX €**  **−XX XXX   \~X%
+                                                     €**         
+
+  **RÉSULTAT BRUT D\'EXPLOITATION      **X XXX €**   **±X XXX    ≥5%
+  (RBE)**                                            €**         
+  ------------------------------------ ------------- ----------- -----------
+
+**2. SEUIL DE RENTABILITÉ**
+
+Le seuil de rentabilité est le nombre d\'ETP permanents à placer pour
+couvrir toutes les charges fixes. Deux calculs distincts doivent être
+faits en permanence :
+
+-   Seuil hors RA : les charges de structure sont couvertes mais tu
+    travailles sans te payer
+
+    -   Seuil complet : charges + ta rémunération → le niveau réellement
+        viable
+
+    -   Formule : Seuil (ETP) = Charges fixes mensuelles ÷ Marge par ETP
+        par mois
+
+    -   Marge par ETP/mois = (Taux client − Taux brut × 2,05) ×
+        Heures/mois × Taux remplissage
+
+**Scénarios IDF 2026 --- Base TC=34€/h · TB=15,5€/h · 39h/sem**
+
+  ------------------ ---------------- ------------------ ------------------
+  **SCÉNARIO**       **ETP PLACÉS**   **CA MENSUEL       **RBE MENSUEL**
+                                      EST.**             
+
+  🌱 Démarrage       3                \~15 000 €         −3 000 €
+
+  ⚖ Équilibre        8                \~38 000 €         \~0 €
+
+  🚀 Croisière       15               \~72 000 €         +5 000 €
+
+  🏆 Performance     25               \~120 000 €        +18 000 €
+  ------------------ ---------------- ------------------ ------------------
+
+⚠ Note franchise : les redevances (% CA) ne sont pas fixes en montant
+--- elles augmentent avec le volume. À 15 ETP, elles représentent \~7,5%
+du CA, soit plus de 5 000€/mois. Négocier impérativement un palier
+dégressif au-delà d\'un seuil de CA annuel.
+
+**3. RATIOS DE PILOTAGE --- CE QUE LA DIRECTION MESURE**
+
+Une direction régionale ou générale ne regarde pas les lignes de votre
+P&L une par une. Elle regarde 6 à 8 ratios qu\'elle compare entre
+agences et entre périodes. Connaître ces ratios et savoir les commenter
+est la différence entre un RA qui subit son entretien de revue et un RA
+qui le dirige.
+
+  ------------------ ----------------- -------------- ------------ ------------------------
+  **INDICATEUR**     **FORMULE**       **OBJECTIF**   **ALERTE**   **NOTE**
+
+  **Marge brute %**  *(CA − MS) ÷ CA*  **≥ 18 %**     \< 12 %      *En dessous de 12%, les
+                                                                   frais fixes ne peuvent
+                                                                   pas être couverts*
+
+  **Coefficient      *Taux client ÷    **2,2 --       \< 2,0×      *×2,05 = plancher pour
+  fact.**            Taux brut*        2,4×**                      couvrir MS seule*
+
+  **RBE %**          *RBE ÷ CA*        **≥ 5 %**      \< 0 %       *Résultat net avant
+                                                                   impôts et
+                                                                   investissements*
+
+  **ETP seuil**      *Charges fixes ÷  **Atteint**    À −2 ETP     *Calculer avec ET sans
+                     Marge/ETP/mois*                               rémunération RA*
+
+  **Taux             *Missions         **15 -- 25 %** \< 10 %      *Mesure efficacité
+  transformation**   démarrées ÷ CVs                               sourcing + placement*
+                     envoyés*                                      
+
+  **Fidélisation     *Clients          **≥ 60 %**     \< 40 %      *Indique la qualité de
+  client**           récurrents à 6                                la relation commerciale*
+                     mois*                                         
+
+  **DSO              *Créances ÷ CA ×  **\< 45 j**    \> 60 j      *Surveiller les gros
+  (recouvrement)**   30*                                           clients BTP : paiements
+                                                                   tardifs fréquents*
+
+  **Durée moy.       *Total heures ÷   **3 -- 6       \< 2 sem.    *Missions courtes = coût
+  mission**          nb missions*      sem.**                      sourcing élevé*
+  ------------------ ----------------- -------------- ------------ ------------------------
+
+**Lecture rapide en entretien de revue**
+
+-   Marge brute \< 18% → question systématique de la direction : \"Où
+    est passée ta marge ?\"
+
+    -   RBE \< 0 deux mois consécutifs → plan d\'action obligatoire
+        exigé
+
+    -   DSO \> 60 jours → signal d\'alerte risque client (identifier
+        le(s) débiteur(s))
+
+    -   Taux transformation \< 10% → problème sourcing ou adéquation
+        profil/poste
+
+**4. SAISONNALITÉ BTP ET GESTION DE TRÉSORERIE**
+
+L\'activité BTP est structurellement saisonnière. Un RA qui ne
+l\'anticipe pas se retrouve en difficulté de trésorerie en août ou en
+déficit en janvier. La direction attend que tu le saches et que tu aies
+un plan.
+
+  ----------------------- ----------------------- -----------------------
+  **MOIS**                **INDICE**              **RBE REL.**
+
+  Janvier                 80%                     −20%
+
+  Février                 85%                     −15%
+
+  Mars                    100%                    +réf
+
+  Avril                   105%                    +5%
+
+  Mai                     110%                    +10%
+
+  Juin                    110%                    +10%
+
+  Juillet                 70%                     −30%
+
+  Août                    50%                     −50%
+
+  Septembre               105%                    +5%
+
+  Octobre                 110%                    +10%
+
+  Novembre                100%                    +réf
+
+  Décembre                75%                     −25%
+  ----------------------- ----------------------- -----------------------
+
+**Règles de trésorerie**
+
+-   Constituer 2,5 à 3 mois de charges fixes en réserve avant juillet
+
+    -   Ne jamais compter l\'été comme une période de prospection ---
+        c\'est une période de consolidation
+
+    -   Profiter de mai/juin (pic) pour renforcer les marges et ne pas
+        céder sur les taux
+
+    -   Septembre est la relance : avoir ses candidats qualifiés
+        disponibles dès fin août
+
+    -   Décembre : anticiper les fins de mission et les demandes de
+        congés intérimaires (ICP)
+
+**5. SPÉCIFICITÉS FRANCHISE / RÉSEAU**
+
+Travailler en franchise modifie la structure de coûts et la relation
+avec la direction. Points à maîtriser absolument :
+
+**Redevances et leur impact réel**
+
+-   Redevance d\'exploitation : 5--9% du CA hors taxes → variable,
+    augmente avec le volume
+
+    -   Royalties marketing : 1,5--2,5% du CA → souvent oubliées dans
+        les simulations
+
+    -   Droit d\'entrée : 15 000 à 40 000€ selon réseau → amortir sur 5
+        ans dans le P&L
+
+    -   Total redevances : vérifier que sur 12% de marge brute objectif,
+        il en reste 8% après redevances
+
+    -   Négocier : palier dégressif si CA \> X€/an, clauses de sortie,
+        conditions de renouvellement
+
+**Ce que le réseau apporte en contrepartie**
+
+-   Marque et notoriété auprès des clients BTP (accélérateur commercial
+    au démarrage)
+
+    -   Back-office paie : souvent externalisé dans les réseaux,
+        réduction du risque administratif
+
+    -   Bases candidats mutualisées : accès à un vivier inter-agences
+        (vérifier conditions d\'utilisation)
+
+    -   Outils ATS / CRM inclus : évaluer leur qualité vs ton propre
+        outillage
+
+    -   Formation initiale et continue : négocier les modules manager
+        d\'agence
+
+**6. DÉFENDRE SA MARGE FACE À LA DIRECTION**
+
+La direction va régulièrement te pousser à baisser tes taux pour gagner
+des clients. Voici les arguments factuels à avoir prêts :
+
+**Argument 1 --- L\'impact chiffré d\'un point de marge**
+
+Sur 15 ETP à 39h/sem, 47 semaines, taux remplissage 85% :
+
+-   Heures facturées/mois : 15 × 39 × 47/12 × 0,85 = \~1 930h/mois
+
+    -   1€/h de taux client en moins = −1 930€/mois de CA = −23 160€/an
+
+    -   1 point de marge perdu sur 72k€ de CA mensuel = −720€/mois = −8
+        640€/an de RBE
+
+    -   Conclusion : céder sur les taux pour \"garder un client\" doit
+        être quantifié, pas subi
+
+**Argument 2 --- Le coût du sourcing et de la non-qualité**
+
+-   Un placement raté (abandon, licenciement, AT) coûte : sourcing +
+    administratif + perte client partielle
+
+    -   Coût estimé d\'un placement raté : 800€ à 2 000€ selon profil
+
+    -   Baisser le taux client sans baisser le taux candidat = comprimer
+        la marge sans réduire le risque
+
+    -   Baisser le taux candidat pour compenser = perdre les bons
+        profils au profit de la concurrence
+
+**Argument 3 --- Les tensions de marché IDF 2025/2026**
+
+-   Plâtrier N3 / Staffeur : pénurie structurelle IDF --- taux brut
+    marché 17--21€/h
+
+    -   CVC (chauffagiste, climaticien) : profils très rares, taux brut
+        18--23€/h
+
+    -   Électricien N3 tertiaire : taux brut 16--20€/h, délai de
+        sourcing 2--4 semaines
+
+    -   Peintre N3P2 bâtiment : taux brut 15--17€/h, offre tendue en IDF
+
+    -   Accepter un taux client trop bas sur ces profils = travailler à
+        perte dès le premier jour
+
+**7. CE QU\'UN DIRECTEUR RÉGIONAL ATTEND DE TOI**
+
+  ----------------------------------- -----------------------------------
+  **CE QU\'IL ATTEND**                **CE QUE ÇA SIGNIFIE CONCRÈTEMENT**
+
+  Connaître son RBE du mois sans      Tu intègres le P&L mentalement, pas
+  chercher                            seulement dans un tableau
+
+  Avoir un plan sur les mois          Anticiper juillet-août, pas les
+  difficiles                          subir
+
+  Défendre sa marge avec des chiffres Jamais \'le client veut moins\' ---
+                                      toujours \'voici ce que ça coûte\'
+
+  Maîtriser son seuil de rentabilité  Savoir combien d\'ETP te séparent
+                                      du rouge à tout moment
+
+  Avoir un pipeline commercial        Prospects, stades d\'avancement,
+  documenté                           prochaine action = pas de surprise
+
+  Parler risque client avant qu\'il   Solvabilité, concentration, délais
+  arrive                              de paiement --- suivi actif
+  ----------------------------------- -----------------------------------
+
+*Document confidentiel --- Usage interne RA · JT ARKPROD 2026*

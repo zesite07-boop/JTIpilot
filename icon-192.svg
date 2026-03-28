@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <rect width="192" height="192" rx="24" fill="#0a0c14"/>
+  <rect width="192" height="192" rx="24" fill="#f97316" opacity="0.12"/>
+  <text x="96" y="80" font-family="monospace" font-size="64" font-weight="bold" fill="#f97316" text-anchor="middle">JT</text>
+  <text x="96" y="130" font-family="monospace" font-size="22" font-weight="600" fill="#64748b" text-anchor="middle">PILOT</text>
+  <rect x="28" y="148" width="136" height="3" rx="2" fill="#f97316" opacity="0.5"/>
+</svg>

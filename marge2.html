@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<link rel="stylesheet" href="shared.css"/>
+<title>Pilotage Marge — RA BTP Intérim</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #f1f5f9; min-height: 100vh; padding: 16px; }
+  .wrap { max-width: 820px; margin: 0 auto; }
+  .header { background: #1F4E79; border-radius: 10px; padding: 14px 20px; margin-bottom: 14px; color: #fff; }
+  .header h1 { font-size: 19px; font-weight: 700; }
+  .header p { font-size: 11px; color: #BDD7EE; margin-top: 3px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .grid3m { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .card { background: #fff; border-radius: 8px; padding: 10px 14px; border: 2px solid #1F4E79; }
+  .card-label { font-weight: 700; color: #1F4E79; font-size: 11px; margin-bottom: 4px; }
+  .card-text { font-size: 12px; }
+  .mode-card { background: #fff; border-radius: 8px; padding: 10px 14px; border: 2px solid #475569; }
+  .mode-label { font-weight: 700; color: #475569; font-size: 11px; margin-bottom: 6px; }
+  .section { background: #fff; border-radius: 10px; margin-bottom: 16px; overflow: hidden; }
+  .section-header { padding: 9px 16px; color: #fff; font-weight: 700; font-size: 13px; }
+  .section-body { padding: 16px; }
+  .ni { margin-bottom: 9px; }
+  .ni label { display: block; font-size: 11px; color: #64748b; font-weight: 600; margin-bottom: 3px; }
+  .ni-row { display: flex; align-items: center; gap: 6px; }
+  .ni input { padding: 4px 8px; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 14px; font-weight: 600; }
+  .ni span { font-size: 12px; color: #94a3b8; }
+  .ni em { font-size: 10px; color: #94a3b8; font-style: italic; }
+  .sub-label { font-size: 11px; font-weight: 700; margin-bottom: 4px; margin-top: 8px; }
+  .btn-group { display: flex; gap: 6px; flex-wrap: wrap; }
+  .btn { padding: 4px 11px; border-radius: 6px; border: none; cursor: pointer; font-weight: 700; font-size: 11px; background: #e2e8f0; color: #475569; }
+  .btn.active { color: #fff; }
+  .hr { height: 1px; margin: 7px 0; }
+  .result-box { background: #EBF3FB; border-radius: 8px; padding: 14px; border: 1.5px solid #BDD7EE; }
+  .result-title { font-size: 12px; font-weight: 700; color: #1F4E79; margin-bottom: 10px; }
+  .badge { display: inline-block; color: #fff; border-radius: 6px; padding: 3px 11px; font-weight: 700; font-size: 13px; margin-bottom: 8px; }
+  .alert-rouge { font-size: 12px; color: #dc2626; background: #fef2f2; border-radius: 6px; padding: 8px; margin-top: 8px; }
+  .plancher-box { background: #f5f3ff; border-radius: 8px; padding: 16px; border: 1.5px solid #ddd6fe; width: 100%; }
+  .week-box { background: #fffbeb; border-radius: 8px; padding: 14px; border: 1.5px solid #fcd34d; }
+  .month-box { background: #fff7ed; border-radius: 8px; padding: 14px; border: 1.5px solid #fdba74; }
+  .claude-box { font-size: 13px; line-height: 2.0; }
+  .claude-item { margin-bottom: 10px; }
+  .claude-item span { color: #64748b; font-size: 12px; }
+  .charges-row { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+  .charges-row input { width: 50px; padding: 3px 6px; border: 1.5px solid #cbd5e1; border-radius: 5px; font-size: 13px; font-weight: 700; }
+  .charges-row span { font-size: 11px; color: #64748b; }
+  #charges-row-wrap { display: none; }
+  .tol-note { font-size: 10px; color: #b45309; margin-top: 4px; font-style: italic; display: none; }
+  .contingent-warn { font-size: 11px; color: #dc2626; background: #fef2f2; border-radius: 5px; padding: 6px; margin-top: 6px; display: none; }
+</style>
+
+<script>/* JTIpilot theme sync */
+(function(){var t=localStorage.getItem('jtp_theme');if(t==='light')document.documentElement.classList.add('light');window.addEventListener('message',function(e){if(e.data&&e.data.type==='theme'){document.documentElement.classList.toggle('light',e.data.value==='light');localStorage.setItem('jtp_theme',e.data.value);}});})();
+</script>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <div class="header">
+    <h1>📊 Pilotage Marge — RA BTP Intérim</h1>
+    <p>Tranches BTP · Panier hors IFM/ICP · Navigo prorata hebdo · Charges patronales ETT Paris</p>
+  </div>
+
+  <!-- SEUILS + MODE -->
+  <div class="grid3">
+    <div class="card">
+      <div class="card-label">DIFFUS</div>
+      <div class="card-text">⚠️ Min <strong>11%</strong> · ✅ Cible <strong>13%+</strong></div>
+    </div>
+    <div class="card">
+      <div class="card-label">ACCORD CADRE / NAT.</div>
+      <div class="card-text">⚠️ Min <strong>10%</strong> · ✅ Cible <strong>11%</strong></div>
+    </div>
+    <div class="mode-card">
+      <div class="mode-label">MODE COEFF (tous modules)</div>
+      <div class="btn-group" style="margin-bottom:6px">
+        <button class="btn active" id="btn-tc" style="background:#475569;color:#fff" onclick="setMode('tc')">Tout compris</button>
+        <button class="btn" id="btn-cs" onclick="setMode('cs')">Charges seules</button>
+      </div>
+      <div id="charges-row-wrap" class="charges-row">
+        <input type="number" id="txCharges" value="43" step="0.5" oninput="recalcAll()" />
+        <span>% charges (déf. 43%)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODULE 1 -->
+  <div class="section" style="border: 2px solid #2563eb">
+    <div class="section-header" style="background:#2563eb">⚡ MODULE 1 — Calculatrice marge temps réel</div>
+    <div class="section-body">
+      <div class="grid3m">
+        <!-- Col 1 -->
+        <div>
+          <div class="sub-label" style="color:#2563eb">BASE</div>
+          <div class="ni"><label>Taux horaire brut</label><div class="ni-row"><input type="number" id="m1_th" value="15" step="0.01" style="width:85px" oninput="recalcAll()"><span>€/h</span></div></div>
+          <div class="ni"><label>Coefficient</label><div class="ni-row"><input type="number" id="m1_coeff" value="2.05" step="0.01" style="width:70px" oninput="recalcAll()"></div></div>
+          <div class="ni"><label>Prix facturé client</label><div class="ni-row"><input type="number" id="m1_prix" value="34" step="0.01" style="width:85px" oninput="recalcAll()"><span>€/h</span></div></div>
+          <div style="margin-top:8px">
+            <div style="font-size:11px;color:#64748b;font-weight:600;margin-bottom:5px">Type contrat</div>
+            <div class="btn-group">
+              <button class="btn active" id="btn-m1-diffus" style="background:#2563eb;color:#fff" onclick="setType1('diffus')">Diffus</button>
+              <button class="btn" id="btn-m1-accord" onclick="setType1('accord')">Accord</button>
+            </div>
+          </div>
+        </div>
+        <!-- Col 2 IPD -->
+        <div>
+          <div class="sub-label" style="color:#0369a1">🚌 TRANSPORT <span style="font-weight:400">(coeff 1 · hors IFM)</span></div>
+          <div class="ni"><label>Pass Navigo (mensuel)</label><div class="ni-row"><input type="number" id="m1_navigo" value="0" step="0.01" style="width:70px" oninput="recalcAll()"><span>€/mois</span><em>ex: 86.60</em></div></div>
+          <div class="ni"><label>IKV vélo / moto</label><div class="ni-row"><input type="number" id="m1_ikv" value="0" step="0.01" style="width:70px" oninput="recalcAll()"><span>€/jour</span></div></div>
+          <div class="sub-label" style="color:#0369a1">🍽 REPAS <span style="font-weight:400">(coeff 1 · hors IFM)</span></div>
+          <div class="ni"><label>Panier repas</label><div class="ni-row"><input type="number" id="m1_panier" value="0" step="0.01" style="width:70px" oninput="recalcAll()"><span>€/jour</span><em>~10.10€</em></div></div>
+          <div class="sub-label" style="color:#059669">🔧 PRIMES BTP <span style="font-weight:400">(base IFM)</span></div>
+          <div class="ni"><label>Prime outillage</label><div class="ni-row"><input type="number" id="m1_outil" value="0" step="0.01" style="width:70px" oninput="recalcAll()"><span>€/jour</span></div></div>
+          <div class="ni"><label>Prime salissure</label><div class="ni-row"><input type="number" id="m1_salis" value="0" step="0.01" style="width:70px" oninput="recalcAll()"><span>€/jour</span></div></div>
+          <div class="ni"><label>Prime exceptionnelle</label><div class="ni-row"><input type="number" id="m1_pexcep" value="0" step="0.01" style="width:70px" oninput="recalcAll()"><span>€/sem.</span></div></div>
+          <div class="sub-label" style="color:#475569">📅 PLANNING</div>
+          <div class="ni"><label>Jours / sem.</label><div class="ni-row"><input type="number" id="m1_jours" value="5" step="1" style="width:55px" oninput="recalcAll()"><span>j</span></div></div>
+          <div class="ni"><label>Semaines / mois</label><div class="ni-row"><input type="number" id="m1_sem" value="4" step="0.01" style="width:55px" oninput="recalcAll()"><em>4 ou 4.33</em></div></div>
+        </div>
+        <!-- Col 3 Résultat -->
+        <div class="result-box">
+          <div class="result-title">RÉSULTAT</div>
+          <div style="font-size:11px;color:#0369a1;margin-bottom:2px">Navigo/sem : <span id="m1_nav_sem">0.00</span> €</div>
+          <div style="font-size:11px;color:#0369a1;margin-bottom:2px">IKV/sem : <span id="m1_ikv_sem">0.00</span> €</div>
+          <div style="font-size:11px;color:#0369a1;margin-bottom:2px">Panier/sem : <span id="m1_pan_sem">0.00</span> €</div>
+          <div style="font-size:11px;color:#059669;margin-bottom:8px">Primes/sem : <span id="m1_primes_sem">0.00</span> €</div>
+          <div class="hr" style="background:#BDD7EE"></div>
+          <div style="font-size:13px;font-weight:700;margin-bottom:4px">Coût réel/h : <span id="m1_cout">0.00</span> €</div>
+          <div id="m1_cs_detail" style="font-size:11px;color:#64748b;margin-bottom:6px;line-height:1.7;display:none">
+            IFM/h : <span id="m1_ifmH">0.00</span> € · ICP/h : <span id="m1_icpH">0.00</span> €<br>
+            Coeff effectif : <strong id="m1_coeffEff">0.00</strong>
+          </div>
+          <div style="font-size:13px;font-weight:700;margin-bottom:8px">Marge/h : <span id="m1_margeE">0.00</span> €</div>
+          <div id="m1_badge"></div>
+          <div id="m1_alert" class="alert-rouge" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOUTON PROPALE -->
+  <div style="text-align:center;margin-bottom:16px;">
+    <button onclick="openPropale()" style="padding:11px 28px;background:linear-gradient(135deg,#1F4E79,#2563eb);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 2px 8px rgba(31,78,121,.3);letter-spacing:.5px;">
+      📄 CRÉER UNE PROPOSITION COMMERCIALE
+    </button>
+    <div style="font-size:11px;color:#64748b;margin-top:5px">Génère une propale basée sur la simulation Module 1</div>
+  </div>
+
+  <!-- MODULE 2 -->
+  <div class="section" style="border: 2px solid #7c3aed">
+    <div class="section-header" style="background:#7c3aed">🔻 MODULE 2 — Prix plancher à annoncer au client</div>
+    <div class="section-body">
+      <div class="grid3m">
+        <div>
+          <div class="sub-label" style="color:#7c3aed">BASE</div>
+          <div class="ni"><label>Taux horaire brut</label><div class="ni-row"><input type="number" id="m2_th" value="15" step="0.01" style="width:85px" oninput="recalcAll()"><span>€/h</span></div></div>
+          <div class="ni"><label>Coefficient</label><div class="ni-row"><input type="number" id="m2_coeff" value="2.05" step="0.01" style="width:70px" oninput="recalcAll()"></div></div>
+          <div class="ni"><label>Marge visée</label><div class="ni-row"><input type="number" id="m2_marge" value="12" step="0.1" style="width:65px" oninput="recalcAll()"><span>%</span></div></div>
+        </div>
+        <div>
+          <div class="sub-label" style="color:#0369a1">🚌 TRANSPORT <span style="font-weight:400">(coeff 1 · hors IFM)</span></div>
+          <div class="ni"><label>Pass Navigo (mensuel)</label><div class="ni-row"><input type="number" id="m2_navigo" value="0" step="0.01" style="width:70px" oninput="recalcAll()"><span>€/mois</span></div></div>
+          <div class="ni"><label>IKV vélo / moto</label><div class="ni-row"><input type="number" id="m2_ikv" value="0" step="0.01" style="width:70px" oninput="recalcAll()"><span>€/jour</span></div></div>
+          <div class="sub-label" style="color:#0369a1">🍽 REPAS <span style="font-weight:400">(hors IFM)</span></div>
+          <div class="ni"><label>Panier repas</label><div class="ni-row"><input type="number" id="m2_panier" value="0" step="0.01" style="width:70px" oninput="recalcAll()"><span>€/jour</span></div></div>
+          <div class="sub-label" style="color:#059669">🔧 PRIMES BTP <span style="font-weight:400">(base IFM)</span></div>
+          <div class="ni"><label>Prime outillage</label><div class="ni-row"><input type="number" id="m2_outil" value="0" step="0.01" style="width:70px" oninput="recalcAll()"><span>€/jour</span></div></div>
+          <div class="ni"><label>Prime salissure</label><div class="ni-row"><input type="number" id="m2_salis" value="0" step="0.01" style="width:70px" oninput="recalcAll()"><span>€/jour</span></div></div>
+          <div class="ni"><label>Prime exceptionnelle</label><div class="ni-row"><input type="number" id="m2_pexcep" value="0" step="0.01" style="width:70px" oninput="recalcAll()"><span>€/sem.</span></div></div>
+          <div class="sub-label" style="color:#475569">📅 PLANNING</div>
+          <div class="ni"><label>Jours / sem.</label><div class="ni-row"><input type="number" id="m2_jours" value="5" step="1" style="width:55px" oninput="recalcAll()"><span>j</span></div></div>
+          <div class="ni"><label>Semaines / mois</label><div class="ni-row"><input type="number" id="m2_sem" value="4" step="0.01" style="width:55px" oninput="recalcAll()"><em>4 ou 4.33</em></div></div>
+        </div>
+        <div style="display:flex;align-items:center">
+          <div class="plancher-box">
+            <div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:8px">PRIX PLANCHER</div>
+            <div style="font-size:34px;font-weight:700;color:#7c3aed;margin-bottom:6px"><span id="m2_plancher">0.00</span> €/h</div>
+            <div style="font-size:12px;color:#64748b;margin-bottom:4px">Coût réel : <span id="m2_cout">0.00</span> €/h</div>
+            <div style="font-size:12px;color:#64748b;margin-bottom:10px">Marge visée : <span id="m2_marge_disp">12</span>%</div>
+            <div style="font-size:12px;color:#dc2626;font-weight:700">En dessous → deal refusé</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODULE 3 -->
+  <div class="section" style="border: 2px solid #b45309">
+    <div class="section-header" style="background:#b45309">💰 MODULE 3 — Salaire intérimaire &amp; acompte hebdomadaire</div>
+    <div class="section-body">
+      <div class="grid3m">
+        <!-- Inputs -->
+        <div>
+          <div class="sub-label" style="color:#b45309">⏱ TEMPS &amp; TAUX</div>
+          <div class="ni"><label>Taux horaire brut</label><div class="ni-row"><input type="number" id="m3_th" value="15" step="0.01" style="width:85px" oninput="recalcAll()"><span>€/h</span></div></div>
+          <div class="ni"><label>Heures travaillées / sem.</label><div class="ni-row"><input type="number" id="m3_hSem" value="43" step="0.5" style="width:65px" oninput="recalcAll()"><span>h</span></div></div>
+          <div class="sub-label" style="color:#0369a1">🚌 TRANSPORT <span style="font-weight:400">(hors IFM)</span></div>
+          <div class="ni"><label>Pass Navigo (mensuel)</label><div class="ni-row"><input type="number" id="m3_navigo" value="0" step="0.01" style="width:70px" oninput="recalcAll()"><span>€/mois</span></div></div>
+          <div class="ni"><label>IKV vélo / moto</label><div class="ni-row"><input type="number" id="m3_ikv" value="0" step="0.01" style="width:70px" oninput="recalcAll()"><span>€/jour</span></div></div>
+          <div class="sub-label" style="color:#0369a1">🍽 REPAS <span style="font-weight:400">(hors IFM)</span></div>
+          <div class="ni"><label>Panier repas</label><div class="ni-row"><input type="number" id="m3_panier" value="0" step="0.01" style="width:70px" oninput="recalcAll()"><span>€/jour</span></div></div>
+          <div class="sub-label" style="color:#059669">🔧 PRIMES BTP <span style="font-weight:400">(base IFM)</span></div>
+          <div class="ni"><label>Prime outillage</label><div class="ni-row"><input type="number" id="m3_outil" value="0" step="0.01" style="width:70px" oninput="recalcAll()"><span>€/jour</span></div></div>
+          <div class="ni"><label>Prime salissure</label><div class="ni-row"><input type="number" id="m3_salis" value="0" step="0.01" style="width:70px" oninput="recalcAll()"><span>€/jour</span></div></div>
+          <div class="ni"><label>Prime exceptionnelle</label><div class="ni-row"><input type="number" id="m3_pexcep" value="0" step="0.01" style="width:70px" oninput="recalcAll()"><span>€/sem.</span></div></div>
+          <div class="sub-label" style="color:#475569">📅 PLANNING</div>
+          <div class="ni"><label>Jours / sem.</label><div class="ni-row"><input type="number" id="m3_jours" value="5" step="1" style="width:55px" oninput="recalcAll()"><span>j</span></div></div>
+          <div class="ni"><label>Semaines / mois</label><div class="ni-row"><input type="number" id="m3_sem" value="4" step="0.01" style="width:55px" oninput="recalcAll()"><em>4 ou 4.33</em></div></div>
+        </div>
+
+        <!-- Semaine -->
+        <div class="week-box">
+          <div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:10px">📅 SEMAINE</div>
+          <div style="font-size:11px;color:#64748b;margin-bottom:1px">Normales (<span id="m3_hN">35</span>h)</div>
+          <div style="font-size:12px;font-weight:700;margin-bottom:5px" id="m3_sal_norm_line">35h × 15.00€ = 525.00 €</div>
+          <div id="m3_25_wrap">
+            <div style="font-size:11px;color:#b45309;margin-bottom:1px">+25% — 36e–43e (<span id="m3_h25">0</span>h)</div>
+            <div style="font-size:12px;font-weight:700;color:#b45309;margin-bottom:5px" id="m3_sal_25_line"></div>
+          </div>
+          <div id="m3_50_wrap">
+            <div style="font-size:11px;color:#dc2626;margin-bottom:1px">+50% — 44e+ (<span id="m3_h50">0</span>h)</div>
+            <div style="font-size:12px;font-weight:700;color:#dc2626;margin-bottom:5px" id="m3_sal_50_line"></div>
+          </div>
+          <div class="hr" style="background:#fcd34d"></div>
+          <div id="m3_nav_line" style="font-size:11px;color:#0369a1"></div>
+          <div id="m3_ikv_line" style="font-size:11px;color:#0369a1"></div>
+          <div id="m3_pan_line" style="font-size:11px;color:#0369a1"></div>
+          <div id="m3_out_line" style="font-size:11px;color:#059669"></div>
+          <div id="m3_sal_line" style="font-size:11px;color:#059669"></div>
+          <div id="m3_pex_line" style="font-size:11px;color:#059669"></div>
+          <div class="hr" style="background:#fcd34d"></div>
+          <div style="font-size:13px;font-weight:700;margin-bottom:4px">Salaire brut/sem : <span id="m3_brutSem">0.00</span> €</div>
+          <div style="font-size:11px;color:#64748b">Base IFM/ICP : <span id="m3_baseIfm">0.00</span> € (hors transport+panier)</div>
+          <div style="font-size:11px;color:#64748b">IFM fin mission : <span id="m3_ifm">0.00</span> €</div>
+          <div style="font-size:11px;color:#64748b;margin-bottom:10px">ICP fin mission : <span id="m3_icp_val">0.00</span> €</div>
+          <div class="hr" style="background:#fcd34d"></div>
+          <div style="margin-bottom:8px">
+            <div style="font-size:11px;color:#64748b;font-weight:600;margin-bottom:4px">Taux acompte</div>
+            <div class="ni-row">
+              <input type="number" id="m3_txA" value="60" step="1" style="width:52px;padding:4px 7px;border:1.5px solid #fcd34d;border-radius:5px;font-size:13px;font-weight:700" oninput="recalcAll()">
+              <span style="font-size:12px">%</span>
+            </div>
+          </div>
+          <div style="font-size:11px;color:#64748b;font-weight:600;margin-bottom:5px">ICP dans l'acompte ?</div>
+          <div class="btn-group" style="margin-bottom:10px">
+            <button class="btn active" id="btn-icp-non" style="background:#b45309;color:#fff" onclick="setIcp(false)">Non</button>
+            <button class="btn" id="btn-icp-oui" onclick="setIcp(true)">Oui (tolérance)</button>
+          </div>
+          <div style="font-size:14px;font-weight:700;color:#b45309;margin-bottom:3px">Acompte max : <span id="m3_acompte">0.00</span> €</div>
+          <div style="font-size:12px;color:#64748b">Reste en paie : <span id="m3_reste">0.00</span> €</div>
+          <div id="m3_tol_note" class="tol-note">⚠ Tolérance commerciale — non obligatoire</div>
+        </div>
+
+        <!-- Mois -->
+        <div class="month-box">
+          <div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:10px">📆 MOIS (<span id="m3_semN_disp">4</span> sem.)</div>
+          <div style="font-size:13px;font-weight:700;margin-bottom:4px">Salaire brut : <span id="m3_brutMois">0.00</span> €</div>
+          <div style="font-size:11px;color:#0369a1;margin-bottom:2px">dont transport+repas : <span id="m3_transMois">0.00</span> €</div>
+          <div style="font-size:11px;color:#059669;margin-bottom:8px">dont primes BTP : <span id="m3_primesMois">0.00</span> €</div>
+          <div class="hr" style="background:#fdba74"></div>
+          <div style="font-size:11px;color:#64748b;margin-bottom:2px">ICP mois : <span id="m3_icpMois">0.00</span> €</div>
+          <div style="font-size:11px;color:#64748b;margin-bottom:10px">IFM mois : <span id="m3_ifmMois">0.00</span> €</div>
+          <div class="hr" style="background:#fdba74"></div>
+          <div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:4px">Total brut mission / mois</div>
+          <div style="font-size:28px;font-weight:700;color:#b45309"><span id="m3_totalMois">0.00</span> €</div>
+          <div style="font-size:11px;color:#64748b;margin-bottom:12px">(salaire + IFM + ICP)</div>
+          <div class="hr" style="background:#fdba74"></div>
+          <div style="font-size:12px;font-weight:700;margin-bottom:4px">Heures sup/mois : <span id="m3_hSupMois">0</span>h</div>
+          <div id="m3_h25mois_line" style="font-size:11px;color:#b45309"></div>
+          <div id="m3_h50mois_line" style="font-size:11px;color:#dc2626"></div>
+          <div id="m3_contingent" class="contingent-warn">⚠ Attention contingent 220h/an</div>
+          <div style="font-size:11px;color:#64748b;margin-top:8px;font-style:italic">Exonération IR heures sup : jusqu'à 7 500€/an</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODULE 4 -->
+  <div class="section" style="border: 2px solid #dc2626">
+    <div class="section-header" style="background:#dc2626">💬 MODULE 4 — Comment utiliser Claude en poste</div>
+    <div class="section-body claude-box">
+      <div class="claude-item">📌 <strong>Vérifier un deal :</strong><br><span>"Coffreur 16€/h, panier 10€/j + IKV 5€/j, outillage 2€/j, coeff 2.05 tout compris, 5j/sem, client propose 34€/h diffus — rentable ?"</span></div>
+      <div class="claude-item">📌 <strong>Prix plancher :</strong><br><span>"Plaquiste 15€/h, panier 10€/j, outillage 2€/j, coeff 2.10 charges seules 43%, marge cible 12% — quel prix minimum ?"</span></div>
+      <div class="claude-item">📌 <strong>Impact concession :</strong><br><span>"Si je baisse de 1€/h sur 10 intérimaires à 43h/sem. pendant 4 semaines, je perds combien en marge ?"</span></div>
+      <div class="claude-item">📌 <strong>Analyser mon mois :</strong><br><span>"CA 90 000€, masse salariale + IFM/ICP 78 000€ — quel est mon taux de marge réel ?"</span></div>
+      <div class="claude-item">📌 <strong>Acompte intérimaire :</strong><br><span>"Coffreur 16€/h, 43h cette sem., panier 10€/j 5j, IKV 4€/j, navigo 86.60€/mois sur 4 sem. — acompte max 60% sans ICP ?"</span></div>
+    </div>
+  </div>
+
+</div>
+<script>
+const H_JOUR = 7;
+let globalMode = 'tc';
+let m1_type = 'diffus';
+let m3_icp = false;
+
+function v(id) { return parseFloat(document.getElementById(id).value) || 0; }
+function s(id, val) { document.getElementById(id).textContent = typeof val === 'number' ? val.toFixed(2) : val; }
+function show(id, visible) { document.getElementById(id).style.display = visible ? '' : 'none'; }
+
+function setMode(m) {
+  globalMode = m;
+  document.getElementById('btn-tc').style.background = m === 'tc' ? '#475569' : '#e2e8f0';
+  document.getElementById('btn-tc').style.color = m === 'tc' ? '#fff' : '#475569';
+  document.getElementById('btn-cs').style.background = m === 'cs' ? '#475569' : '#e2e8f0';
+  document.getElementById('btn-cs').style.color = m === 'cs' ? '#fff' : '#475569';
+  show('charges-row-wrap', m === 'cs');
+  recalcAll();
+}
+
+function setType1(t) {
+  m1_type = t;
+  document.getElementById('btn-m1-diffus').style.background = t === 'diffus' ? '#2563eb' : '#e2e8f0';
+  document.getElementById('btn-m1-diffus').style.color = t === 'diffus' ? '#fff' : '#475569';
+  document.getElementById('btn-m1-accord').style.background = t === 'accord' ? '#2563eb' : '#e2e8f0';
+  document.getElementById('btn-m1-accord').style.color = t === 'accord' ? '#fff' : '#475569';
+  recalcAll();
+}
+
+function setIcp(val) {
+  m3_icp = val;
+  document.getElementById('btn-icp-non').style.background = !val ? '#b45309' : '#e2e8f0';
+  document.getElementById('btn-icp-non').style.color = !val ? '#fff' : '#475569';
+  document.getElementById('btn-icp-oui').style.background = val ? '#b45309' : '#e2e8f0';
+  document.getElementById('btn-icp-oui').style.color = val ? '#fff' : '#475569';
+  show('m3_tol_note', val);
+  recalcAll();
+}
+
+function calcCout(th, outil_j, salis_j, pexcep_sem, panier_j, jours, coeff, mode, txCh) {
+  const t = th, co = coeff, j = jours;
+  const tc = txCh / 100;
+  const primesH = (outil_j * j + salis_j * j + pexcep_sem) / H_JOUR;
+  const panierH = panier_j / H_JOUR;
+  if (mode === 'tc') {
+    return { cout: (t + primesH + panierH) * co, ifmH: 0, icpH: 0, coeffEff: co };
+  }
+  const baseH = t + primesH;
+  const chH = baseH * tc;
+  const ifmH = baseH * 0.10;
+  const icpH = (baseH + ifmH) * 0.10;
+  const cout = baseH + chH + ifmH + icpH + panierH * co;
+  return { cout, ifmH, icpH, coeffEff: t > 0 ? cout / t : 0 };
+}
+
+function hBTP(hSem, th) {
+  const h = hSem, t = th;
+  const hN = Math.min(h, 35);
+  const h25 = Math.max(0, Math.min(h - 35, 8));
+  const h50 = Math.max(0, h - 43);
+  return { hN, h25, h50, sal: hN * t + h25 * t * 1.25 + h50 * t * 1.50 };
+}
+
+function badge(pct, type) {
+  const min = type === 'accord' ? 10 : 11;
+  const cible = type === 'accord' ? 11 : 13;
+  if (!isFinite(pct)) return '';
+  if (pct >= cible) return `<span class="badge" style="background:#22c55e">✓ VERT ${pct.toFixed(1)}%</span>`;
+  if (pct >= min)   return `<span class="badge" style="background:#f59e0b">⚠ LIMITE ${pct.toFixed(1)}%</span>`;
+  return `<span class="badge" style="background:#ef4444">✗ ROUGE ${pct.toFixed(1)}%</span>`;
+}
+
+
+function chargerGrilleQualif() {
+  var qualif = (document.getElementById('p_qualif')||{}).value || '';
+  if(!qualif) return;
+  try {
+    var grilles = JSON.parse(localStorage.getItem('grilles_btp') || '[]');
+    var g = grilles.find(function(gr){ return gr.qualif === qualif || (gr.qualif||'').toLowerCase() === qualif.toLowerCase(); });
+    if(g && g.taux_client) {
+      var el = document.getElementById('p_txclient');
+      if(el) { el.value = g.taux_client; recalcAll(); }
+      var hint = document.getElementById('grille-hint');
+      if(hint) { hint.textContent = 'Grille accord-cadre : ' + g.taux_client + ' €/h'; hint.style.display='inline'; }
+    } else {
+      var hint2 = document.getElementById('grille-hint');
+      if(hint2) hint2.style.display='none';
+    }
+  } catch(e) {}
+}
+
+function recalcAll() {
+  const txCh = v('txCharges');
+
+  // ── MODULE 1 ──
+  const m1j = v('m1_jours'), m1s = v('m1_sem') || 4;
+  const nav1 = v('m1_navigo') / m1s;
+  const ikv1 = v('m1_ikv') * m1j;
+  const pan1 = v('m1_panier') * m1j;
+  const out1 = v('m1_outil') * m1j;
+  const sal1 = v('m1_salis') * m1j;
+  const pex1 = v('m1_pexcep');
+  const { cout: c1, ifmH: ifm1, icpH: icp1, coeffEff: ce1 } = calcCout(
+    v('m1_th'), v('m1_outil'), v('m1_salis'), v('m1_pexcep'),
+    v('m1_panier'), m1j, v('m1_coeff'), globalMode, txCh
+  );
+  const prix1 = v('m1_prix');
+  const marge1 = prix1 > 0 ? ((prix1 - c1) / prix1) * 100 : 0;
+  const margeE1 = prix1 - c1;
+
+  s('m1_nav_sem', nav1);
+  s('m1_ikv_sem', ikv1);
+  s('m1_pan_sem', pan1);
+  s('m1_primes_sem', out1 + sal1 + pex1);
+  s('m1_cout', c1);
+  document.getElementById('m1_margeE').textContent = margeE1.toFixed(2);
+  document.getElementById('m1_margeE').style.color = margeE1 >= 0 ? '#16a34a' : '#dc2626';
+  show('m1_cs_detail', globalMode === 'cs');
+  if (globalMode === 'cs') { s('m1_ifmH', ifm1); s('m1_icpH', icp1); s('m1_coeffEff', ce1); }
+  document.getElementById('m1_badge').innerHTML = badge(marge1, m1_type);
+  const alert1 = document.getElementById('m1_alert');
+  if (marge1 < 11 && isFinite(marge1)) {
+    alert1.innerHTML = `❌ Non rentable<br>Min diffus (11%) : <strong>${(c1/0.89).toFixed(2)} €/h</strong><br>Min accord (10%) : <strong>${(c1/0.90).toFixed(2)} €/h</strong>`;
+    show('m1_alert', true);
+  } else { show('m1_alert', false); }
+
+  // ── MODULE 2 ──
+  const m2j = v('m2_jours');
+  const { cout: c2 } = calcCout(
+    v('m2_th'), v('m2_outil'), v('m2_salis'), v('m2_pexcep'),
+    v('m2_panier'), m2j, v('m2_coeff'), globalMode, txCh
+  );
+  const mv2 = v('m2_marge') / 100;
+  const plancher2 = mv2 < 1 && c2 > 0 ? c2 / (1 - mv2) : 0;
+  s('m2_cout', c2);
+  s('m2_plancher', plancher2);
+  document.getElementById('m2_marge_disp').textContent = v('m2_marge');
+
+  // ── MODULE 3 ──
+  const m3j = v('m3_jours'), m3s = v('m3_sem') || 4;
+  const thN = v('m3_th');
+  const { hN, h25, h50, sal } = hBTP(v('m3_hSem'), thN);
+  const nav3 = v('m3_navigo') / m3s;
+  const ikv3 = v('m3_ikv') * m3j;
+  const pan3 = v('m3_panier') * m3j;
+  const out3 = v('m3_outil') * m3j;
+  const sal3 = v('m3_salis') * m3j;
+  const pex3 = v('m3_pexcep');
+  const transport3 = nav3 + ikv3;
+  const primes3 = out3 + sal3 + pex3;
+  const baseIfm = sal + primes3;
+  const ifm3 = baseIfm * 0.10;
+  const icpV = (baseIfm + ifm3) * 0.10;
+  const brut3 = sal + transport3 + pan3 + primes3;
+  const txAN = v('m3_txA') || 60;
+  const baseA = m3_icp ? brut3 + icpV : brut3;
+  const acompte3 = baseA * (txAN / 100);
+  const reste3 = brut3 + icpV + ifm3 - acompte3;
+  const brutMois = brut3 * m3s;
+  const ifmMois = ifm3 * m3s;
+  const icpMois = icpV * m3s;
+  const totalMois = brutMois + ifmMois + icpMois;
+  const hSupMois = (h25 + h50) * m3s;
+
+  document.getElementById('m3_hN').textContent = hN.toFixed(0);
+  document.getElementById('m3_sal_norm_line').textContent = `${hN.toFixed(0)}h × ${thN.toFixed(2)}€ = ${(hN*thN).toFixed(2)} €`;
+  document.getElementById('m3_h25').textContent = h25.toFixed(0);
+  document.getElementById('m3_h50').textContent = h50.toFixed(0);
+  show('m3_25_wrap', h25 > 0);
+  show('m3_50_wrap', h50 > 0);
+  if (h25 > 0) document.getElementById('m3_sal_25_line').textContent = `${h25.toFixed(0)}h × ${(thN*1.25).toFixed(2)}€ = ${(h25*thN*1.25).toFixed(2)} €`;
+  if (h50 > 0) document.getElementById('m3_sal_50_line').textContent = `${h50.toFixed(0)}h × ${(thN*1.50).toFixed(2)}€ = ${(h50*thN*1.50).toFixed(2)} €`;
+
+  document.getElementById('m3_nav_line').textContent = nav3 > 0 ? `Navigo/sem (prorata) : ${nav3.toFixed(2)} €` : '';
+  document.getElementById('m3_ikv_line').textContent = ikv3 > 0 ? `IKV (${m3j}j) : ${ikv3.toFixed(2)} €` : '';
+  document.getElementById('m3_pan_line').textContent = pan3 > 0 ? `Panier (${m3j}j) : ${pan3.toFixed(2)} €` : '';
+  document.getElementById('m3_out_line').textContent = out3 > 0 ? `Outillage (${m3j}j) : ${out3.toFixed(2)} €` : '';
+  document.getElementById('m3_sal_line').textContent = sal3 > 0 ? `Salissure (${m3j}j) : ${sal3.toFixed(2)} €` : '';
+  document.getElementById('m3_pex_line').textContent = pex3 > 0 ? `Prime excep. : ${pex3.toFixed(2)} €` : '';
+
+  s('m3_brutSem', brut3);
+  s('m3_baseIfm', baseIfm);
+  s('m3_ifm', ifm3);
+  s('m3_icp_val', icpV);
+  s('m3_acompte', acompte3);
+  s('m3_reste', reste3);
+  document.getElementById('m3_semN_disp').textContent = m3s;
+  s('m3_brutMois', brutMois);
+  s('m3_transMois', (transport3 + pan3) * m3s);
+  s('m3_primesMois', primes3 * m3s);
+  s('m3_icpMois', icpMois);
+  s('m3_ifmMois', ifmMois);
+  s('m3_totalMois', totalMois);
+  document.getElementById('m3_hSupMois').textContent = hSupMois.toFixed(0);
+  document.getElementById('m3_h25mois_line').textContent = h25 > 0 ? `${(h25*m3s).toFixed(0)}h à +25%` : '';
+  document.getElementById('m3_h50mois_line').textContent = h50 > 0 ? `${(h50*m3s).toFixed(0)}h à +50%` : '';
+  show('m3_contingent', hSupMois > 183);
+}
+
+// Init
+recalcAll();
+</script>
+
+<!-- ════════════════════════════════════════════════
+     MODAL PROPOSITION COMMERCIALE
+════════════════════════════════════════════════ -->
+<div id="modal-propale" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:999;align-items:center;justify-content:center;overflow:auto;padding:20px;">
+  <div style="background:#fff;border-radius:12px;max-width:680px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,.3);">
+    <div style="background:#1F4E79;color:#fff;padding:18px 22px;border-radius:12px 12px 0 0;display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div style="font-size:16px;font-weight:700;letter-spacing:.5px;">📄 PROPOSITION COMMERCIALE</div>
+        <div style="font-size:11px;color:#BDD7EE;margin-top:3px">Paramètres de la propale</div>
+      </div>
+      <button onclick="closePropale()" style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:4px;padding:5px 10px;cursor:pointer;font-size:16px;">×</button>
+    </div>
+    <div style="padding:20px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+        <div><label style="font-size:11px;font-weight:700;color:#475569;display:block;margin-bottom:4px;">AGENCE</label>
+          <input id="p_agence" type="text" value="JTI Intérim BTP" style="width:100%;padding:7px 10px;border:1.5px solid #cbd5e1;border-radius:6px;font-size:13px;"/></div>
+        <div><label style="font-size:11px;font-weight:700;color:#475569;display:block;margin-bottom:4px;">DATE</label>
+          <input id="p_date" type="date" style="width:100%;padding:7px 10px;border:1.5px solid #cbd5e1;border-radius:6px;font-size:13px;"/></div>
+        <div><label style="font-size:11px;font-weight:700;color:#475569;display:block;margin-bottom:4px;">CLIENT (Société)</label>
+          <input id="p_client" type="text" placeholder="SARL Dubois Plâtrerie" style="width:100%;padding:7px 10px;border:1.5px solid #cbd5e1;border-radius:6px;font-size:13px;"/></div>
+        <div><label style="font-size:11px;font-weight:700;color:#475569;display:block;margin-bottom:4px;">CONTACT CLIENT</label>
+          <input id="p_contact" type="text" placeholder="M. Dubois" style="width:100%;padding:7px 10px;border:1.5px solid #cbd5e1;border-radius:6px;font-size:13px;"/></div>
+        <div><label style="font-size:11px;font-weight:700;color:#475569;display:block;margin-bottom:4px;">QUALIFICATION POSTE</label>
+          <select id="p_qualif" onchange="chargerGrilleQualif()" style="width:100%;padding:7px 10px;border:1.5px solid #cbd5e1;border-radius:6px;font-size:13px;background:#fff;color:#1e293b;"><option value="">-- Sélectionner le métier --</option><optgroup label="GROS OEUVRE"><option value="Macon">Macon</option><option value="Macon VRD">Macon VRD</option><option value="Macon Finisseur">Macon Finisseur</option><option value="Coffreur-Bancheur">Coffreur-Bancheur</option><option value="Ferrailleur">Ferrailleur</option><option value="Charpentier Bois">Charpentier Bois</option><option value="Charpentier Metallique">Charpentier Metallique</option><option value="Couvreur">Couvreur</option><option value="Etancheur">Etancheur</option><option value="Demolisseur">Demolisseur</option></optgroup><optgroup label="SECOND OEUVRE"><option value="Plaquiste">Plaquiste</option><option value="Platrerie / Staff">Platrerie / Staff</option><option value="Staffeur / Stuqueur">Staffeur / Stuqueur</option><option value="Peintre en batiment">Peintre en batiment</option><option value="Facadier">Facadier</option><option value="Solier / Moquettiste">Solier / Moquettiste</option><option value="Carreleur">Carreleur</option><option value="Menuisier Poseur">Menuisier Poseur</option><option value="Menuisier Atelier">Menuisier Atelier</option><option value="Serrurier / Metallier">Serrurier / Metallier</option><option value="Calorifugeur">Calorifugeur</option><option value="Echafaudeur">Echafaudeur</option></optgroup><optgroup label="CVC / PLOMBERIE"><option value="Technicien CVC">Technicien CVC</option><option value="Chauffagiste">Chauffagiste</option><option value="Plombier Sanitaire">Plombier Sanitaire</option><option value="Installateur CVC">Installateur CVC</option><option value="Technicien Frigoriste">Technicien Frigoriste</option><option value="Technicien Maintenance Batiment">Technicien Maintenance Batiment</option></optgroup><optgroup label="ELECTRICITE"><option value="Electricien CFO">Electricien CFO</option><option value="Electricien CFA">Electricien CFA</option><option value="Tireur de Cables">Tireur de Cables</option><option value="Technicien Automatisme">Technicien Automatisme</option></optgroup><optgroup label="ENGINS / LEVAGE"><option value="Conducteur Engins (CACES R482)">Conducteur Engins (CACES R482)</option><option value="Grutier (CACES R487)">Grutier (CACES R487)</option><option value="Conducteur Grue Mobile">Conducteur Grue Mobile</option><option value="Conducteur Nacelle (PEMP)">Conducteur Nacelle (PEMP)</option><option value="Mecanicien Engins Chantier">Mecanicien Engins Chantier</option><option value="Cariste (CACES R489)">Cariste (CACES R489)</option></optgroup><optgroup label="TRAVAUX PUBLICS"><option value="Canalisateur">Canalisateur</option><option value="Asphalteur">Asphalteur</option><option value="Poseur de Bordures">Poseur de Bordures</option><option value="Ouvrier VRD">Ouvrier VRD</option></optgroup><optgroup label="ENCADREMENT"><option value="Chef de Chantier">Chef de Chantier</option><option value="Conducteur de Travaux">Conducteur de Travaux</option><option value="Chef Equipe">Chef Equipe</option><option value="Animateur QSE">Animateur QSE</option></optgroup><optgroup label="BUREAU D'ETUDES"><option value="Dessinateur Projeteur">Dessinateur Projeteur</option><option value="Metreuse / Economiste">Metreuse / Economiste</option><option value="Ingenieur CVC">Ingenieur CVC</option><option value="Operateur Topographe">Operateur Topographe</option><option value="Responsable QSE">Responsable QSE</option></optgroup></select></div>
+        <div><label style="font-size:11px;font-weight:700;color:#475569;display:block;margin-bottom:4px;">DURÉE MISSION</label>
+          <input id="p_duree" type="text" placeholder="3 semaines, du 17 au 31 mars" style="width:100%;padding:7px 10px;border:1.5px solid #cbd5e1;border-radius:6px;font-size:13px;"/></div>
+        <div><label style="font-size:11px;font-weight:700;color:#475569;display:block;margin-bottom:4px;">CHANTIER / ADRESSE</label>
+          <input id="p_chantier" type="text" placeholder="Résidence Les Acacias — 75013 Paris" style="width:100%;padding:7px 10px;border:1.5px solid #cbd5e1;border-radius:6px;font-size:13px;"/></div>
+        <div><label style="font-size:11px;font-weight:700;color:#475569;display:block;margin-bottom:4px;">HORAIRES</label>
+          <input id="p_horaires" type="text" placeholder="7h-16h du lundi au vendredi" style="width:100%;padding:7px 10px;border:1.5px solid #cbd5e1;border-radius:6px;font-size:13px;"/></div>
+        <div><label style="font-size:11px;font-weight:700;color:#475569;display:block;margin-bottom:4px;">TAUX CLIENT DIFFUS (€/h) — pré-rempli</label>
+          <input id="p_txclient" type="number" step="0.5" placeholder="34.50" style="width:100%;padding:7px 10px;border:1.5px solid #cbd5e1;border-radius:6px;font-size:13px;"/></div>
+        <div><label style="font-size:11px;font-weight:700;color:#475569;display:block;margin-bottom:4px;">RESPONSABLE COMMERCIAL</label>
+          <input id="p_ra" type="text" placeholder="Jonathan TIMMIAH" style="width:100%;padding:7px 10px;border:1.5px solid #cbd5e1;border-radius:6px;font-size:13px;"/></div>
+      </div>
+      <div><label style="font-size:11px;font-weight:700;color:#475569;display:block;margin-bottom:4px;">POINTS CLÉS / ARGUMENTS</label>
+        <textarea id="p_args" rows="3" placeholder="Ex: Profil vérifié CACES R486 + habilitation électrique HO. Disponible immédiatement. Expérience chantier neuf IDF." style="width:100%;padding:8px 10px;border:1.5px solid #cbd5e1;border-radius:6px;font-size:12px;line-height:1.6;resize:vertical;"></textarea></div>
+      <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">
+        <button onclick="closePropale()" style="padding:8px 18px;background:#f1f5f9;color:#475569;border:1.5px solid #cbd5e1;border-radius:6px;font-weight:700;cursor:pointer;">Annuler</button>
+        <button onclick="generatePropale()" style="padding:8px 22px;background:#1F4E79;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:13px;">📄 GÉNÉRER LA PROPALE</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PROPALE RENDU -->
+<div id="modal-propale-out" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:flex-start;justify-content:center;overflow:auto;padding:20px;">
+  <div style="background:#fff;border-radius:12px;max-width:760px;width:100%;margin:0 auto;box-shadow:0 10px 40px rgba(0,0,0,.4);">
+    <div style="background:#1F4E79;color:#fff;padding:14px 20px;border-radius:12px 12px 0 0;display:flex;justify-content:space-between;align-items:center;">
+      <span style="font-weight:700;letter-spacing:.5px;">PROPOSITION COMMERCIALE — APERÇU</span>
+      <div style="display:flex;gap:8px;">
+        <button onclick="printPropale()" style="padding:6px 14px;background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:4px;cursor:pointer;font-weight:700;font-size:12px;">🖨 Imprimer</button>
+        <button onclick="document.getElementById('modal-propale-out').style.display='none'" style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:4px;padding:5px 10px;cursor:pointer;font-size:16px;">×</button>
+      </div>
+    </div>
+    <div id="propale-content" style="padding:30px;font-family:'Segoe UI',Arial,sans-serif;color:#1e293b;"></div>
+  </div>
+</div>
+
+<style>
+@media print {
+  body > *:not(#modal-propale-out) { display:none!important; }
+  #modal-propale-out { position:static!important;background:white!important;padding:0!important; }
+  #modal-propale-out > div { box-shadow:none!important;border-radius:0!important;max-width:none!important; }
+  #modal-propale-out > div > div:first-child { display:none!important; }
+}
+</style>
+
+<script>
+function openPropale() {
+  // Pré-remplir depuis la simulation M1
+  var txc = document.getElementById('m1_prix');
+  var pdtx = document.getElementById('p_txclient');
+  if(txc && pdtx && parseFloat(txc.value) > 0) pdtx.value = txc.value;
+  // Date du jour
+  var now = new Date();
+  var dd = String(now.getDate()).padStart(2,'0');
+  var mm = String(now.getMonth()+1).padStart(2,'0');
+  document.getElementById('p_date').value = now.getFullYear()+'-'+mm+'-'+dd;
+  document.getElementById('modal-propale').style.display = 'flex';
+}
+function closePropale() {
+  document.getElementById('modal-propale').style.display = 'none';
+}
+function printPropale() {
+  window.print();
+}
+function fmtDateFr(d) {
+  if(!d) return '';
+  var p = d.split('-');
+  return p[2]+'/'+p[1]+'/'+p[0];
+}
+function generatePropale() {
+  // Récupérer valeurs du formulaire
+  var agence  = document.getElementById('p_agence').value || 'JTI Intérim BTP';
+  var date    = document.getElementById('p_date').value;
+  var client  = document.getElementById('p_client').value || '[Société client]';
+  var contact = document.getElementById('p_contact').value || '';
+  var qualif  = document.getElementById('p_qualif').value || '[Qualification]';
+  var duree   = document.getElementById('p_duree').value || '[Durée à préciser]';
+  var chantier= document.getElementById('p_chantier').value || '';
+  var horaires= document.getElementById('p_horaires').value || '';
+  var txcli   = parseFloat(document.getElementById('p_txclient').value) || 0;
+  var ra      = document.getElementById('p_ra').value || 'Votre Responsable d\'Agence';
+  var args    = document.getElementById('p_args').value || '';
+
+  // Récupérer données simulation M1
+  var txh    = parseFloat((document.getElementById('m1_th')||{value:0}).value) || 0;
+  var coeff  = parseFloat((document.getElementById('m1_coeff')||{value:0}).value) || 0;
+  var mE     = document.getElementById('m1_margeE') ? parseFloat(document.getElementById('m1_margeE').textContent) : 0;
+  var cout1  = document.getElementById('m1_cout') ? parseFloat(document.getElementById('m1_cout').textContent) : 0;
+  var margePct = txcli > 0 && cout1 > 0 ? ((txcli - cout1) / txcli * 100).toFixed(1) : '--';
+
+  // Lignes primes
+  var pan1   = parseFloat((document.getElementById('m1_panier')||{value:0}).value) || 0;
+  var outil1 = parseFloat((document.getElementById('m1_outil')||{value:0}).value) || 0;
+  var ikv1   = parseFloat((document.getElementById('m1_ikv')||{value:0}).value) || 0;
+  var nav1   = parseFloat((document.getElementById('m1_navigo')||{value:0}).value) || 0;
+  var jours1 = parseFloat((document.getElementById('m1_jours')||{value:5}).value) || 5;
+
+  // Arguments formatés
+  var argsHtml = args ? args.split('\n').map(function(l){return l.trim()?'<li style="margin-bottom:5px">'+l+'</li>':'';}).join('') : '';
+
+  // Construction HTML propale
+  var html = [
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;padding-bottom:18px;border-bottom:3px solid #1F4E79;">',
+      '<div>',
+        '<div style="font-size:22px;font-weight:800;color:#1F4E79;letter-spacing:-.5px;">'+agence+'</div>',
+        '<div style="font-size:12px;color:#64748b;margin-top:4px;">Agence Intérim Spécialisée BTP — Île-de-France</div>',
+      '</div>',
+      '<div style="text-align:right;">',
+        '<div style="font-size:12px;color:#64748b;">Date : <strong>'+fmtDateFr(date)+'</strong></div>',
+        '<div style="font-size:12px;color:#64748b;">Réf. : PROP-'+Date.now().toString(36).toUpperCase()+'</div>',
+      '</div>',
+    '</div>',
+
+    '<div style="background:#EBF3FB;border-left:4px solid #1F4E79;border-radius:4px;padding:14px 18px;margin-bottom:22px;">',
+      '<div style="font-size:10px;font-weight:700;color:#1F4E79;letter-spacing:1px;margin-bottom:4px;">DESTINATAIRE</div>',
+      '<div style="font-size:16px;font-weight:700;color:#1e293b;">'+client+'</div>',
+      (contact ? '<div style="font-size:13px;color:#475569;margin-top:2px;">À l\'attention de : '+contact+'</div>' : ''),
+    '</div>',
+
+    '<div style="font-size:10px;font-weight:700;color:#1F4E79;letter-spacing:1px;margin-bottom:10px;">OBJET DE LA PROPOSITION</div>',
+    '<div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:20px;line-height:1.5;">',
+      'Mise à disposition de personnel intérimaire — <span style="color:#1F4E79;">'+qualif+'</span>',
+    '</div>',
+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:22px;">',
+      '<div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:8px;padding:14px;">',
+        '<div style="font-size:10px;font-weight:700;color:#64748b;letter-spacing:.8px;margin-bottom:10px;">DÉTAILS MISSION</div>',
+        '<table style="width:100%;font-size:12px;border-collapse:collapse;">',
+          '<tr><td style="color:#64748b;padding:3px 0;">Qualification</td><td style="font-weight:700;text-align:right;">'+qualif+'</td></tr>',
+          '<tr><td style="color:#64748b;padding:3px 0;">Durée</td><td style="font-weight:700;text-align:right;">'+duree+'</td></tr>',
+          (chantier ? '<tr><td style="color:#64748b;padding:3px 0;">Chantier</td><td style="font-weight:700;text-align:right;">'+chantier+'</td></tr>' : ''),
+          (horaires ? '<tr><td style="color:#64748b;padding:3px 0;">Horaires</td><td style="font-weight:700;text-align:right;">'+horaires+'</td></tr>' : ''),
+        '</table>',
+      '</div>',
+      '<div style="background:#EBF3FB;border:1.5px solid #BDD7EE;border-radius:8px;padding:14px;">',
+        '<div style="font-size:10px;font-weight:700;color:#1F4E79;letter-spacing:.8px;margin-bottom:10px;">CONDITIONS FINANCIÈRES</div>',
+        '<table style="width:100%;font-size:12px;border-collapse:collapse;">',
+          (txh > 0 ? '<tr><td style="color:#475569;padding:3px 0;">Taux horaire brut</td><td style="font-weight:700;text-align:right;">'+txh.toFixed(2)+' €/h</td></tr>' : ''),
+          (coeff > 0 ? '<tr><td style="color:#475569;padding:3px 0;">Coefficient appliqué</td><td style="font-weight:700;text-align:right;">'+coeff.toFixed(2)+'</td></tr>' : ''),
+          (pan1 > 0 ? '<tr><td style="color:#475569;padding:3px 0;">Panier repas/j</td><td style="font-weight:700;text-align:right;">'+pan1.toFixed(2)+' €</td></tr>' : ''),
+          (outil1 > 0 ? '<tr><td style="color:#475569;padding:3px 0;">Outillage/j</td><td style="font-weight:700;text-align:right;">'+outil1.toFixed(2)+' €</td></tr>' : ''),
+          (nav1 > 0 ? '<tr><td style="color:#475569;padding:3px 0;">Navigo mensuel</td><td style="font-weight:700;text-align:right;">'+nav1.toFixed(2)+' €/mois</td></tr>' : ''),
+          (txcli > 0 ? '<tr style="border-top:1.5px solid #93C6E7;"><td style="color:#1F4E79;padding:5px 0 0;font-weight:700;">TAUX DIFFUS CLIENT</td><td style="font-weight:800;font-size:16px;color:#1F4E79;text-align:right;padding-top:5px;">'+txcli.toFixed(2)+' €/h</td></tr>' : ''),
+        '</table>',
+      '</div>',
+    '</div>',
+
+    (argsHtml ? [
+      '<div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:8px;padding:14px;margin-bottom:22px;">',
+        '<div style="font-size:10px;font-weight:700;color:#15803d;letter-spacing:.8px;margin-bottom:8px;">POINTS CLÉS DU PROFIL</div>',
+        '<ul style="margin:0;padding-left:18px;font-size:13px;color:#1e293b;line-height:1.8;">'+argsHtml+'</ul>',
+      '</div>',
+    ].join('') : ''),
+
+    '<div style="background:#1F4E79;color:#fff;border-radius:8px;padding:16px 20px;margin-bottom:22px;">',
+      '<div style="font-size:10px;letter-spacing:1px;opacity:.7;margin-bottom:6px;">CONFORMITÉ LÉGALE</div>',
+      '<div style="font-size:12px;line-height:1.7;opacity:.9;">',
+        'Contrat de mise à disposition conforme au Code du travail (L.1251-1 à L.1251-87). ',
+        'Facturation selon taux diffus convenu — règlement à 30 jours nets. ',
+        'Garantie de remplacement en cas d\'absence prolongée.',
+      '</div>',
+    '</div>',
+
+    '<div style="display:flex;justify-content:space-between;align-items:flex-end;border-top:2px solid #e2e8f0;padding-top:18px;margin-top:10px;">',
+      '<div style="font-size:12px;color:#64748b;line-height:1.7;">',
+        'Proposition valable 15 jours à compter de la date d\'\1mission.<br/>',
+        'Cette offre est soumise à disponibilité du candidat au moment de la confirmation.',
+      '</div>',
+      '<div style="text-align:right;">',
+        '<div style="font-size:10px;color:#94a3b8;margin-bottom:8px;">Responsable Commercial</div>',
+        '<div style="font-size:15px;font-weight:700;color:#1F4E79;">'+ra+'</div>',
+        '<div style="font-size:11px;color:#64748b;">'+agence+'</div>',
+      '</div>',
+    '</div>',
+  ].join('');
+
+  document.getElementById('propale-content').innerHTML = html;
+  closePropale();
+  document.getElementById('modal-propale-out').style.display = 'flex';
+}
+ // --- DÉBUT DU PATCH DEEPSEEK (MARGE) ---
+(function() {
+    // 1. Fonction de notification silencieuse
+    window.notifyParentMarge = function() {
+        try {
+            if (window.parent) {
+                window.parent.postMessage({ type: 'marge_updated' }, '*');
+            }
+        } catch(e) {}
+    };
+
+    // 2. Interception automatique de recalcAll()
+    if (typeof window.recalcAll === 'function') {
+        var _origRecalcAll = window.recalcAll;
+        window.recalcAll = function() {
+            _origRecalcAll.apply(this, arguments); // Exécute ton calcul normal
+            window.notifyParentMarge(); // Envoie le signal
+        };
+    }
+
+    // 3. Interception automatique de applyGrille()
+    if (typeof window.applyGrille === 'function') {
+        var _origApplyGrille = window.applyGrille;
+        window.applyGrille = function() {
+            _origApplyGrille.apply(this, arguments); // Applique ta grille normalement
+            window.notifyParentMarge(); // Envoie le signal
+        };
+    }
+})();
+// --- FIN DU PATCH DEEPSEEK (MARGE) ---
+</script>
+
+</body>
+</html>

@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<title>Pilotage RA — Tableau de Bord</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;600;700;800&display=swap');
+
+:root{
+  --bg:#07090f;
+  --surface:#0e1120;
+  --surface2:#131828;
+  --surface3:#1a2035;
+  --border:#1e2540;
+  --border2:#2a3458;
+  --text:#dde3f5;
+  --muted:#5a6690;
+  --muted2:#8891b8;
+  --accent:#f97316;
+  --accent2:#fb923c;
+  --green:#22d47a;
+  --blue:#4da6ff;
+  --yellow:#f5c842;
+  --warn:#ff5252;
+  --purple:#b57bff;
+  --cyan:#38e8d5;
+  --mono:'DM Mono',monospace;
+  --display:'Syne',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--mono);overflow:hidden;}
+
+/* GRID LAYOUT */
+.shell{display:grid;grid-template-rows:56px 1fr;height:100vh;}
+
+/* TOP BAR */
+.topbar{
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  display:grid;
+  grid-template-columns:auto 1fr auto auto;
+  align-items:center;
+  padding:0 20px;
+  gap:20px;
+}
+.topbar-logo{
+  font-family:var(--display);font-weight:800;font-size:13px;
+  color:var(--accent);letter-spacing:2px;white-space:nowrap;
+}
+.topbar-sub{font-size:10px;color:var(--muted);letter-spacing:.5px;}
+.topbar-date{font-size:11px;color:var(--muted2);}
+.topbar-sync{
+  display:flex;align-items:center;gap:8px;
+  font-size:10px;color:var(--muted);cursor:pointer;
+  padding:5px 12px;border:1px solid var(--border);border-radius:3px;
+  transition:all .15s;
+}
+.topbar-sync:hover{border-color:var(--accent);color:var(--accent);}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+/* MAIN GRID */
+.main{display:grid;grid-template-columns:1fr 1fr 1fr 320px;grid-template-rows:1fr 1fr 1fr;gap:1px;background:var(--border);overflow:hidden;}
+
+/* PANEL */
+.panel{
+  background:var(--bg);
+  padding:18px 20px;
+  position:relative;
+  overflow:hidden;
+  display:flex;flex-direction:column;
+  gap:10px;
+}
+.panel::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--border2),transparent);
+}
+
+/* Panel accents */
+.panel.accent-green::before{background:linear-gradient(90deg,transparent,var(--green),transparent);}
+.panel.accent-warn::before{background:linear-gradient(90deg,transparent,var(--warn),transparent);}
+.panel.accent-yellow::before{background:linear-gradient(90deg,transparent,var(--yellow),transparent);}
+.panel.accent-blue::before{background:linear-gradient(90deg,transparent,var(--blue),transparent);}
+.panel.accent-purple::before{background:linear-gradient(90deg,transparent,var(--purple),transparent);}
+.panel.accent-cyan::before{background:linear-gradient(90deg,transparent,var(--cyan),transparent);}
+.panel.accent-orange::before{background:linear-gradient(90deg,transparent,var(--accent),transparent);}
+
+/* PANEL HEADER */
+.ph{display:flex;justify-content:space-between;align-items:flex-start;}
+.ph-label{font-family:var(--display);font-size:9px;font-weight:600;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}
+.ph-badge{font-size:9px;padding:2px 7px;border-radius:10px;font-weight:500;}
+.badge-green{background:rgba(34,212,122,.12);color:var(--green);border:1px solid rgba(34,212,122,.2);}
+.badge-warn{background:rgba(255,82,82,.12);color:var(--warn);border:1px solid rgba(255,82,82,.2);}
+.badge-yellow{background:rgba(245,200,66,.12);color:var(--yellow);border:1px solid rgba(245,200,66,.2);}
+.badge-muted{background:rgba(90,102,144,.15);color:var(--muted2);border:1px solid var(--border);}
+.badge-blue{background:rgba(77,166,255,.1);color:var(--blue);border:1px solid rgba(77,166,255,.2);}
+
+/* BIG NUMBER */
+.big-num{
+  font-family:var(--display);font-weight:800;
+  line-height:1;letter-spacing:-1px;
+}
+.big-num.sz-xl{font-size:52px;}
+.big-num.sz-lg{font-size:38px;}
+.big-num.sz-md{font-size:28px;}
+
+/* SPARKLINE */
+.sparkline{height:36px;width:100%;}
+svg.spark{width:100%;height:36px;overflow:visible;}
+.spark-line{fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
+.spark-area{fill-opacity:.15;}
+.spark-dot{r:3;}
+
+/* BARS */
+.bar-row{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;margin-bottom:5px;}
+.bar-label{font-size:10px;color:var(--muted2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bar-val{font-size:10px;font-weight:500;text-align:right;min-width:36px;}
+.bar-bg{height:4px;background:var(--surface3);border-radius:2px;margin-top:2px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:2px;transition:width .6s cubic-bezier(.22,1,.36,1);}
+
+/* RATIO RING */
+.ring-wrap{display:flex;align-items:center;gap:14px;}
+.ring-svg{flex-shrink:0;}
+.ring-info{flex:1;}
+.ring-val{font-family:var(--display);font-size:22px;font-weight:800;}
+.ring-lbl{font-size:9px;color:var(--muted);letter-spacing:.5px;margin-top:2px;}
+.ring-sub{font-size:10px;color:var(--muted2);margin-top:5px;line-height:1.5;}
+
+/* STAT ROW */
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);}
+.stat-row:last-child{border-bottom:none;}
+.stat-lbl{font-size:10px;color:var(--muted2);}
+.stat-val{font-size:11px;font-weight:500;}
+
+/* SEUIL BLOCK */
+.seuil-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.seuil-etp{font-family:var(--display);font-weight:800;font-size:28px;min-width:48px;}
+.seuil-bar-wrap{flex:1;}
+.seuil-track{height:8px;background:var(--surface3);border-radius:4px;overflow:hidden;position:relative;}
+.seuil-prog{height:100%;border-radius:4px;transition:width .6s cubic-bezier(.22,1,.36,1);}
+.seuil-labels{display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-top:3px;}
+
+/* ALERTE ROW */
+.alerte{
+  display:flex;align-items:flex-start;gap:8px;
+  padding:7px 10px;border-radius:3px;
+  font-size:10px;line-height:1.5;
+  margin-bottom:4px;
+}
+.alerte-warn{background:rgba(255,82,82,.08);border-left:2px solid var(--warn);color:var(--text);}
+.alerte-ok{background:rgba(34,212,122,.06);border-left:2px solid var(--green);color:var(--text);}
+.alerte-info{background:rgba(77,166,255,.06);border-left:2px solid var(--blue);color:var(--text);}
+.alerte-yellow{background:rgba(245,200,66,.07);border-left:2px solid var(--yellow);color:var(--text);}
+.alerte-icon{font-size:12px;flex-shrink:0;margin-top:1px;}
+
+/* PIPELINE */
+.pipe-stage{margin-bottom:8px;}
+.pipe-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+.pipe-name{font-size:10px;font-weight:600;letter-spacing:.3px;}
+.pipe-count{font-family:var(--display);font-size:16px;font-weight:800;}
+.pipe-track{height:6px;background:var(--surface3);border-radius:3px;overflow:hidden;}
+.pipe-fill{height:100%;border-radius:3px;transition:width .6s cubic-bezier(.22,1,.36,1);}
+
+/* MISSION LIST */
+.mission-item{
+  padding:7px 0;border-bottom:1px solid var(--border);
+  display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;
+}
+.mission-item:last-child{border-bottom:none;}
+.mission-cand{font-size:11px;font-weight:600;color:var(--text);}
+.mission-client{font-size:9px;color:var(--muted);margin-top:1px;}
+.mission-days{font-size:10px;font-weight:700;text-align:right;}
+
+/* SIDEBAR PANEL */
+.panel.sidebar-right{grid-row:1/4;display:flex;flex-direction:column;gap:0;padding:0;}
+.sidebar-section{padding:16px 18px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.sidebar-section.grow{flex:1;overflow-y:auto;}
+
+/* MINI INPUT */
+.mini-input{
+  width:100%;padding:5px 8px;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:3px;color:var(--text);
+  font-size:11px;font-family:var(--mono);outline:none;
+  margin-top:4px;
+}
+.mini-input:focus{border-color:var(--accent);}
+.mini-label{font-size:9px;color:var(--muted);letter-spacing:.3px;}
+
+/* SCROLL */
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* GLOW BG */
+.panel.main-metric{position:relative;}
+.panel.main-metric::after{
+  content:'';position:absolute;
+  width:180px;height:180px;border-radius:50%;
+  filter:blur(60px);opacity:.07;
+  pointer-events:none;right:-20px;bottom:-20px;
+}
+.panel.main-metric.glow-green::after{background:var(--green);}
+.panel.main-metric.glow-warn::after{background:var(--warn);}
+.panel.main-metric.glow-yellow::after{background:var(--yellow);}
+.panel.main-metric.glow-blue::after{background:var(--blue);}
+
+/* TREND */
+.trend{font-size:10px;display:flex;align-items:center;gap:4px;}
+.trend.up{color:var(--green);}
+.trend.down{color:var(--warn);}
+.trend.flat{color:var(--muted2);}
+
+/* MODAL */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;
+  display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(4px);
+  opacity:0;pointer-events:none;transition:opacity .2s;
+}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal{
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:8px;padding:24px;width:480px;max-height:80vh;overflow-y:auto;
+}
+.modal h3{font-family:var(--display);font-size:14px;font-weight:700;margin-bottom:16px;color:var(--accent);}
+.modal-close{
+  position:absolute;top:16px;right:16px;background:none;border:none;
+  color:var(--muted);cursor:pointer;font-size:18px;
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div>
+      <div class="topbar-logo">JT ARKPROD · PILOTAGE RA</div>
+      <div class="topbar-sub">TABLEAU DE BORD TEMPS RÉEL</div>
+    </div>
+    <div></div>
+    <div class="topbar-date" id="td-date"></div>
+    <div class="topbar-sync" onclick="refresh()">
+      <div class="sync-dot"></div>
+      <span id="sync-label">SYNCHRONISER</span>
+    </div>
+  </div>
+
+  <!-- MAIN GRID 3×3 + sidebar -->
+  <div class="main">
+
+    <!-- ROW 1 -->
+
+    <!-- P1 : MARGE BRUTE (grand) -->
+    <div class="panel accent-green main-metric glow-green" id="p-marge">
+      <div class="ph">
+        <span class="ph-label">MARGE BRUTE</span>
+        <span class="ph-badge" id="badge-marge">—</span>
+      </div>
+      <div class="big-num sz-xl" id="val-marge" style="color:var(--green)">—%</div>
+      <div class="trend" id="trend-marge"></div>
+      <div style="font-size:10px;color:var(--muted);margin-top:2px">Objectif ≥ 18% · Alerte &lt; 12%</div>
+      <div class="sparkline" id="spark-marge"></div>
+      <div class="stat-row">
+        <span class="stat-lbl">CA estimé / mois</span>
+        <span class="stat-val" id="ca-mois">—</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-lbl">Coeff. facturation</span>
+        <span class="stat-val" id="coeff-fact">—</span>
+      </div>
+    </div>
+
+    <!-- P2 : RBE -->
+    <div class="panel accent-yellow main-metric glow-yellow" id="p-rbe">
+      <div class="ph">
+        <span class="ph-label">RBE MENSUEL EST.</span>
+        <span class="ph-badge" id="badge-rbe">—</span>
+      </div>
+      <div class="big-num sz-lg" id="val-rbe" style="color:var(--yellow)">—€</div>
+      <div class="trend" id="trend-rbe"></div>
+      <div style="margin-top:6px">
+        <div class="stat-row">
+          <span class="stat-lbl">Frais fixes estimés</span>
+          <span class="stat-val" id="frais-fixes">—</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-lbl">ETP actifs (missions)</span>
+          <span class="stat-val" id="etp-actifs">—</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-lbl">Heures facturées / mois</span>
+          <span class="stat-val" id="h-fact">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- P3 : SEUIL DE RENTABILITÉ -->
+    <div class="panel accent-blue main-metric glow-blue" id="p-seuil">
+      <div class="ph">
+        <span class="ph-label">SEUIL DE RENTABILITÉ</span>
+        <span class="ph-badge" id="badge-seuil">—</span>
+      </div>
+      <div class="seuil-row">
+        <div>
+          <div style="font-size:9px;color:var(--muted);letter-spacing:.5px">ETP ACTUELS</div>
+          <div class="seuil-etp" id="seuil-etp-cur" style="color:var(--blue)">—</div>
+        </div>
+        <div style="flex:1">
+          <div class="seuil-track"><div class="seuil-prog" id="seuil-prog"></div></div>
+          <div class="seuil-labels">
+            <span>0</span>
+            <span id="seuil-label-mid">seuil</span>
+            <span id="seuil-label-max">—</span>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:9px;color:var(--muted);letter-spacing:.5px">SEUIL</div>
+          <div class="seuil-etp" id="seuil-etp-needed" style="color:var(--accent)">—</div>
+        </div>
+      </div>
+      <div style="font-size:10px;color:var(--muted2)" id="seuil-txt">Calculer dans le simulateur P&L pour définir vos charges fixes</div>
+      <div class="stat-row">
+        <span class="stat-lbl">ETP manquants</span>
+        <span class="stat-val" id="etp-gap">—</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-lbl">Marge / ETP / mois</span>
+        <span class="stat-val" id="mb-etp">—</span>
+      </div>
+    </div>
+
+    <!-- ROW 2 -->
+
+    <!-- P4 : TAUX DE TRANSFORMATION -->
+    <div class="panel accent-purple" id="p-transfo">
+      <div class="ph">
+        <span class="ph-label">TAUX DE TRANSFORMATION</span>
+        <span class="ph-badge" id="badge-transfo">—</span>
+      </div>
+      <div class="ring-wrap" style="margin-top:4px">
+        <svg class="ring-svg" width="72" height="72" viewBox="0 0 72 72">
+          <circle cx="36" cy="36" r="30" fill="none" stroke="var(--surface3)" stroke-width="7"/>
+          <circle id="ring-transfo" cx="36" cy="36" r="30" fill="none" stroke="var(--purple)"
+                  stroke-width="7" stroke-linecap="round" stroke-dasharray="188.5"
+                  stroke-dashoffset="188.5" transform="rotate(-90 36 36)"
+                  style="transition:stroke-dashoffset .8s cubic-bezier(.22,1,.36,1)"/>
+        </svg>
+        <div class="ring-info">
+          <div class="ring-val" id="ring-transfo-val" style="color:var(--purple)">—%</div>
+          <div class="ring-lbl">CVs → MISSIONS</div>
+          <div class="ring-sub" id="ring-transfo-sub">Objectif 15–25%</div>
+        </div>
+      </div>
+      <div class="stat-row">
+        <span class="stat-lbl">CVs envoyés (besoins actifs)</span>
+        <span class="stat-val" id="cv-envoyes">—</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-lbl">Missions démarrées</span>
+        <span class="stat-val" id="missions-dem">—</span>
+      </div>
+    </div>
+
+    <!-- P5 : PIPELINE COMMERCIAL -->
+    <div class="panel accent-orange" id="p-pipeline">
+      <div class="ph">
+        <span class="ph-label">PIPELINE COMMERCIAL</span>
+        <span class="ph-badge badge-muted" id="badge-prospects">— prospects</span>
+      </div>
+      <div style="margin-top:4px">
+        <div class="pipe-stage" id="pipe-chaud">
+          <div class="pipe-header">
+            <span class="pipe-name" style="color:var(--accent)">🔥 CHAUD</span>
+            <span class="pipe-count" style="color:var(--accent)" id="pipe-chaud-n">—</span>
+          </div>
+          <div class="pipe-track"><div class="pipe-fill" id="pipe-chaud-bar" style="background:var(--accent)"></div></div>
+        </div>
+        <div class="pipe-stage" id="pipe-tiede">
+          <div class="pipe-header">
+            <span class="pipe-name" style="color:var(--yellow)">~ TIÈDE</span>
+            <span class="pipe-count" style="color:var(--yellow)" id="pipe-tiede-n">—</span>
+          </div>
+          <div class="pipe-track"><div class="pipe-fill" id="pipe-tiede-bar" style="background:var(--yellow)"></div></div>
+        </div>
+        <div class="pipe-stage">
+          <div class="pipe-header">
+            <span class="pipe-name" style="color:var(--blue)">❄ FROID</span>
+            <span class="pipe-count" style="color:var(--blue)" id="pipe-froid-n">—</span>
+          </div>
+          <div class="pipe-track"><div class="pipe-fill" id="pipe-froid-bar" style="background:var(--blue)"></div></div>
+        </div>
+        <div class="pipe-stage">
+          <div class="pipe-header">
+            <span class="pipe-name" style="color:var(--green)">✓ CLIENT</span>
+            <span class="pipe-count" style="color:var(--green)" id="pipe-client-n">—</span>
+          </div>
+          <div class="pipe-track"><div class="pipe-fill" id="pipe-client-bar" style="background:var(--green)"></div></div>
+        </div>
+      </div>
+      <div class="stat-row" style="margin-top:4px">
+        <span class="stat-lbl">Besoins ouverts</span>
+        <span class="stat-val" id="besoins-ouverts">—</span>
+      </div>
+    </div>
+
+    <!-- P6 : DSO / RECOUVREMENT -->
+    <div class="panel accent-cyan" id="p-dso">
+      <div class="ph">
+        <span class="ph-label">ACTIONS DU JOUR</span>
+        <span class="ph-badge" id="badge-actions">—</span>
+      </div>
+      <div id="actions-list" style="overflow-y:auto;flex:1"></div>
+      <div style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px">
+        <div class="stat-row">
+          <span class="stat-lbl">Prochaines actions en retard</span>
+          <span class="stat-val" id="retard-count" style="color:var(--warn)">—</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-lbl">Actions dans les 7 jours</span>
+          <span class="stat-val" id="soon-count">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW 3 -->
+
+    <!-- P7 : FIDÉLISATION -->
+    <div class="panel accent-green" id="p-fidel">
+      <div class="ph">
+        <span class="ph-label">FIDÉLISATION CLIENT</span>
+        <span class="ph-badge" id="badge-fidel">—</span>
+      </div>
+      <div class="ring-wrap" style="margin-top:4px">
+        <svg class="ring-svg" width="60" height="60" viewBox="0 0 60 60">
+          <circle cx="30" cy="30" r="24" fill="none" stroke="var(--surface3)" stroke-width="6"/>
+          <circle id="ring-fidel" cx="30" cy="30" r="24" fill="none" stroke="var(--green)"
+                  stroke-width="6" stroke-linecap="round" stroke-dasharray="150.8"
+                  stroke-dashoffset="150.8" transform="rotate(-90 30 30)"
+                  style="transition:stroke-dashoffset .8s cubic-bezier(.22,1,.36,1)"/>
+        </svg>
+        <div class="ring-info">
+          <div class="ring-val" id="ring-fidel-val" style="color:var(--green)">—%</div>
+          <div class="ring-lbl">CLIENTS RÉCURRENTS</div>
+          <div class="ring-sub" id="ring-fidel-sub">Objectif ≥ 60%</div>
+        </div>
+      </div>
+      <div class="stat-row">
+        <span class="stat-lbl">Total clients (statut CLIENT)</span>
+        <span class="stat-val" id="total-clients">—</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-lbl">Avec journal d'activité</span>
+        <span class="stat-val" id="clients-actifs">—</span>
+      </div>
+    </div>
+
+    <!-- P8 : CANDIDATS / SOURCING -->
+    <div class="panel accent-blue" id="p-cands">
+      <div class="ph">
+        <span class="ph-label">BASE CANDIDATS</span>
+        <span class="ph-badge" id="badge-cands">—</span>
+      </div>
+      <div style="margin-top:4px">
+        <div class="bar-row">
+          <div>
+            <div class="bar-label" style="color:var(--green)">⚙ EN MISSION</div>
+            <div class="bar-bg"><div class="bar-fill" id="bar-mission" style="background:var(--yellow)"></div></div>
+          </div>
+          <div class="bar-val" id="cnt-mission" style="color:var(--yellow)">—</div>
+        </div>
+        <div class="bar-row">
+          <div>
+            <div class="bar-label" style="color:var(--green)">✓ DISPONIBLE</div>
+            <div class="bar-bg"><div class="bar-fill" id="bar-dispo" style="background:var(--green)"></div></div>
+          </div>
+          <div class="bar-val" id="cnt-dispo" style="color:var(--green)">—</div>
+        </div>
+        <div class="bar-row">
+          <div>
+            <div class="bar-label">⏳ PRÉAVIS</div>
+            <div class="bar-bg"><div class="bar-fill" id="bar-preavis" style="background:var(--blue)"></div></div>
+          </div>
+          <div class="bar-val" id="cnt-preavis" style="color:var(--blue)">—</div>
+        </div>
+        <div class="bar-row">
+          <div>
+            <div class="bar-label">✗ INDISPO</div>
+            <div class="bar-bg"><div class="bar-fill" id="bar-indispo" style="background:var(--muted)"></div></div>
+          </div>
+          <div class="bar-val" id="cnt-indispo" style="color:var(--muted2)">—</div>
+        </div>
+      </div>
+      <div class="stat-row" style="margin-top:6px">
+        <span class="stat-lbl">Total candidats</span>
+        <span class="stat-val" id="total-cands">—</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-lbl">Taux dispo immédiate</span>
+        <span class="stat-val" id="taux-dispo">—</span>
+      </div>
+    </div>
+
+    <!-- P9 : ALERTES -->
+    <div class="panel accent-warn" id="p-alertes">
+      <div class="ph">
+        <span class="ph-label">ALERTES ACTIVES</span>
+        <span class="ph-badge" id="badge-alertes-count">—</span>
+      </div>
+      <div id="alertes-list" style="overflow-y:auto;flex:1;margin-top:4px"></div>
+    </div>
+
+    <!-- SIDEBAR DROITE -->
+    <div class="panel sidebar-right">
+
+      <!-- Paramètres de calcul -->
+      <div class="sidebar-section">
+        <div class="ph-label" style="margin-bottom:10px">PARAMÈTRES DE CALCUL</div>
+        <div class="mini-label">Taux client moyen (€/h)</div>
+        <input class="mini-input" id="cfg-tc" type="number" value="34" step="0.5" oninput="refresh()"/>
+        <div class="mini-label" style="margin-top:6px">Taux brut moyen (€/h)</div>
+        <input class="mini-input" id="cfg-tb" type="number" value="15.5" step="0.5" oninput="refresh()"/>
+        <div class="mini-label" style="margin-top:6px">Heures / sem / ETP</div>
+        <input class="mini-input" id="cfg-h" type="number" value="39" oninput="refresh()"/>
+        <div class="mini-label" style="margin-top:6px">Charges fixes / mois (€)</div>
+        <input class="mini-input" id="cfg-ff" type="number" value="12000" step="500" oninput="refresh()"/>
+        <div style="font-size:9px;color:var(--muted);margin-top:4px;line-height:1.5">Inclure : loyer + permanents + redevances + RA. Utiliser le simulateur P&L pour calculer ce montant précis.</div>
+      </div>
+
+      <!-- Saisir KPI manuels -->
+      <div class="sidebar-section">
+        <div class="ph-label" style="margin-bottom:10px">KPI MANUELS</div>
+        <div class="mini-label">Factures impayées (€)</div>
+        <input class="mini-input" id="cfg-impaye" type="number" value="0" step="1000" oninput="refresh()"/>
+        <div class="mini-label" style="margin-top:6px">CA mensuel facturé réel (€) — 0=auto</div>
+        <input class="mini-input" id="cfg-ca" type="number" value="0" step="1000" oninput="refresh()"/>
+        <div class="mini-label" style="margin-top:6px">DSO actuel (jours) — 0=auto</div>
+        <input class="mini-input" id="cfg-dso" type="number" value="0" oninput="refresh()"/>
+        <div class="mini-label" style="margin-top:6px">Seuil ETP (calculé dans P&L)</div>
+        <input class="mini-input" id="cfg-seuil-etp" type="number" value="9" step="0.5" oninput="refresh()"/>
+      </div>
+
+      <!-- Missions actives rapides -->
+      <div class="sidebar-section grow">
+        <div class="ph-label" style="margin-bottom:10px">MISSIONS EN COURS</div>
+        <div id="missions-list"></div>
+      </div>
+
+      <!-- Score semaine -->
+      <div class="sidebar-section" style="flex-shrink:0">
+        <div class="ph-label" style="margin-bottom:8px">SCORE SEMAINE CRM</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="font-family:var(--display);font-size:32px;font-weight:800;color:var(--accent)" id="score-sem">—</div>
+          <div style="flex:1">
+            <div class="bar-bg" style="height:6px"><div class="bar-fill" id="score-bar" style="background:var(--accent)"></div></div>
+            <div style="font-size:9px;color:var(--muted);margin-top:3px" id="score-detail">—</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /shell -->
+
+<script>
+// ─────────────────────────────────────────────
+// UTILITAIRES
+// ─────────────────────────────────────────────
+var TODAY=new Date();
+function fmt(n){return new Intl.NumberFormat('fr-FR',{maximumFractionDigits:0}).format(Math.round(n));}
+function pct(n){return Math.round(n*10)/10+'%';}
+
+function setDate(){
+  var d=TODAY;
+  var days=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  var months=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+  document.getElementById('td-date').textContent=days[d.getDay()]+' '+d.getDate()+' '+months[d.getMonth()]+' '+d.getFullYear();
+}
+
+function ring(id,val,max,color){
+  var el=document.getElementById(id);
+  if(!el)return;
+  var r=parseFloat(el.getAttribute('r'));
+  var circ=2*Math.PI*r;
+  var fill=Math.min(1,Math.max(0,val/max));
+  el.style.strokeDashoffset=circ*(1-fill);
+  if(color)el.setAttribute('stroke',color);
+}
+
+function badge(id,text,cls){
+  var el=document.getElementById(id);
+  if(!el)return;
+  el.textContent=text;
+  el.className='ph-badge '+cls;
+}
+
+function sparkSVG(vals,color){
+  if(!vals||vals.length<2)return '<svg class="spark"></svg>';
+  var min=Math.min.apply(null,vals);
+  var max=Math.max.apply(null,vals);
+  var range=max-min||1;
+  var w=200,h=36,pad=4;
+  var pts=vals.map(function(v,i){
+    var x=pad+(i/(vals.length-1))*(w-2*pad);
+    var y=h-pad-(v-min)/range*(h-2*pad);
+    return x+','+y;
+  });
+  var path='M'+pts.join(' L');
+  var areaPath=path+' L'+pts[pts.length-1].split(',')[0]+','+(h-pad)+' L'+pad+','+(h-pad)+' Z';
+  return '<svg class="spark" viewBox="0 0 200 36" preserveAspectRatio="none">'
+    +'<path d="'+areaPath+'" fill="'+color+'" fill-opacity=".12"/>'
+    +'<path d="'+path+'" fill="none" stroke="'+color+'" stroke-width="1.5" stroke-linecap="round"/>'
+    +'</svg>';
+}
+
+// ─────────────────────────────────────────────
+// LECTURE localStorage
+// ─────────────────────────────────────────────
+function getCRM(){
+  try{return JSON.parse(localStorage.getItem('crm_btp_db')||'[]');}catch(e){return [];}
+}
+function getCands(){
+  try{
+    var raw=localStorage.getItem('cands_btp_v2');
+    if(!raw)return [];
+    var d=JSON.parse(raw);
+    return Array.isArray(d)?d:(d.candidats||[]);
+  }catch(e){return [];}
+}
+function getScore(){
+  try{
+    var kpi=JSON.parse(localStorage.getItem('crm_kpi_semaine')||'{}');
+    return kpi;
+  }catch(e){return {};}
+}
+
+// ─────────────────────────────────────────────
+// CALCULS
+// ─────────────────────────────────────────────
+function g(id){return parseFloat(document.getElementById(id).value)||0;}
+
+function computeAll(){
+  var DB=getCRM();
+  var cands=getCands();
+  var tc=g('cfg-tc'),tb=g('cfg-tb'),hsem=g('cfg-h');
+  var ff=g('cfg-ff');
+  var impaye=g('cfg-impaye');
+  var caManuel=g('cfg-ca');
+  var dsoManuel=g('cfg-dso');
+  var seuilETP=g('cfg-seuil-etp');
+
+  // ── MISSIONS depuis CRM + candidats ──
+  var missions=[];
+  DB.forEach(function(p){
+    (p.besoins||[]).forEach(function(b){
+      (b.cvs||[]).forEach(function(cv){
+        if(cv.mission==='oui'){
+          missions.push({candidat:cv.nom||'?',client:p.nom||'',qualif:b.qualif||'',dateFin:b.date_fin||''});
+        }
+      });
+    });
+  });
+  cands.forEach(function(c){
+    var mis=c.mission||{};
+    if(mis.client){
+      missions.push({
+        candidat:(c.prenom||'')+' '+(c.nom||'').charAt(0)+'.',
+        client:mis.client,qualif:c.qualif||'',
+        dateFin:mis.date_fin||''
+      });
+    }
+  });
+
+  var etpActifs=missions.length;
+
+  // ── CA ──
+  var hMois=hsem*47/12;
+  var caAuto=etpActifs*hMois*tc;
+  var ca=caManuel>0?caManuel:caAuto;
+
+  // ── MASSE SALARIALE ──
+  var hTotal=etpActifs*hMois;
+  var sb=hTotal*tb;
+  var ms=sb*(1+0.43+0.10+0.10*1.10);
+  var mb=ca-ms;
+  var mbPct=ca>0?mb/ca*100:0;
+  var coeff=tb>0?tc/tb:0;
+
+  // ── RBE ──
+  var rbe=mb-ff;
+
+  // ── PIPELINE ──
+  var statuts={chaud:0,tiede:0,froid:0,client:0,veille:0};
+  var totalProspects=DB.length;
+  DB.forEach(function(p){var s=p.statut||'froid';if(statuts[s]!==undefined)statuts[s]++;});
+  var totalClients=statuts.client;
+
+  // ── BESOINS ──
+  var totalCVs=0,totalMissionsStart=0,totalBesoinsOuverts=0;
+  DB.forEach(function(p){
+    (p.besoins||[]).forEach(function(b){
+      if(!b.clos)totalBesoinsOuverts++;
+      (b.cvs||[]).forEach(function(cv){
+        totalCVs++;
+        if(cv.mission==='oui')totalMissionsStart++;
+      });
+    });
+  });
+  var tauxTransfo=totalCVs>0?totalMissionsStart/totalCVs*100:0;
+
+  // ── FIDÉLISATION ──
+  var clientsAvecJournal=DB.filter(function(p){return p.statut==='client'&&(p.journal||[]).length>0;}).length;
+  var fidel=totalClients>0?clientsAvecJournal/totalClients*100:0;
+
+  // ── CANDIDATS ──
+  var cntDispo={mission:0,dispo:0,preavis:0,indispo:0,conge:0};
+  cands.forEach(function(c){var d=c.dispo||'indispo';if(cntDispo[d]!==undefined)cntDispo[d]++;});
+  var totalCands=cands.length;
+  var tauxDispoImm=totalCands>0?(cntDispo.dispo+cntDispo.preavis)/totalCands*100:0;
+
+  // ── ACTIONS DU JOUR ──
+  var now=TODAY;
+  var retard=[],soon=[];
+  DB.forEach(function(p){
+    if(!p.prochaine_action)return;
+    var d=new Date(p.prochaine_action);
+    if(isNaN(d.getTime()))return;
+    var diff=Math.round((d-now)/86400000);
+    if(diff<0)retard.push({nom:p.nom,diff:diff,action:p.action_type||'action'});
+    else if(diff<=7)soon.push({nom:p.nom,diff:diff,action:p.action_type||'action'});
+  });
+  retard.sort(function(a,b){return a.diff-b.diff;});
+  soon.sort(function(a,b){return a.diff-b.diff;});
+
+  // ── SCORE CRM ──
+  var scoreKpi=getScore();
+  var scoreSem=scoreKpi.score||0;
+  var scoreAppels=scoreKpi.appels||0;
+  var scoreRDV=scoreKpi.rdv||0;
+  var scorePush=scoreKpi.cv_push||0;
+
+  // ── SEUIL ──
+  var mbParH=tc-tb*2.05;
+  var mbParETP=mbParH*hMois;
+  var etpSeuil=seuilETP;
+  var etpGap=Math.max(0,etpSeuil-etpActifs);
+
+  // ── DSO ──
+  var dso=dsoManuel>0?dsoManuel:(impaye>0&&ca>0?Math.round(impaye/ca*30):0);
+
+  return {
+    ca,mb,mbPct,coeff,rbe,etpActifs,hTotal,
+    statuts,totalProspects,totalCVs,totalMissionsStart,totalBesoinsOuverts,tauxTransfo,
+    totalClients,clientsAvecJournal,fidel,
+    cntDispo,totalCands,tauxDispoImm,
+    retard,soon,missions,
+    etpSeuil,etpGap,mbParETP,
+    scoreKpi,scoreSem,scoreAppels,scoreRDV,scorePush,
+    dso,impaye
+  };
+}
+
+// ─────────────────────────────────────────────
+// RENDU
+// ─────────────────────────────────────────────
+function refresh(){
+  var d=computeAll();
+
+  // ── MARGE BRUTE ──
+  var mbColor=d.mbPct>=18?'var(--green)':d.mbPct>=12?'var(--yellow)':'var(--warn)';
+  var mbBadge=d.mbPct>=18?['✓ BON','badge-green']:d.mbPct>=12?['⚠ FAIBLE','badge-yellow']:['✗ CRITIQUE','badge-warn'];
+  document.getElementById('val-marge').style.color=mbColor;
+  document.getElementById('val-marge').textContent=d.mbPct>0?pct(d.mbPct):'—';
+  badge('badge-marge',mbBadge[0],mbBadge[1]);
+  document.getElementById('ca-mois').textContent=d.ca>0?fmt(d.ca)+'€':'—';
+  document.getElementById('coeff-fact').textContent=d.coeff>0?'×'+Math.round(d.coeff*100)/100:'—';
+
+  // Sparkline marge (simulée historique — pourrait être stockée localStorage)
+  var sparkData=JSON.parse(localStorage.getItem('tdb_spark_marge')||'[]');
+  if(sparkData.length===0)sparkData=[14,15,16,14.5,17,d.mbPct||17];
+  document.getElementById('spark-marge').innerHTML=sparkSVG(sparkData,d.mbPct>=18?'#22d47a':d.mbPct>=12?'#f5c842':'#ff5252');
+
+  // Trend
+  var prev=sparkData[sparkData.length-2]||d.mbPct;
+  var diff=d.mbPct-prev;
+  var trendEl=document.getElementById('trend-marge');
+  if(diff>0.5)trendEl.innerHTML='<span class="trend up">▲ +'+pct(diff)+' vs période précédente</span>';
+  else if(diff<-0.5)trendEl.innerHTML='<span class="trend down">▼ '+pct(diff)+' vs période précédente</span>';
+  else trendEl.innerHTML='<span class="trend flat">― Stable</span>';
+
+  // ── RBE ──
+  var rbeColor=d.rbe>5000?'var(--green)':d.rbe>=0?'var(--yellow)':'var(--warn)';
+  var rbeBadge=d.rbe>5000?['✓ RENTABLE','badge-green']:d.rbe>=0?['⚖ ÉQUILIBRE','badge-yellow']:['✗ DÉFICIT','badge-warn'];
+  document.getElementById('val-rbe').style.color=rbeColor;
+  document.getElementById('val-rbe').textContent=d.rbe!==0?(d.rbe>0?'+':'')+fmt(d.rbe)+'€':'—';
+  badge('badge-rbe',rbeBadge[0],rbeBadge[1]);
+  document.getElementById('frais-fixes').textContent=fmt(g('cfg-ff'))+'€';
+  document.getElementById('etp-actifs').textContent=d.etpActifs;
+  document.getElementById('h-fact').textContent=d.hTotal>0?fmt(d.hTotal)+'h':'—';
+
+  // ── SEUIL ──
+  var pctSeuil=d.etpSeuil>0?Math.min(1,d.etpActifs/d.etpSeuil):0;
+  var seuilColor=pctSeuil>=1?'var(--green)':pctSeuil>=0.7?'var(--yellow)':'var(--warn)';
+  document.getElementById('seuil-prog').style.width=(pctSeuil*100)+'%';
+  document.getElementById('seuil-prog').style.background=seuilColor;
+  document.getElementById('seuil-etp-cur').textContent=d.etpActifs;
+  document.getElementById('seuil-etp-cur').style.color=seuilColor;
+  document.getElementById('seuil-etp-needed').textContent=d.etpSeuil;
+  document.getElementById('seuil-label-mid').textContent=d.etpSeuil+' ETP';
+  document.getElementById('seuil-label-max').textContent=Math.max(d.etpActifs,d.etpSeuil)+5;
+  var seuilBadge=pctSeuil>=1?['✓ ATTEINT','badge-green']:pctSeuil>=0.7?['⚠ PROCHE','badge-yellow']:['✗ EN DESSOUS','badge-warn'];
+  badge('badge-seuil',seuilBadge[0],seuilBadge[1]);
+  document.getElementById('etp-gap').textContent=d.etpGap>0?d.etpGap+' ETP':'Objectif atteint';
+  document.getElementById('etp-gap').style.color=d.etpGap>0?'var(--warn)':'var(--green)';
+  document.getElementById('mb-etp').textContent=d.mbParETP>0?fmt(d.mbParETP)+'€':'—';
+  document.getElementById('seuil-txt').textContent=pctSeuil>=1?
+    'Au-dessus du seuil — chaque ETP supplémentaire génère '+fmt(d.mbParETP)+'€/mois de RBE':
+    'Manque '+d.etpGap+' ETP pour couvrir toutes les charges. Chaque ETP supplémentaire : +'+fmt(d.mbParETP)+'€/mois.';
+
+  // ── TAUX DE TRANSFORMATION ──
+  ring('ring-transfo',d.tauxTransfo,30,'var(--purple)');
+  document.getElementById('ring-transfo-val').textContent=pct(d.tauxTransfo);
+  var transfoBadge=d.tauxTransfo>=15?['✓ BON','badge-green']:d.tauxTransfo>=8?['⚠ FAIBLE','badge-yellow']:['— N/A','badge-muted'];
+  badge('badge-transfo',transfoBadge[0],transfoBadge[1]);
+  document.getElementById('ring-transfo-sub').textContent=d.totalCVs+' CVs, '+d.totalMissionsStart+' missions';
+  document.getElementById('cv-envoyes').textContent=d.totalCVs;
+  document.getElementById('missions-dem').textContent=d.totalMissionsStart;
+
+  // ── PIPELINE ──
+  var maxPipe=Math.max(d.statuts.chaud,d.statuts.tiede,d.statuts.froid,d.statuts.client,1);
+  badge('badge-prospects',d.totalProspects+' prospects','badge-muted');
+  document.getElementById('pipe-chaud-n').textContent=d.statuts.chaud;
+  document.getElementById('pipe-tiede-n').textContent=d.statuts.tiede;
+  document.getElementById('pipe-froid-n').textContent=d.statuts.froid;
+  document.getElementById('pipe-client-n').textContent=d.statuts.client;
+  document.getElementById('pipe-chaud-bar').style.width=(d.statuts.chaud/maxPipe*100)+'%';
+  document.getElementById('pipe-tiede-bar').style.width=(d.statuts.tiede/maxPipe*100)+'%';
+  document.getElementById('pipe-froid-bar').style.width=(d.statuts.froid/maxPipe*100)+'%';
+  document.getElementById('pipe-client-bar').style.width=(d.statuts.client/maxPipe*100)+'%';
+  document.getElementById('besoins-ouverts').textContent=d.totalBesoinsOuverts;
+
+  // ── ACTIONS DU JOUR ──
+  var aBadge=d.retard.length>0?[d.retard.length+' EN RETARD','badge-warn']:['À JOUR','badge-green'];
+  badge('badge-actions',aBadge[0],aBadge[1]);
+  document.getElementById('retard-count').textContent=d.retard.length;
+  document.getElementById('soon-count').textContent=d.soon.length;
+  var aHtml='';
+  d.retard.slice(0,3).forEach(function(a){
+    aHtml+='<div class="alerte alerte-warn"><span class="alerte-icon">⚠</span><div><b>'+a.nom+'</b> · '+a.action+'<br><span style="font-size:9px;color:var(--muted)">'+Math.abs(a.diff)+' jour(s) de retard</span></div></div>';
+  });
+  d.soon.slice(0,3).forEach(function(a){
+    aHtml+='<div class="alerte alerte-info"><span class="alerte-icon">📅</span><div><b>'+a.nom+'</b> · '+a.action+'<br><span style="font-size:9px;color:var(--muted)">dans '+a.diff+' jour(s)</span></div></div>';
+  });
+  if(!aHtml)aHtml='<div style="font-size:10px;color:var(--muted);padding:8px 0">Aucune action CRM enregistrée.</div>';
+  document.getElementById('actions-list').innerHTML=aHtml;
+
+  // ── FIDÉLISATION ──
+  ring('ring-fidel',d.fidel,100,'var(--green)');
+  document.getElementById('ring-fidel-val').textContent=pct(d.fidel);
+  var fidelBadge=d.fidel>=60?['✓ BON','badge-green']:d.fidel>=40?['⚠ MOYEN','badge-yellow']:['— N/A','badge-muted'];
+  badge('badge-fidel',fidelBadge[0],fidelBadge[1]);
+  document.getElementById('ring-fidel-sub').textContent='Objectif ≥ 60% · Base : '+d.totalClients+' clients';
+  document.getElementById('total-clients').textContent=d.totalClients;
+  document.getElementById('clients-actifs').textContent=d.clientsAvecJournal;
+
+  // ── CANDIDATS ──
+  var maxC=Math.max(d.cntDispo.mission,d.cntDispo.dispo,d.cntDispo.preavis,d.cntDispo.indispo,1);
+  document.getElementById('cnt-mission').textContent=d.cntDispo.mission;
+  document.getElementById('cnt-dispo').textContent=d.cntDispo.dispo;
+  document.getElementById('cnt-preavis').textContent=d.cntDispo.preavis;
+  document.getElementById('cnt-indispo').textContent=d.cntDispo.indispo;
+  document.getElementById('bar-mission').style.width=(d.cntDispo.mission/maxC*100)+'%';
+  document.getElementById('bar-dispo').style.width=(d.cntDispo.dispo/maxC*100)+'%';
+  document.getElementById('bar-preavis').style.width=(d.cntDispo.preavis/maxC*100)+'%';
+  document.getElementById('bar-indispo').style.width=(d.cntDispo.indispo/maxC*100)+'%';
+  document.getElementById('total-cands').textContent=d.totalCands;
+  document.getElementById('taux-dispo').textContent=d.totalCands>0?pct(d.tauxDispoImm):'—';
+  badge('badge-cands',d.totalCands+' profils','badge-muted');
+
+  // ── ALERTES ──
+  var alertes=[];
+  if(d.mbPct>0&&d.mbPct<12)alertes.push({t:'warn',m:'Marge brute critique : '+pct(d.mbPct)+' (seuil mini 12%)'});
+  if(d.mbPct>=12&&d.mbPct<16)alertes.push({t:'yellow',m:'Marge brute faible : '+pct(d.mbPct)+' — objectif 18%'});
+  if(d.rbe<0)alertes.push({t:'warn',m:'RBE négatif : '+fmt(d.rbe)+'€/mois — déficit à combler'});
+  if(d.etpGap>0)alertes.push({t:'yellow',m:d.etpGap+' ETP manquant(s) pour atteindre le seuil de rentabilité'});
+  if(d.coeff>0&&d.coeff<2.05)alertes.push({t:'warn',m:'Coefficient insuffisant (×'+Math.round(d.coeff*100)/100+') — perte sur chaque heure'});
+  if(d.retard.length>0)alertes.push({t:'yellow',m:d.retard.length+' action(s) CRM en retard'});
+  if(d.impaye>0)alertes.push({t:'warn',m:'Impayés déclarés : '+fmt(d.impaye)+'€'});
+  if(d.dso>60)alertes.push({t:'warn',m:'DSO estimé : '+d.dso+' jours — seuil d\'alerte 60 jours'});
+  else if(d.dso>45)alertes.push({t:'yellow',m:'DSO estimé : '+d.dso+' jours — surveiller les délais clients'});
+  if(d.cntDispo.dispo===0&&d.cntDispo.preavis===0)alertes.push({t:'yellow',m:'Aucun candidat disponible immédiatement — risque sur nouvelles missions'});
+  if(d.tauxTransfo>0&&d.tauxTransfo<8)alertes.push({t:'yellow',m:'Taux de transformation faible ('+pct(d.tauxTransfo)+') — revoir sourcing ou matching'});
+
+  badge('badge-alertes-count',alertes.length+' alerte(s)',alertes.length>2?'badge-warn':alertes.length>0?'badge-yellow':'badge-green');
+
+  var alertHtml='';
+  if(alertes.length===0){
+    alertHtml='<div class="alerte alerte-ok"><span class="alerte-icon">✓</span><div>Tous les indicateurs sont dans les normes.</div></div>';
+  }
+  alertes.forEach(function(a){
+    var cls={warn:'alerte-warn',yellow:'alerte-yellow',info:'alerte-info',ok:'alerte-ok'}[a.t]||'alerte-info';
+    var ic={warn:'🔴',yellow:'⚠',info:'ℹ',ok:'✓'}[a.t]||'·';
+    alertHtml+='<div class="alerte '+cls+'"><span class="alerte-icon">'+ic+'</span><div>'+a.m+'</div></div>';
+  });
+  document.getElementById('alertes-list').innerHTML=alertHtml;
+
+  // ── MISSIONS SIDEBAR ──
+  var mHtml='';
+  if(d.missions.length===0){
+    mHtml='<div style="font-size:10px;color:var(--muted)">Aucune mission active détectée.<br>Importer la base candidats dans le CRM.</div>';
+  }
+  d.missions.slice(0,10).forEach(function(m){
+    var joursR='';var jColor='var(--muted2)';
+    if(m.dateFin){
+      var df=new Date(m.dateFin);
+      var diff2=Math.round((df-TODAY)/86400000);
+      if(diff2<=0){joursR='TERMINÉE';jColor='var(--warn)';}
+      else if(diff2<=3){joursR=diff2+'j ⚠';jColor='var(--warn)';}
+      else if(diff2<=7){joursR=diff2+'j';jColor='var(--yellow)';}
+      else{joursR=diff2+'j';jColor='var(--muted2)';}
+    }
+    mHtml+='<div class="mission-item">'
+      +'<div><div class="mission-cand">'+m.candidat+'</div><div class="mission-client">'+m.client+'</div></div>'
+      +'<div class="mission-days" style="color:'+jColor+'">'+joursR+'</div>'
+      +'</div>';
+  });
+  document.getElementById('missions-list').innerHTML=mHtml;
+
+  // ── SCORE SEMAINE ──
+  var score=d.scoreSem||0;
+  document.getElementById('score-sem').textContent=score||'—';
+  document.getElementById('score-sem').style.color=score>=80?'var(--green)':score>=50?'var(--yellow)':'var(--accent)';
+  document.getElementById('score-bar').style.width=(score||0)+'%';
+  document.getElementById('score-bar').style.background=score>=80?'var(--green)':score>=50?'var(--yellow)':'var(--accent)';
+  document.getElementById('score-detail').textContent=
+    d.scoreAppels?d.scoreAppels+' appels · '+d.scoreRDV+' RDV · '+d.scorePush+' CV push':'Données depuis le CRM';
+
+  // Label sync
+  document.getElementById('sync-label').textContent='ACTUALISÉ '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+
+  // Sauvegarder paramètres
+  localStorage.setItem('tdb_cfg',JSON.stringify({
+    tc:g('cfg-tc'),tb:g('cfg-tb'),h:g('cfg-h'),ff:g('cfg-ff'),
+    impaye:g('cfg-impaye'),ca:g('cfg-ca'),dso:g('cfg-dso'),seuilEtp:g('cfg-seuil-etp')
+  }));
+}
+
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+function init(){
+  setDate();
+  // Restaurer paramètres
+  try{
+    var cfg=JSON.parse(localStorage.getItem('tdb_cfg')||'{}');
+    if(cfg.tc)document.getElementById('cfg-tc').value=cfg.tc;
+    if(cfg.tb)document.getElementById('cfg-tb').value=cfg.tb;
+    if(cfg.h)document.getElementById('cfg-h').value=cfg.h;
+    if(cfg.ff)document.getElementById('cfg-ff').value=cfg.ff;
+    if(cfg.impaye)document.getElementById('cfg-impaye').value=cfg.impaye;
+    if(cfg.ca)document.getElementById('cfg-ca').value=cfg.ca;
+    if(cfg.dso)document.getElementById('cfg-dso').value=cfg.dso;
+    if(cfg.seuilEtp)document.getElementById('cfg-seuil-etp').value=cfg.seuilEtp;
+  }catch(e){}
+  refresh();
+  // Auto-refresh toutes les 60s
+  setInterval(refresh,60000);
+}
+window.addEventListener('load',init);
+window.addEventListener('storage',function(e){
+  if(e.key==='crm_btp_db'||e.key==='cands_btp_v2')refresh();
+});
+</script>
+</body>
+</html>

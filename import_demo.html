@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<title>Import Données Démo — RA BTP</title>
+<style>
+body{font-family:'IBM Plex Mono',monospace;background:#0f1117;color:#e2e8f0;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;}
+.box{background:#181c27;border:1px solid #2a2f45;border-radius:6px;padding:32px;max-width:480px;width:100%;text-align:center;}
+h2{color:#f97316;font-size:14px;letter-spacing:1px;margin-bottom:8px;}
+p{font-size:11px;color:#64748b;margin-bottom:24px;line-height:1.6;}
+button{background:#f97316;color:#fff;border:none;border-radius:3px;padding:12px 24px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.5px;width:100%;margin-bottom:8px;}
+button:hover{background:#ea6c0a;}
+.btn-clear{background:transparent;border:1px solid #2a2f45;color:#64748b;}
+.btn-clear:hover{border-color:#ef4444;color:#ef4444;}
+.log{background:#0a0c14;border:1px solid #2a2f45;border-radius:3px;padding:12px;font-size:10px;color:#94a3b8;text-align:left;min-height:80px;margin-top:16px;display:none;}
+.ok{color:#22c55e;} .warn{color:#f97316;}
+</style>
+</head>
+<body>
+<div class="box">
+  <h2>⬆ IMPORT DONNÉES DÉMO</h2>
+  <p>Injecte 10 prospects CRM réalistes (dont SOE STUC ET STAFF) et 12 candidats BTP dans vos outils. À utiliser une seule fois pour peupler l'outil avant une démo.</p>
+  <button onclick="importDemo()">IMPORTER LES DONNÉES DÉMO</button>
+  <button class="btn-clear" onclick="clearAll()">⚠ VIDER TOUTES LES DONNÉES</button>
+  <div class="log" id="log"></div>
+  <div style="margin-top:16px;font-size:10px;color:#2a2f45">Retour → <a href="index.html" style="color:#f97316">index.html</a></div>
+</div>
+<script>
+var CRM_DEMO = [{"id":"p_soe_001","nom":"SOE STUC ET STAFF","statut":"client","metier":"Staff/Stuc/Enduit décoratif","taille":"PME","zone":"75","ville":"Paris 1er","cp":"75001","tel":"01 42 33 44 55","email":"contact@soe-stuc.fr","decideur":"M. Samir OUALI","notes":"Client historique, spécialiste staff décoratif haut de gamme, monuments historiques. Exige profils N3P2 minimum.","nextType":"appel","nextDate":"2026-03-13","nextDetail":"Confirmer mission TARE au-delà du 20/03","besoins":[{"id":"b1","qualif":"Staffeur N4","nb":1,"date":"2026-03-16","duree":"1 semaine renouvelable","statut":"encours","tauxClient":"42","notes":"Extension mission Guy TARE","cvs":[{"candidat":"TARE Guy — Staffeur N4","date":"2026-03-15","tbh":20,"tc":42,"marge":"Env. 18%","retour":"ok","mission":"oui"}]}]},{"id":"p_bati_002","nom":"BATICORP RENOVATION","statut":"client","metier":"Platrerie/Plaquiste","taille":"PME","zone":"92","ville":"Courbevoie","cp":"92400","tel":"01 43 55 66 77","email":"rh@baticorp.fr","decideur":"Mme Patricia ROUX","notes":"Bon client régulier, plâtrerie logements collectifs, délais serrés","nextType":"rdv","nextDate":"2026-03-18","nextDetail":"RDV présentation planning avril","besoins":[]},{"id":"p_cvc_003","nom":"CVC EXPERT IDF","statut":"client","metier":"CVC/Chauffage","taille":"PME","zone":"75","ville":"Paris 1er","cp":"75001","tel":"01 44 77 88 99","email":"technique@cvc-expert.fr","decideur":"M. Thierry BERNARD","notes":"Spécialiste maintenance CVC tertiaire, bureaux et hôtels Paris","nextType":"email","nextDate":"2026-03-14","nextDetail":"Envoyer CV chauffagiste N3 pour remplacement","besoins":[{"id":"b2","qualif":"Chauffagiste N3","nb":1,"date":"2026-03-21","duree":"3 semaines","statut":"ouvert","tauxClient":"41","notes":"Remplacement congé formation","cvs":[]}]},{"id":"p_men_004","nom":"MENUISERIE PARISIENNE","statut":"client","metier":"Menuiserie/Serrurerie","taille":"TPE","zone":"75","ville":"Paris 16e","cp":"75016","tel":"01 45 88 00 11","email":"atelier@menuiserie-paris.fr","decideur":"M. Jacques SIMON","notes":"Artisan haut de gamme, clientèle privée 16e/17e, très exigeant qualité","nextType":"appel","nextDate":"2026-03-20","nextDetail":"Renouvellement mission Fontaine","besoins":[]},{"id":"p_reno_005","nom":"ARTISAN PLATERIE","statut":"client","metier":"Platrerie/Plaquiste","taille":"TPE","zone":"75","ville":"Paris 18e","cp":"75018","tel":"06 12 44 55 66","email":"artisanplat@gmail.com","decideur":"M. Rachid HAMZA","notes":"Petit artisan dynamique, besoins ponctuels, bons payeurs","nextType":"relance","nextDate":"2026-03-25","nextDetail":"Relance besoin plaquiste avril","besoins":[]},{"id":"p_gpe_006","nom":"GPE CONSTRUCTION","statut":"chaud","metier":"Maconnerie/Gros oeuvre","taille":"ETI","zone":"93","ville":"Saint-Denis","cp":"93200","tel":"01 48 22 33 44","email":"rh@gpe-construction.fr","decideur":"Mme Laura PETIT","notes":"Grand compte Grand Paris, gros volumes maçonnerie et béton armé","nextType":"rdv","nextDate":"2026-03-16","nextDetail":"1er RDV commercial","besoins":[]},{"id":"p_ele_007","nom":"ELEC TERTIAIRE 75","statut":"chaud","metier":"Electricite","taille":"PME","zone":"75","ville":"Paris 8e","cp":"75008","tel":"01 47 33 22 11","email":"contact@elec75.fr","decideur":"M. Philippe MARTIN","notes":"Besoins récurrents électriciens tertiaire","nextType":"cv","nextDate":"2026-03-14","nextDetail":"Envoyer 2 profils électriciens N3","besoins":[{"id":"b3","qualif":"Électricien N3","nb":2,"date":"2026-03-23","duree":"4 semaines","statut":"ouvert","tauxClient":"35","notes":"Habilitations B2V BR obligatoires","cvs":[]}]},{"id":"p_ite_008","nom":"FACADES ISOLATION IDF","statut":"tiede","metier":"Facades/ITE","taille":"PME","zone":"92","ville":"Boulogne","cp":"92100","tel":"01 46 99 00 11","email":"commercial@facades-idf.fr","decideur":"M. Arnaud LEFEBVRE","notes":"Spécialiste ITE et ravalement","nextType":"appel","nextDate":"2026-03-28","nextDetail":"Rappel après envoi plaquette","besoins":[]},{"id":"p_pei_009","nom":"PEINTURE DECO PARIS","statut":"tiede","metier":"Peinture/Ravalement","taille":"TPE","zone":"75","ville":"Paris 11e","cp":"75011","tel":"06 33 44 55 66","email":"peinture.deco75@orange.fr","decideur":"M. Bruno DURAND","notes":"Artisan peinture déco intérieure haut de gamme","nextType":"email","nextDate":"2026-04-01","nextDetail":"Suivi après 1er contact","besoins":[]},{"id":"p_etan_010","nom":"ETANCHEITE PRO","statut":"froid","metier":"Etancheite","taille":"PME","zone":"94","ville":"Créteil","cp":"94000","tel":"01 49 77 88 00","email":"contact@etancheite-pro.fr","decideur":"M. Stéphane MORIN","notes":"Approche à renouveler","nextType":"appel","nextDate":"2026-04-15","nextDetail":"Relance après 3 mois de veille","besoins":[]}];
+
+var CANDS_DEMO = [{"id":"cand_001","nom":"TARE","prenom":"Guy","qualif":"Staffeur N4","tbh":20,"dispo":"mission","tel":"06 12 34 56 78","email":"guy.tare@email.fr","cp":"75014","ville":"Paris 14","mobilite":"TC","vehicule":"2 roues","notes":"Très bon staffeur décoratif, spécialiste voûtes et coupoles","mission":{"client":"SOE STUC ET STAFF","adresse":"15 rue de Rivoli 75001","debut":"2026-03-16","fin":"2026-03-20","tc":42},"source":"reseau","source_detail":"Ancien intérimaire Partnaire"},{"id":"cand_002","nom":"SAIRIEN","prenom":"Jean","qualif":"CVC N3P2","tbh":17,"dispo":"preavis","tel":"06 23 45 67 89","email":"j.sairien@email.fr","cp":"92600","ville":"Asnières","mobilite":"TC","notes":"Bon technicien CVC, PAC et chaudières gaz","source":"jobboard","source_detail":"Indeed"},{"id":"cand_003","nom":"MARTIN","prenom":"Paul","qualif":"Plâtrier N3P1","tbh":15.5,"dispo":"dispo","tel":"06 34 56 78 90","email":"paul.martin@email.fr","cp":"93200","ville":"Saint-Denis","mobilite":"voiture","notes":"Plaquiste polyvalent, GTL et doublage","source":"passage_agence"},{"id":"cand_004","nom":"BENSAID","prenom":"Karim","qualif":"Staffeur N3P2","tbh":18,"dispo":"dispo","tel":"06 45 67 89 01","email":"k.bensaid@email.fr","cp":"75020","ville":"Paris 20","mobilite":"2roues","notes":"Bon staffeur moulures classiques","source":"parrainage","source_detail":"TARE Guy"},{"id":"cand_005","nom":"DUPONT","prenom":"Marc","qualif":"Électricien N3","tbh":16,"dispo":"dispo","tel":"06 56 78 90 12","email":"marc.dupont@email.fr","cp":"94200","ville":"Ivry","mobilite":"voiture","notes":"Habilitations B2V BR BC","source":"jobboard","source_detail":"Monster"},{"id":"cand_006","nom":"LEROY","prenom":"Sophie","qualif":"Peintre N2","tbh":13.5,"dispo":"indispo","tel":"06 67 89 01 23","email":"s.leroy@email.fr","cp":"75011","ville":"Paris 11","mobilite":"TC","notes":"Peinture déco, disponible mi-avril","source":"cr","source_detail":"Recrutement Anaïs"},{"id":"cand_007","nom":"FONTAINE","prenom":"Julien","qualif":"Menuisier N3","tbh":16,"dispo":"mission","tel":"06 78 90 12 34","email":"j.fontaine@email.fr","cp":"78000","ville":"Versailles","mobilite":"voiture","notes":"Menuiserie alu et PVC","mission":{"client":"MENUISERIE PARISIENNE","adresse":"45 av. Victor Hugo 75016","debut":"2026-03-16","fin":"2026-04-04","tc":34},"source":"envoi_client","source_detail":"SOE STUC ET STAFF"},{"id":"cand_008","nom":"CHEN","prenom":"Wei","qualif":"Chauffagiste N3","tbh":19,"dispo":"mission","tel":"06 89 01 23 45","email":"wei.chen@email.fr","cp":"75013","ville":"Paris 13","mobilite":"TC","notes":"Spécialiste fioul et gaz","mission":{"client":"CVC EXPERT IDF","adresse":"12 rue du Louvre 75001","debut":"2026-03-09","fin":"2026-03-20","tc":41},"source":"reseau","source_detail":"Ancien candidat RIS"},{"id":"cand_009","nom":"MBAYE","prenom":"Ibrahima","qualif":"Maçon N3","tbh":15,"dispo":"dispo","tel":"06 90 12 34 56","email":"i.mbaye@email.fr","cp":"93300","ville":"Aubervilliers","mobilite":"TC","notes":"Gros oeuvre, béton armé, Grand Paris","source":"jobboard","source_detail":"BTP Jobs"},{"id":"cand_010","nom":"GARCIA","prenom":"José","qualif":"Carreleur N3","tbh":15.5,"dispo":"preavis","tel":"06 01 23 45 67","email":"j.garcia@email.fr","cp":"91000","ville":"Évry","mobilite":"voiture","notes":"Carrelage sol et mur, très soigné","source":"passage_agence"},{"id":"cand_011","nom":"ROUSSEAU","prenom":"Pierre","qualif":"Charpentier N3","tbh":17,"dispo":"dispo","tel":"06 11 22 33 44","email":"p.rousseau@email.fr","cp":"77100","ville":"Meaux","mobilite":"voiture","notes":"Charpente bois et métallique","source":"parrainage","source_detail":"MARTIN Paul"},{"id":"cand_012","nom":"DIALLO","prenom":"Moussa","qualif":"Étancheur N2","tbh":14,"dispo":"dispo","tel":"06 22 33 44 55","email":"m.diallo@email.fr","cp":"93100","ville":"Montreuil","mobilite":"TC","notes":"Étanchéité toiture terrasse, EPDM","source":"cr","source_detail":"Recrutement Thomas"}];
+
+function log(msg, cls) {
+  var el = document.getElementById('log');
+  el.style.display = 'block';
+  el.innerHTML += '<div class="'+(cls||'')+'">'+msg+'</div>';
+}
+
+function importDemo() {
+  // Fusion CRM
+  var existing = [];
+  try { existing = JSON.parse(localStorage.getItem('crm_btp_db') || '[]'); } catch(e) {}
+  var added = 0;
+  CRM_DEMO.forEach(function(p) {
+    if (!existing.find(function(e){ return e.id === p.id; })) { existing.push(p); added++; }
+  });
+  localStorage.setItem('crm_btp_db', JSON.stringify(existing));
+  log('✓ CRM : '+added+' prospects ajoutés ('+existing.length+' total)', 'ok');
+
+  // Fusion candidats
+  var existingC = [];
+  try { existingC = JSON.parse(localStorage.getItem('cands_btp_v2') || '[]'); } catch(e) {}
+  var addedC = 0;
+  CANDS_DEMO.forEach(function(c) {
+    if (!existingC.find(function(e){ return e.id === c.id; })) { existingC.push(c); addedC++; }
+  });
+  localStorage.setItem('cands_btp_v2', JSON.stringify(existingC));
+  log('✓ Candidats : '+addedC+' ajoutés ('+existingC.length+' total)', 'ok');
+
+  log('→ Retourne sur index.html et actualise la page', 'warn');
+}
+
+function clearAll() {
+  if (!confirm('Vider TOUTES les données ? Cette action est irréversible.')) return;
+  ['crm_btp_db','cands_btp_v2','flc_clients','grilles_btp','agence_btp','tdb_cfg','crm_kpi_semaine','tdb_spark_marge'].forEach(function(k){ localStorage.removeItem(k); });
+  log('✓ Toutes les données supprimées', 'ok');
+}
+</script>
+</body>
+</html>

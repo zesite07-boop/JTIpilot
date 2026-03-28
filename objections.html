@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<title>Objections Direction — Guide RA BTP</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+:root{
+  --bg:#fafaf8;--s1:#ffffff;--s2:#f5f4f0;--s3:#ece9e1;
+  --border:#ddd9ce;--border2:#c8c2b4;
+  --text:#1c1a16;--muted:#7a7262;--muted2:#a09880;
+  --accent:#1a1a2e;--accent2:#16213e;
+  --red:#c0392b;--red-bg:#fdf1f0;
+  --green:#1a6b3a;--green-bg:#f0f8f2;
+  --blue:#1a3a6b;--blue-bg:#f0f4f8;
+  --orange:#c05a1a;--orange-bg:#fdf5f0;
+  --yellow:#6b5a1a;--yellow-bg:#fdf9f0;
+  --mono:'Space Mono',monospace;
+  --sans:'Space Grotesk',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;line-height:1.6;min-height:100vh;}
+
+.header{
+  background:var(--accent);color:#fff;
+  padding:24px 32px 20px;
+  display:grid;grid-template-columns:1fr auto;align-items:center;gap:20px;
+}
+.header h1{font-size:16px;font-weight:700;letter-spacing:.5px;margin-bottom:3px;}
+.header p{font-size:10px;opacity:.6;font-family:var(--mono);}
+.header-badge{
+  font-family:var(--mono);font-size:10px;
+  padding:6px 14px;border:1px solid rgba(255,255,255,.25);border-radius:2px;
+  color:rgba(255,255,255,.8);white-space:nowrap;
+}
+
+.layout{display:grid;grid-template-columns:280px 1fr;min-height:calc(100vh - 80px);}
+
+/* NAV */
+.nav{background:var(--s1);border-right:1px solid var(--border);padding:0;}
+.nav-section-title{
+  font-family:var(--mono);font-size:9px;font-weight:700;color:var(--muted2);
+  letter-spacing:1.5px;padding:16px 20px 6px;
+}
+.nav-item{
+  padding:10px 20px;font-size:11px;color:var(--muted);
+  cursor:pointer;border-left:3px solid transparent;
+  transition:all .12s;display:flex;align-items:center;gap:10px;
+}
+.nav-item:hover{color:var(--text);background:var(--s2);}
+.nav-item.active{color:var(--accent);background:var(--s2);border-left-color:var(--red);font-weight:600;}
+.nav-item .ni-num{
+  font-family:var(--mono);font-size:9px;font-weight:700;
+  width:20px;height:20px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--s3);color:var(--muted);flex-shrink:0;
+}
+.nav-item.active .ni-num{background:var(--red);color:#fff;}
+
+/* CONTENT */
+.content{padding:28px 36px;max-width:860px;}
+.section{display:none;}
+.section.active{display:block;}
+
+/* OBJECTION CARD */
+.obj-card{
+  background:var(--red-bg);border:1px solid #e8c4c0;
+  border-radius:4px;padding:16px 20px;margin-bottom:20px;
+  display:flex;gap:12px;align-items:flex-start;
+}
+.obj-icon{font-size:20px;flex-shrink:0;}
+.obj-text{font-size:13px;font-weight:600;color:var(--red);font-style:italic;line-height:1.5;}
+.obj-source{font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:4px;}
+
+/* RESPONSE BLOCK */
+.resp-block{
+  background:var(--s1);border:1px solid var(--border);
+  border-radius:4px;overflow:hidden;margin-bottom:12px;
+}
+.resp-header{
+  padding:10px 16px;background:var(--s2);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;
+}
+.resp-step{
+  font-family:var(--mono);font-size:10px;font-weight:700;
+  width:22px;height:22px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.resp-title{font-size:11px;font-weight:600;letter-spacing:.3px;}
+.resp-body{padding:14px 16px;}
+
+/* RÉPONSE TEXTUELLE */
+.resp-quote{
+  background:var(--green-bg);border-left:3px solid var(--green);
+  padding:10px 14px;margin-bottom:10px;border-radius:0 3px 3px 0;
+  font-size:12px;line-height:1.7;color:var(--text);font-style:italic;
+}
+.resp-quote .rq-label{
+  font-family:var(--mono);font-size:9px;font-weight:700;color:var(--green);
+  letter-spacing:.5px;font-style:normal;margin-bottom:6px;
+}
+
+/* CHIFFRES EN TEMPS RÉEL */
+.calc-block{
+  background:var(--accent);color:#fff;
+  border-radius:3px;padding:14px 16px;margin-bottom:10px;
+}
+.calc-title{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:1px;opacity:.6;margin-bottom:10px;}
+.calc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.calc-item{background:rgba(255,255,255,.08);border-radius:2px;padding:8px 10px;text-align:center;}
+.calc-val{font-family:var(--mono);font-size:18px;font-weight:700;line-height:1;}
+.calc-lbl{font-size:9px;opacity:.6;margin-top:3px;letter-spacing:.3px;}
+.calc-formula{
+  font-family:var(--mono);font-size:10px;
+  background:rgba(255,255,255,.06);border-radius:2px;
+  padding:6px 10px;margin-top:8px;opacity:.8;line-height:1.5;
+}
+
+/* PIÈGE / ERREUR */
+.piege{
+  background:var(--orange-bg);border:1px solid #e8cdb0;
+  border-radius:3px;padding:10px 14px;margin-bottom:8px;
+  font-size:11px;line-height:1.6;
+}
+.piege-title{font-family:var(--mono);font-size:9px;font-weight:700;color:var(--orange);letter-spacing:.5px;margin-bottom:4px;}
+
+/* ARGUMENT BOX */
+.arg-box{
+  border:1px solid var(--border);border-radius:3px;
+  margin-bottom:8px;overflow:hidden;
+}
+.arg-box-head{
+  background:var(--s2);padding:8px 14px;
+  font-family:var(--mono);font-size:9px;font-weight:700;
+  color:var(--muted2);letter-spacing:1px;
+  cursor:pointer;display:flex;justify-content:space-between;
+}
+.arg-box-head:hover{background:var(--s3);}
+.arg-box-body{padding:12px 14px;display:none;font-size:11px;line-height:1.7;color:var(--muted);}
+.arg-box-body.open{display:block;}
+
+/* SIMULATEUR */
+.sim-panel{
+  background:var(--s1);border:1px solid var(--border);
+  border-radius:4px;padding:20px;margin-bottom:20px;
+}
+.sim-title{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--muted2);letter-spacing:1px;margin-bottom:14px;}
+.sim-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.sim-field label{display:block;font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.3px;margin-bottom:3px;}
+.sim-field input,.sim-field select{
+  width:100%;padding:6px 8px;
+  background:var(--s2);border:1px solid var(--border);border-radius:2px;
+  font-family:var(--mono);font-size:11px;color:var(--text);outline:none;
+}
+.sim-field input:focus,.sim-field select:focus{border-color:var(--red);}
+.sim-results{
+  background:var(--accent);color:#fff;
+  border-radius:3px;padding:14px 16px;margin-top:12px;
+}
+.sim-results-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.sr-item{background:rgba(255,255,255,.07);border-radius:2px;padding:8px;text-align:center;}
+.sr-val{font-family:var(--mono);font-size:16px;font-weight:700;}
+.sr-lbl{font-size:9px;opacity:.6;margin-top:2px;}
+
+/* TABLE */
+.ref-table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:14px;}
+.ref-table th{
+  background:var(--accent);color:#fff;padding:8px 12px;
+  font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.5px;text-align:left;
+}
+.ref-table td{padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.5;}
+.ref-table tr:hover td{background:var(--s2);}
+.ref-table .mono{font-family:var(--mono);font-size:10px;}
+.ref-table .red{color:var(--red);font-weight:600;}
+.ref-table .green{color:var(--green);font-weight:600;}
+
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+.chip{
+  display:inline-block;font-family:var(--mono);font-size:9px;
+  padding:2px 7px;border-radius:10px;margin:2px;
+}
+.chip-red{background:var(--red-bg);color:var(--red);border:1px solid #e8c4c0;}
+.chip-green{background:var(--green-bg);color:var(--green);border:1px solid #b8dfc6;}
+.chip-blue{background:var(--blue-bg);color:var(--blue);border:1px solid #b8c8df;}
+.chip-orange{background:var(--orange-bg);color:var(--orange);border:1px solid #e8d0b8;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>OBJECTIONS DIRECTION — GUIDE DE RÉPONSE RA BTP</h1>
+    <p>Défendre sa marge avec des chiffres · Répondre sans se déstabiliser · Garder le contrôle</p>
+  </div>
+  <div class="header-badge" id="hdr-params">TC=34€ · TB=15,5€ · 15 ETP</div>
+</div>
+
+<div class="layout">
+
+  <nav class="nav">
+    <div class="nav-section-title">SIMULATEUR</div>
+    <div class="nav-item active" onclick="show('sim',this)">
+      <span class="ni-num">⚙</span> Paramètres de base
+    </div>
+
+    <div class="nav-section-title" style="margin-top:8px">OBJECTIONS FRÉQUENTES</div>
+    <div class="nav-item" onclick="show('o1',this)">
+      <span class="ni-num">1</span> "Tes taux sont trop élevés"
+    </div>
+    <div class="nav-item" onclick="show('o2',this)">
+      <span class="ni-num">2</span> "La concurrence fait moins cher"
+    </div>
+    <div class="nav-item" onclick="show('o3',this)">
+      <span class="ni-num">3</span> "Ta marge est trop haute"
+    </div>
+    <div class="nav-item" onclick="show('o4',this)">
+      <span class="ni-num">4</span> "Vous n'avez pas les profils"
+    </div>
+    <div class="nav-item" onclick="show('o5',this)">
+      <span class="ni-num">5</span> "Ton RBE est insuffisant"
+    </div>
+    <div class="nav-item" onclick="show('o6',this)">
+      <span class="ni-num">6</span> "Tu dois baisser tes charges"
+    </div>
+
+    <div class="nav-section-title" style="margin-top:8px">ENTRETIENS DE REVUE</div>
+    <div class="nav-item" onclick="show('revue',this)">
+      <span class="ni-num">📋</span> Préparer sa revue
+    </div>
+    <div class="nav-item" onclick="show('tensionbtp',this)">
+      <span class="ni-num">📊</span> Arguments marché BTP 2026
+    </div>
+  </nav>
+
+  <div class="content">
+
+    <!-- ═══════════════════════════════ -->
+    <!-- SIMULATEUR -->
+    <!-- ═══════════════════════════════ -->
+    <div id="s-sim" class="section active">
+      <div class="sim-panel">
+        <div class="sim-title">PARAMÈTRES — MIS À JOUR DANS TOUS LES ONGLETS</div>
+        <div class="sim-row">
+          <div class="sim-field">
+            <label>Taux client moyen (€/h)</label>
+            <input id="p-tc" type="number" value="34" step="0.5" oninput="recalc()"/>
+          </div>
+          <div class="sim-field">
+            <label>Taux brut moyen (€/h)</label>
+            <input id="p-tb" type="number" value="15.5" step="0.5" oninput="recalc()"/>
+          </div>
+          <div class="sim-field">
+            <label>ETP placés en permanence</label>
+            <input id="p-etp" type="number" value="15" step="1" oninput="recalc()"/>
+          </div>
+          <div class="sim-field">
+            <label>Heures / semaine / ETP</label>
+            <input id="p-h" type="number" value="39" oninput="recalc()"/>
+          </div>
+          <div class="sim-field">
+            <label>Semaines actives / an</label>
+            <input id="p-s" type="number" value="47" oninput="recalc()"/>
+          </div>
+          <div class="sim-field">
+            <label>Charges fixes / mois (€)</label>
+            <input id="p-ff" type="number" value="12000" step="500" oninput="recalc()"/>
+          </div>
+        </div>
+        <div class="sim-results">
+          <div class="sim-results-grid" id="sim-results-grid"></div>
+          <div style="font-family:var(--mono);font-size:10px;opacity:.6;margin-top:10px" id="sim-formula"></div>
+        </div>
+      </div>
+
+      <div style="font-size:11px;color:var(--muted);line-height:1.8">
+        <b style="color:var(--text)">Comment utiliser ce guide :</b><br>
+        Renseigne tes paramètres réels ci-dessus. Tous les chiffres dans les onglets "Objections" se calculent automatiquement en temps réel — tu peux donc les utiliser directement en entretien sur ton téléphone ou en réunion.<br><br>
+        <b style="color:var(--text)">Principe de base :</b> Une direction qui objectionne sur les taux ou la marge le fait avec des généralités. Toi tu réponds avec des chiffres précis, liés à ta situation réelle. C'est toujours toi qui gagnes ce type d'échange si tu es préparé.
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════ -->
+    <!-- OBJECTION 1 — TAUX TROP ÉLEVÉS -->
+    <!-- ═══════════════════════════════ -->
+    <div id="s-o1" class="section">
+      <div class="obj-card">
+        <div class="obj-icon">🗣</div>
+        <div>
+          <div class="obj-text">"Tes taux sont trop élevés. Le client ne peut pas payer ça. Il faut qu'on soit compétitifs."</div>
+          <div class="obj-source">DR / DG · Revue de portefeuille · Négociation accord-cadre</div>
+        </div>
+      </div>
+
+      <div class="resp-block">
+        <div class="resp-header">
+          <div class="resp-step" style="background:var(--accent);color:#fff">1</div>
+          <div class="resp-title">NE PAS CÉDER IMMÉDIATEMENT — QUESTIONNER LA BASE</div>
+        </div>
+        <div class="resp-body">
+          <div class="resp-quote">
+            <div class="rq-label">CE QUE TU DIS</div>
+            "Je comprends la pression. Sur quels profils et quel client précisément ? Parce que mes taux actuels sur ce segment sont déjà au niveau du marché IDF — si je descends, je dois expliquer pourquoi au client sur la qualité des profils."
+          </div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.7">
+            <b>Pourquoi :</b> "Tes taux sont trop élevés" est une phrase générale. Forcer la direction à être précise sur le profil et le client transforme le débat en analyse factuelle — terrain sur lequel tu es plus fort.
+          </div>
+        </div>
+      </div>
+
+      <div class="resp-block">
+        <div class="resp-header">
+          <div class="resp-step" style="background:var(--red);color:#fff">2</div>
+          <div class="resp-title">MONTRER L'IMPACT CHIFFRÉ D'UNE BAISSE DE TAUX</div>
+        </div>
+        <div class="resp-body">
+          <div class="calc-block" id="calc-o1">
+            <div class="calc-title">SIMULATION EN TEMPS RÉEL · IMPACT −1€/H SUR LE TAUX CLIENT</div>
+            <div class="calc-grid" id="calc-o1-grid"></div>
+            <div class="calc-formula" id="calc-o1-formula"></div>
+          </div>
+          <div class="resp-quote">
+            <div class="rq-label">CE QUE TU DIS</div>
+            "Si je baisse d'1€/h sur mes <span class="dyn-etp">15</span> ETP actuels, ça représente <span class="dyn-perte-mois" style="font-weight:700;color:var(--red)">—€</span> de marge en moins par mois, soit <span class="dyn-perte-an" style="font-weight:700;color:var(--red)">—€</span> sur l'année. Est-ce qu'on a un plan pour compenser ce manque ?"
+          </div>
+        </div>
+      </div>
+
+      <div class="resp-block">
+        <div class="resp-header">
+          <div class="resp-step" style="background:var(--green);color:#fff">3</div>
+          <div class="resp-title">PROPOSER UNE ALTERNATIVE SANS BAISSER</div>
+        </div>
+        <div class="resp-body">
+          <div class="resp-quote">
+            <div class="rq-label">CE QUE TU DIS</div>
+            "Je peux travailler sur le volume avec ce client — si on passe de X missions à Y missions par mois, je peux négocier un taux dégressif préservant ma marge unitaire. Mais une baisse sèche sans contrepartie volume, je ne peux pas le faire sans impacter la qualité des profils que je peux lui proposer."
+          </div>
+          <div class="piege">
+            <div class="piege-title">PIÈGE À ÉVITER</div>
+            Ne jamais dire "je vais voir ce que je peux faire" sans poser de condition. C'est perçu comme une acceptation tacite. Toujours lier toute concession de taux à une contrepartie : volume garanti, durée de mission plus longue, profils moins qualifiés explicitement acceptés.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════ -->
+    <!-- OBJECTION 2 — CONCURRENCE MOINS CHER -->
+    <!-- ═══════════════════════════════ -->
+    <div id="s-o2" class="section">
+      <div class="obj-card">
+        <div class="obj-icon">🗣</div>
+        <div>
+          <div class="obj-text">"Adecco / Manpower / [concurrent] fait les mêmes profils à 2€/h de moins. Pourquoi le client resterait avec nous ?"</div>
+          <div class="obj-source">DR lors d'une revue · Perte d'appel d'offres · Pression client</div>
+        </div>
+      </div>
+
+      <div class="resp-block">
+        <div class="resp-header">
+          <div class="resp-step" style="background:var(--accent);color:#fff">1</div>
+          <div class="resp-title">QUESTIONNER LA RÉALITÉ DE L'OFFRE CONCURRENTE</div>
+        </div>
+        <div class="resp-body">
+          <div class="resp-quote">
+            <div class="rq-label">CE QUE TU DIS</div>
+            "Est-ce que c'est une offre ferme ou une annonce de taux ? Sur quel profil exact et pour quelle durée ? Parce qu'un N3P2 staffeur à 33€/h en IDF, soit le concurrent ne connaît pas ses coûts, soit il place un N2 en le déclarant N3."
+          </div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:8px">
+            <b>Fait à connaître :</b> les grandes agences généralistes font souvent des offres d'appel agressives sur le taux, puis compensent sur des profils moins qualifiés, des délais plus longs, ou des taux cachés (frais de dossier, EPI non fournis). Un écart de 2€/h doit être expliqué.
+          </div>
+        </div>
+      </div>
+
+      <div class="resp-block">
+        <div class="resp-header">
+          <div class="resp-step" style="background:var(--red);color:#fff">2</div>
+          <div class="resp-title">QUANTIFIER CE QUE 2€/H REPRÉSENTE VRAIMENT</div>
+        </div>
+        <div class="resp-body">
+          <div class="calc-block" id="calc-o2">
+            <div class="calc-title">SIMULATION · ÉCART DE 2€/H VS CONCURRENT</div>
+            <div class="calc-grid" id="calc-o2-grid"></div>
+            <div class="calc-formula" id="calc-o2-formula"></div>
+          </div>
+          <div class="resp-quote">
+            <div class="rq-label">CE QUE TU DIS</div>
+            "Sur <span class='dyn-etp'>15</span> ETP, 2€/h de moins c'est <span class='dyn-ecart-an' style='font-weight:700;color:var(--red)'>—€</span> de perdu sur l'année. Avec ça je ne peux plus sourcer les profils rares qui font notre valeur ajoutée. Le client économise sur le taux et perd sur la qualité et les délais."
+          </div>
+        </div>
+      </div>
+
+      <div class="resp-block">
+        <div class="resp-header">
+          <div class="resp-step" style="background:var(--green);color:#fff">3</div>
+          <div class="resp-title">METTRE EN VALEUR CE QUE LA CONCURRENCE NE PEUT PAS FAIRE</div>
+        </div>
+        <div class="resp-body">
+          <div class="arg-box">
+            <div class="arg-box-head" onclick="toggleArg(this)">SPÉCIALISATION BTP IDF — NOTRE DIFFÉRENCIATION <span>▼</span></div>
+            <div class="arg-box-body">
+              Une grande agence généraliste gère des caristes, des secrétaires et des plâtriers dans la même semaine. Notre spécialisation BTP IDF signifie : vivier de staffeurs N3P2 sourçable en 48h, connaissance précise des chantiers IDF, des conventions collectives BTP, des plans de prévention. Le client paie 2€/h de plus et évite 3 jours de délai de sourcing et 1 placement raté sur 4.
+            </div>
+          </div>
+          <div class="arg-box">
+            <div class="arg-box-head" onclick="toggleArg(this)">COÛT D'UN PLACEMENT RATÉ — L'ARGUMENT QUI CLÔT LE DÉBAT <span>▼</span></div>
+            <div class="arg-box-body">
+              Un placement raté (abandon avant 1 semaine, AT en période d'essai, profil inadapté) coûte au client : perte de productivité, ressourcing, remise à niveau. Estimation basse : 1 500 à 3 000€ par incident. À 2€/h d'économie, il faut 750 à 1 500 heures travaillées pour rentabiliser une seule erreur de placement. Notre taux de fidélisation client et notre taux de transformation sont nos arguments chiffrés ici.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════ -->
+    <!-- OBJECTION 3 — MARGE TROP HAUTE -->
+    <!-- ═══════════════════════════════ -->
+    <div id="s-o3" class="section">
+      <div class="obj-card">
+        <div class="obj-icon">🗣</div>
+        <div>
+          <div class="obj-text">"Ton taux de marge brute est de 22%, c'est trop. Tu dois descendre à 18% pour être plus compétitif."</div>
+          <div class="obj-source">DG lors d'une revue annuelle · Pression stratégique réseau</div>
+        </div>
+      </div>
+
+      <div class="resp-block">
+        <div class="resp-header">
+          <div class="resp-step" style="background:var(--accent);color:#fff">1</div>
+          <div class="resp-title">DISTINGUER MARGE BRUTE ET MARGE NETTE</div>
+        </div>
+        <div class="resp-body">
+          <div class="resp-quote">
+            <div class="rq-label">CE QUE TU DIS</div>
+            "22% de marge brute avec mes charges fixes actuelles de <span class='dyn-ff'>—€</span>/mois donne un RBE de <span class='dyn-rbe' style='font-weight:700'>—€</span>/mois. Si je descends à 18%, mon RBE devient <span class='dyn-rbe18' style='font-weight:700;color:var(--red)'>—€</span>/mois. À ce niveau, le moindre mois creux ou impayé me met en négatif."
+          </div>
+          <div class="calc-block" id="calc-o3">
+            <div class="calc-title">SIMULATION · IMPACT MARGE BRUTE → RBE</div>
+            <div class="calc-grid" id="calc-o3-grid"></div>
+            <div class="calc-formula" id="calc-o3-formula"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="resp-block">
+        <div class="resp-header">
+          <div class="resp-step" style="background:var(--red);color:#fff">2</div>
+          <div class="resp-title">LA MARGE BRUTE N'EST PAS UN PROFIT</div>
+        </div>
+        <div class="resp-body">
+          <div class="resp-quote">
+            <div class="rq-label">CE QUE TU DIS</div>
+            "La marge brute couvre les charges de structure, ma rémunération, la redevance réseau, et génère le résultat. 22% de marge brute avec 12k€ de charges fixes sur 70k€ de CA, ça ne fait pas 15 000€ de profit — ça fait <span class='dyn-rbe'>—€</span> de RBE. C'est le seul chiffre qui compte."
+          </div>
+          <div class="piege">
+            <div class="piege-title">ERREUR CLASSIQUE DE LA DIRECTION</div>
+            Confondre marge brute et profit. La direction qui demande de "baisser la marge à 18%" raisonne parfois comme si les 4 points de différence étaient du profit pur. Ce n'est pas le cas — c'est de la couverture des charges fixes. Faire ce calcul explicitement en entretien.
+          </div>
+        </div>
+      </div>
+
+      <div class="resp-block">
+        <div class="resp-header">
+          <div class="resp-step" style="background:var(--green);color:#fff">3</div>
+          <div class="resp-title">PROPOSER LA BONNE MÉTRIQUE : LE RBE, PAS LA MARGE</div>
+        </div>
+        <div class="resp-body">
+          <div class="resp-quote">
+            <div class="rq-label">CE QUE TU DIS</div>
+            "Je préfère qu'on parle de RBE plutôt que de marge brute. Mon objectif est un RBE de X€/mois — je gère mes taux en fonction de ça. Si le réseau veut que je baisse les taux, il faut baisser les charges de structure en contrepartie, notamment la redevance."
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════ -->
+    <!-- OBJECTION 4 — PAS LES PROFILS -->
+    <!-- ═══════════════════════════════ -->
+    <div id="s-o4" class="section">
+      <div class="obj-card">
+        <div class="obj-icon">🗣</div>
+        <div>
+          <div class="obj-text">"Tu rates des placements parce que tu n'as pas les profils. Ta base candidats est insuffisante."</div>
+          <div class="obj-source">DR après une perte client · Revue de performance Q1</div>
+        </div>
+      </div>
+
+      <div class="resp-block">
+        <div class="resp-header">
+          <div class="resp-step" style="background:var(--accent);color:#fff">1</div>
+          <div class="resp-title">DISSOCIER PÉNURIE DE MARCHÉ ET PROBLÈME D'AGENCE</div>
+        </div>
+        <div class="resp-body">
+          <div class="resp-quote">
+            <div class="rq-label">CE QUE TU DIS</div>
+            "Sur les staffeurs N3P2 et les CVC en IDF, la tension est structurelle depuis 2023. Mes concurrents ont le même problème — la différence c'est que moi je ne promets pas ce que je n'ai pas. Si on veut sécuriser ces profils, il faut soit augmenter les taux bruts pour être attractifs, soit investir dans des partenariats écoles/centres de formation."
+          </div>
+        </div>
+      </div>
+
+      <div class="resp-block">
+        <div class="resp-header">
+          <div class="resp-step" style="background:var(--red);color:#fff">2</div>
+          <div class="resp-title">MONTRER LES DONNÉES DU MARCHÉ BTP IDF</div>
+        </div>
+        <div class="resp-body">
+          <table class="ref-table">
+            <tr><th>PROFIL</th><th>TENSION MARCHÉ IDF</th><th>DÉLAI SOURCING</th><th>TAUX BRUT MARCHÉ</th></tr>
+            <tr><td>Staffeur N3P2</td><td class="red">TRÈS ÉLEVÉE</td><td class="mono">3–7 jours</td><td class="mono">17–21 €/h</td></tr>
+            <tr><td>CVC / Chauffagiste N3</td><td class="red">TRÈS ÉLEVÉE</td><td class="mono">5–14 jours</td><td class="mono">18–23 €/h</td></tr>
+            <tr><td>Électricien tertiaire N3</td><td class="red">ÉLEVÉE</td><td class="mono">4–10 jours</td><td class="mono">16–20 €/h</td></tr>
+            <tr><td>Plâtrier N3P1</td><td style="color:var(--orange);font-weight:600">MODÉRÉE</td><td class="mono">2–5 jours</td><td class="mono">15–17 €/h</td></tr>
+            <tr><td>Peintre N2 bâtiment</td><td class="green">FAIBLE</td><td class="mono">1–3 jours</td><td class="mono">13–15 €/h</td></tr>
+          </table>
+          <div class="resp-quote">
+            <div class="rq-label">CE QUE TU DIS</div>
+            "Si le client demande un staffeur N3P2 disponible demain à 15€/h brut, personne ne peut répondre en IDF. Ce n'est pas un problème de base candidats — c'est un problème de réalisme commercial. Je préfère expliquer ça au client maintenant plutôt qu'après avoir promis l'impossible."
+          </div>
+        </div>
+      </div>
+
+      <div class="resp-block">
+        <div class="resp-header">
+          <div class="resp-step" style="background:var(--green);color:#fff">3</div>
+          <div class="resp-title">PRÉSENTER SON PLAN SOURCING</div>
+        </div>
+        <div class="resp-body">
+          <div class="resp-quote">
+            <div class="rq-label">CE QUE TU DIS</div>
+            "Voici ce que je fais concrètement : [nombre] candidats actifs dans ma base, délai moyen de placement de X jours sur les 3 derniers mois, taux de transformation de X%. Pour aller plus loin, j'ai besoin de [budget formation / outil ATS / partenariat]. Qu'est-ce que le réseau peut apporter sur ce point ?"
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════ -->
+    <!-- OBJECTION 5 — RBE INSUFFISANT -->
+    <!-- ═══════════════════════════════ -->
+    <div id="s-o5" class="section">
+      <div class="obj-card">
+        <div class="obj-icon">🗣</div>
+        <div>
+          <div class="obj-text">"Ton RBE est trop bas / négatif. Il faut qu'on redresse ça rapidement."</div>
+          <div class="obj-source">DR lors d'un point mensuel · Fin de trimestre · Alerte réseau</div>
+        </div>
+      </div>
+
+      <div class="resp-block">
+        <div class="resp-header">
+          <div class="resp-step" style="background:var(--accent);color:#fff">1</div>
+          <div class="resp-title">ACCEPTER LA RÉALITÉ, PRÉSENTER LE DIAGNOSTIC</div>
+        </div>
+        <div class="resp-body">
+          <div class="resp-quote">
+            <div class="rq-label">CE QUE TU DIS</div>
+            "Vous avez raison et je l'ai identifié. Le problème vient de [cause précise : saisonnalité / perte d'un client / délai de recrutement / charges fixes]. Ce n'est pas structurel — voici ce que j'ai déjà mis en place et ce dont j'ai besoin."
+          </div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:8px">
+            <b>Règle d'or :</b> Ne jamais se défendre sur un RBE négatif. Accepter le constat, montrer que tu l'avais vu, présenter le diagnostic et le plan. Un RA qui arrive avec "je sais, voilà pourquoi, voilà ce que je fais" est infiniment plus crédible qu'un RA qui découvre la situation en revue.
+          </div>
+        </div>
+      </div>
+
+      <div class="resp-block">
+        <div class="resp-header">
+          <div class="resp-step" style="background:var(--red);color:#fff">2</div>
+          <div class="resp-title">PRÉSENTER LE PLAN DE REDRESSEMENT EN 3 LEVIERS</div>
+        </div>
+        <div class="resp-body">
+          <div class="calc-block" id="calc-o5">
+            <div class="calc-title">SIMULATION · LES 3 LEVIERS DE REDRESSEMENT</div>
+            <div class="calc-grid" id="calc-o5-grid"></div>
+            <div class="calc-formula" id="calc-o5-formula"></div>
+          </div>
+          <div class="resp-quote">
+            <div class="rq-label">CE QUE TU DIS</div>
+            "Pour redresser le RBE, j'ai 3 leviers : +<span class='dyn-lev1'>—</span> ETP supplémentaires = +<span class='dyn-lev1-val'>—€</span>/mois | +0,5€/h sur le taux client = +<span class='dyn-lev2-val'>—€</span>/mois | −500€ de charges fixes = +500€/mois. Je travaille sur les trois en parallèle."
+          </div>
+        </div>
+      </div>
+
+      <div class="resp-block">
+        <div class="resp-header">
+          <div class="resp-step" style="background:var(--green);color:#fff">3</div>
+          <div class="resp-title">DEMANDER CE QUE LA DIRECTION PEUT FAIRE</div>
+        </div>
+        <div class="resp-body">
+          <div class="resp-quote">
+            <div class="rq-label">CE QUE TU DIS</div>
+            "De mon côté j'active ces leviers. De votre côté, est-ce qu'il y a une possibilité de revoir temporairement la redevance pendant la phase de montée en puissance ? Ça représente [X€/mois] — ça ferait la différence entre un plan à 6 mois et un plan à 3 mois."
+          </div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:8px">
+            Retourner l'entretien : si la direction te met sous pression sur le RBE, c'est le bon moment pour renégocier une clause de la franchise. Tu as une légitimité et un argument chiffré.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════ -->
+    <!-- OBJECTION 6 — BAISSER LES CHARGES -->
+    <!-- ═══════════════════════════════ -->
+    <div id="s-o6" class="section">
+      <div class="obj-card">
+        <div class="obj-icon">🗣</div>
+        <div>
+          <div class="obj-text">"Tes charges de structure sont trop élevées. Tu peux réduire le loyer / les logiciels / les frais divers."</div>
+          <div class="obj-source">DR lors d'une revue de coûts · Audit réseau</div>
+        </div>
+      </div>
+
+      <div class="resp-block">
+        <div class="resp-header">
+          <div class="resp-step" style="background:var(--accent);color:#fff">1</div>
+          <div class="resp-title">DISTINGUER CHARGES COMPRESSIBLES ET CHARGES STRUCTURELLES</div>
+        </div>
+        <div class="resp-body">
+          <table class="ref-table">
+            <tr><th>CHARGE</th><th>COMPRESSIBLE ?</th><th>IMPACT SI RÉDUIT</th></tr>
+            <tr><td>Loyer (IDF)</td><td style="color:var(--orange);font-weight:600">Partiellement</td><td>Emplacement → visibilité client réduite</td></tr>
+            <tr><td>Logiciels ATS/CRM</td><td class="red">Non</td><td>Perte d'efficacité sourcing → délais plus longs</td></tr>
+            <tr><td>Véhicule(s)</td><td style="color:var(--orange);font-weight:600">Partiellement</td><td>Moins de visites chantier → fidélisation client</td></tr>
+            <tr><td>Expert-comptable</td><td class="red">Non</td><td>Risque conformité sociale et fiscale</td></tr>
+            <tr><td>Redevance franchise</td><td class="red">Non (sauf négociation)</td><td>Clause contractuelle</td></tr>
+            <tr><td>Fournitures / divers</td><td class="green">Oui</td><td>Faible impact opérationnel</td></tr>
+          </table>
+          <div class="resp-quote">
+            <div class="rq-label">CE QUE TU DIS</div>
+            "Sur les charges compressibles, j'ai déjà optimisé ce que je pouvais. Ce qui reste, c'est la structure minimum pour opérer correctement en IDF. Si on coupe les outils de sourcing, on ralentit le placement et on perd des clients — ce n'est pas un arbitrage favorable."
+          </div>
+        </div>
+      </div>
+
+      <div class="resp-block">
+        <div class="resp-header">
+          <div class="resp-step" style="background:var(--green);color:#fff">2</div>
+          <div class="resp-title">MONTRER QUE LA SOLUTION EST DANS LE VOLUME, PAS LES COÛTS</div>
+        </div>
+        <div class="resp-body">
+          <div class="calc-block" id="calc-o6">
+            <div class="calc-title">SIMULATION · VOLUME VS COÛTS — CE QUI EST PLUS EFFICACE</div>
+            <div class="calc-grid" id="calc-o6-grid"></div>
+            <div class="calc-formula" id="calc-o6-formula"></div>
+          </div>
+          <div class="resp-quote">
+            <div class="rq-label">CE QUE TU DIS</div>
+            "Réduire mes charges de 1 000€/mois est l'équivalent d'ajouter <span class='dyn-charges-etp'>—</span> ETP supplémentaire en termes de RBE. Je préfère investir ce temps dans le commercial plutôt que dans la gestion de coûts qui auront un impact opérationnel."
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════ -->
+    <!-- REVUE -->
+    <!-- ═══════════════════════════════ -->
+    <div id="s-revue" class="section">
+      <div style="font-size:13px;font-weight:600;margin-bottom:16px;color:var(--accent)">PRÉPARER SA REVUE DE PERFORMANCE — STRUCTURE EN 5 TEMPS</div>
+
+      <div class="resp-block">
+        <div class="resp-header">
+          <div class="resp-step" style="background:var(--accent);color:#fff">1</div>
+          <div class="resp-title">OUVRIR SUR VOS CHIFFRES, PAS SUR LES LEURS</div>
+        </div>
+        <div class="resp-body">
+          <div class="resp-quote">
+            <div class="rq-label">FORMULATION D'OUVERTURE</div>
+            "Avant qu'on regarde les tableaux du réseau, laissez-moi vous donner ma lecture du mois : CA [X€], marge brute [X%], RBE [±X€], [X] ETP actifs, [X] prospects chauds en cours de conversion. Voilà où j'en suis."
+          </div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:8px">
+            Celui qui pose les chiffres en premier cadre le débat. Si tu laisses la direction sortir ses tableaux en premier, tu es en mode réactif toute la réunion.
+          </div>
+        </div>
+      </div>
+
+      <div class="resp-block">
+        <div class="resp-header">
+          <div class="resp-step" style="background:var(--accent);color:#fff">2</div>
+          <div class="resp-title">DISTINGUER CE QUI EST SOUS TON CONTRÔLE ET CE QUI NE L'EST PAS</div>
+        </div>
+        <div class="resp-body">
+          <div class="resp-quote">
+            <div class="rq-label">FORMULATION</div>
+            "Sur ce mois, il y a deux types de facteurs : ceux que j'ai maîtrisés — [taux de transformation, fidélisation, délais de placement] — et ceux qui sont exogènes — [saisonnalité BTP, pénurie de profils, retard de paiement d'un client spécifique]. Sur ce que je contrôle, voici mes résultats. Sur ce que je ne contrôle pas, voici comment j'ai réagi."
+          </div>
+        </div>
+      </div>
+
+      <div class="resp-block">
+        <div class="resp-header">
+          <div class="resp-step" style="background:var(--accent);color:#fff">3</div>
+          <div class="resp-title">NE JAMAIS ARRIVER SANS DEMANDE PRÉCISE</div>
+        </div>
+        <div class="resp-body">
+          <div class="resp-quote">
+            <div class="rq-label">FORMULATION DE CLÔTURE</div>
+            "Pour le mois prochain, j'ai besoin de [une chose précise] de votre côté : [accès à la base candidats mutualisée / support commercial sur le compte X / révision temporaire de la redevance / formation sourcing]. Je peux avancer sans ça, mais avec ça j'atteindrais l'objectif 6 semaines plus tôt."
+          </div>
+        </div>
+      </div>
+
+      <div class="resp-block">
+        <div class="resp-header">
+          <div class="resp-step" style="background:var(--accent);color:#fff">4</div>
+          <div class="resp-title">LES 5 MÉTRIQUES À AVOIR EN TÊTE À TOUT MOMENT</div>
+        </div>
+        <div class="resp-body">
+          <div class="calc-block" id="calc-revue">
+            <div class="calc-title">VOS 5 MÉTRIQUES CLÉS (CALCULÉES EN TEMPS RÉEL)</div>
+            <div id="calc-revue-grid"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════ -->
+    <!-- TENSIONS BTP 2026 -->
+    <!-- ═══════════════════════════════ -->
+    <div id="s-tensionbtp" class="section">
+      <div style="font-size:13px;font-weight:600;margin-bottom:16px;color:var(--accent)">ARGUMENTS MARCHÉ BTP IDF 2025/2026 — DONNÉES À CITER</div>
+
+      <div class="resp-block">
+        <div class="resp-header">
+          <div class="resp-step" style="background:var(--accent);color:#fff">📊</div>
+          <div class="resp-title">CONTEXTE MARCHÉ — CE QUE TOUT RA DOIT SAVOIR CITER</div>
+        </div>
+        <div class="resp-body">
+          <table class="ref-table">
+            <tr><th>FAIT</th><th>CHIFFRE / INFORMATION</th><th>USAGE EN ENTRETIEN</th></tr>
+            <tr><td>Pénurie artisans BTP IDF</td><td>Déficit estimé 15 000–20 000 postes IDF (FFB 2025)</td><td>Justifie les délais de sourcing</td></tr>
+            <tr><td>Turnover intérim BTP</td><td>~45% des intérimaires BTP changent d'agence en moins d'un an</td><td>Justifie les taux bruts élevés pour fidéliser</td></tr>
+            <tr><td>AT en BTP intérim</td><td>Taux AT intérim BTP = 2–3× supérieur au BTP permanent</td><td>Justifie la vigilance sur les placements et les coûts AT</td></tr>
+            <tr><td>Grand Paris Express</td><td>Chantiers actifs jusqu'en 2030, tension forte sur les gros œuvre et CVC</td><td>Opportunité commerciale + argument délai sourcing</td></tr>
+            <tr><td>Rénovation énergétique</td><td>Plan France 2030 : 500 000 logements/an à rénover → demande ITE, isolation</td><td>Nouveau segment de prospection à développer</td></tr>
+            <tr><td>Convention collective BTP</td><td>Revalorisation des minima de branche en janvier 2025 (+3,2% en moyenne)</td><td>Justifie hausse des taux bruts et par ricochet des taux clients</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="resp-block">
+        <div class="resp-header">
+          <div class="resp-step" style="background:var(--red);color:#fff">⚠</div>
+          <div class="resp-title">CE QU'UNE DIRECTION NE PEUT PAS CONTESTER</div>
+        </div>
+        <div class="resp-body">
+          <div class="resp-quote">
+            <div class="rq-label">ARGUMENT BÉTON</div>
+            "Les minima de la convention collective BTP ont augmenté de 3,2% en janvier 2025. Mes taux bruts ont mécaniquement dû suivre pour rester conformes et compétitifs. Si je ne les augmente pas, je ne peux plus sourcer les profils qualifiés. Si j'augmente les taux bruts sans toucher les taux clients, ma marge s'effondre. L'augmentation des taux clients n'est pas un choix — c'est une conséquence mécanique des obligations légales."
+          </div>
+          <div class="resp-quote" style="margin-top:8px">
+            <div class="rq-label">SUR LA PÉNURIE</div>
+            "Un N3P2 staffeur disponible en IDF, c'est une ressource rare. Le marché le sait. Mes clients le savent. Si je descends mon taux client pour "être compétitif", je ne peux pas descendre le taux brut en face — sinon je perds l'intérimaire au profit d'une agence qui paie mieux. La marge se comprime des deux côtés."
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /layout -->
+
+<script>
+function g(id){return parseFloat(document.getElementById(id)?.value)||0;}
+function fmt(n){return new Intl.NumberFormat('fr-FR',{maximumFractionDigits:0}).format(Math.round(n));}
+function pct(n){return Math.round(n*10)/10+'%';}
+
+function calcItem(val,lbl){
+  return '<div class="calc-item"><div class="calc-val">'+val+'</div><div class="calc-lbl">'+lbl+'</div></div>';
+}
+
+function recalc(){
+  var tc=g('p-tc'), tb=g('p-tb'), etp=g('p-etp');
+  var h=g('p-h'), s=g('p-s'), ff=g('p-ff');
+  var hMois=h*s/12;
+  var hTotal=etp*hMois;
+  var ca=hTotal*tc;
+  var ms=hTotal*tb*2.053; // coeff 2.053 intègre charges+IFM+ICP
+  var mb=ca-ms;
+  var mbPct=ca>0?mb/ca*100:0;
+  var rbe=mb-ff;
+  var coeff=tb>0?tc/tb:0;
+  var mbParH=tc-tb*2.053;
+  var mbParETP=mbParH*hMois;
+
+  // Header badge
+  document.getElementById('hdr-params').textContent='TC='+tc+'€ · TB='+tb+'€ · '+etp+' ETP · MB='+Math.round(mbPct)+'%';
+
+  // SIMULATEUR principal
+  var c=mbPct>=18?'#22d47a':mbPct>=12?'#f5c842':'#ff5252';
+  document.getElementById('sim-results-grid').innerHTML=
+    calcItem(fmt(ca)+'€','CA / MOIS')
+   +calcItem(fmt(mb)+'€','MARGE BRUTE')
+   +calcItem(pct(mbPct),'TAUX MB')
+   +calcItem(fmt(rbe)+'€','RBE / MOIS')
+   +calcItem('×'+Math.round(coeff*100)/100,'COEFF')
+   +calcItem(fmt(mbParETP)+'€','MB / ETP / MOIS');
+  document.getElementById('sim-formula').textContent=
+    'CA = '+etp+' ETP × '+hMois.toFixed(1)+'h/mois × '+tc+'€/h | MS = heures × '+tb+'€/h × 2,053 | RBE = MB − '+fmt(ff)+'€ charges fixes';
+
+  // DYNAMIC SPANS
+  document.querySelectorAll('.dyn-etp').forEach(function(e){e.textContent=etp;});
+  document.querySelectorAll('.dyn-ff').forEach(function(e){e.textContent=fmt(ff)+'€';});
+  document.querySelectorAll('.dyn-rbe').forEach(function(e){e.textContent=(rbe>=0?'+':'')+fmt(rbe)+'€';});
+
+  // RBE à 18%
+  var rbe18=ca*0.18-ff;
+  document.querySelectorAll('.dyn-rbe18').forEach(function(e){e.textContent=(rbe18>=0?'+':'')+fmt(rbe18)+'€';});
+
+  // Perte −1€/h
+  var perteMois=hTotal*1;
+  var perteAn=perteMois*12;
+  document.querySelectorAll('.dyn-perte-mois').forEach(function(e){e.textContent=fmt(perteMois)+'€';});
+  document.querySelectorAll('.dyn-perte-an').forEach(function(e){e.textContent=fmt(perteAn)+'€';});
+
+  // Écart 2€/h vs concurrent
+  var ecartAn=hTotal*2*12;
+  document.querySelectorAll('.dyn-ecart-an').forEach(function(e){e.textContent=fmt(ecartAn)+'€';});
+
+  // Leviers RBE
+  var lev1=Math.max(1,Math.round(1/mbParETP*1000)/1000); // ETP pour +1000€
+  var lev1val=Math.round(mbParETP);
+  document.querySelectorAll('.dyn-lev1').forEach(function(e){e.textContent='1';});
+  document.querySelectorAll('.dyn-lev1-val').forEach(function(e){e.textContent=fmt(lev1val);});
+  var lev2val=hTotal*0.5;
+  document.querySelectorAll('.dyn-lev2-val').forEach(function(e){e.textContent=fmt(lev2val);});
+
+  // Charges ETP équivalent
+  var chargesETP=ff>0?1000/mbParETP:0;
+  document.querySelectorAll('.dyn-charges-etp').forEach(function(e){e.textContent=Math.round(chargesETP*10)/10;});
+
+  // CALC O1 — impact −1€/h
+  if(document.getElementById('calc-o1-grid')){
+    document.getElementById('calc-o1-grid').innerHTML=
+      calcItem('−'+fmt(perteMois)+'€','MARGE PERDUE / MOIS')
+     +calcItem('−'+fmt(perteAn)+'€','MARGE PERDUE / AN')
+     +calcItem(pct((rbe-perteMois)/ca*100),'RBE % APRÈS BAISSE');
+    document.getElementById('calc-o1-formula').textContent=
+      '−1€/h × '+etp+' ETP × '+hMois.toFixed(0)+'h/mois = −'+fmt(perteMois)+'€/mois | ×12 = −'+fmt(perteAn)+'€/an';
+  }
+
+  // CALC O2 — écart 2€/h
+  if(document.getElementById('calc-o2-grid')){
+    var ecart2m=hTotal*2;
+    document.getElementById('calc-o2-grid').innerHTML=
+      calcItem('−'+fmt(ecart2m)+'€','MARGE PERDUE / MOIS')
+     +calcItem('−'+fmt(ecartAn)+'€','MARGE PERDUE / AN')
+     +calcItem(fmt(ecartAn/1500),'PLACEMENTS RATÉS EQ.');
+    document.getElementById('calc-o2-formula').textContent=
+      '−2€/h × '+fmt(hTotal)+'h/mois = −'+fmt(ecart2m)+'€/mois | Coût placement raté estimé 1 500€ → équivalent '+Math.round(ecartAn/1500)+' ratés/an';
+  }
+
+  // CALC O3 — marge brute vs RBE
+  if(document.getElementById('calc-o3-grid')){
+    var rbe20=ca*0.20-ff;
+    var rbe16=ca*0.16-ff;
+    document.getElementById('calc-o3-grid').innerHTML=
+      calcItem(pct(16)+' MB → '+(rbe16>=0?'+':'')+fmt(rbe16)+'€','RBE À 16%')
+     +calcItem(pct(mbPct)+' MB → '+(rbe>=0?'+':'')+fmt(rbe)+'€','RBE ACTUEL')
+     +calcItem(pct(20)+' MB → '+(rbe20>=0?'+':'')+fmt(rbe20)+'€','RBE À 20%');
+    document.getElementById('calc-o3-formula').textContent=
+      'RBE = CA ('+fmt(ca)+'€) × MB% − Charges fixes ('+fmt(ff)+'€) | Chaque −1% de MB = −'+fmt(ca/100)+'€/mois de RBE';
+  }
+
+  // CALC O5 — 3 leviers
+  if(document.getElementById('calc-o5-grid')){
+    var lev_etp=mbParETP;
+    var lev_tc=hTotal*0.5;
+    document.getElementById('calc-o5-grid').innerHTML=
+      calcItem('+'+fmt(lev_etp)+'€','1 ETP SUPPLÉMENTAIRE')
+     +calcItem('+'+fmt(lev_tc)+'€','TC +0,5€/H')
+     +calcItem('+500€','CHARGES −500€');
+    document.getElementById('calc-o5-formula').textContent=
+      'Levier 1 : +1 ETP = +'+fmt(lev_etp)+'€/mois MB | Levier 2 : +0,5€/h × '+fmt(hTotal)+'h = +'+fmt(lev_tc)+'€/mois | Levier 3 : direct';
+  }
+
+  // CALC O6 — volume vs coûts
+  if(document.getElementById('calc-o6-grid')){
+    var eq=mbParETP>0?1000/mbParETP:0;
+    document.getElementById('calc-o6-grid').innerHTML=
+      calcItem('−1 000€/mois','ÉCONOMIE CHARGES')
+     +calcItem('+'+fmt(mbParETP)+'€','1 ETP SUPPLÉMENTAIRE')
+     +calcItem(Math.round(eq*10)/10+' ETP','ÉQUIVALENCE');
+    document.getElementById('calc-o6-formula').textContent=
+      '1 000€ économisé en charges = équivaut à '+Math.round(eq*10)/10+' ETP en termes de RBE | Temps investi : 1 mois de réduction de charges vs 1 client supplémentaire';
+  }
+
+  // CALC REVUE
+  if(document.getElementById('calc-revue-grid')){
+    var mbColor=mbPct>=18?'#22d47a':mbPct>=12?'#f5c842':'#ff5252';
+    document.getElementById('calc-revue-grid').innerHTML=
+    '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">'
+     +calcItem(fmt(ca)+'€','CA MENSUEL')
+     +calcItem(pct(mbPct),'MARGE BRUTE')
+     +calcItem((rbe>=0?'+':'')+fmt(rbe)+'€','RBE MENSUEL')
+     +calcItem('×'+Math.round(coeff*100)/100,'COEFF FACT.')
+     +calcItem(fmt(mbParETP)+'€','MB / ETP')
+    +'</div>';
+  }
+}
+
+function show(id,el){
+  document.querySelectorAll('.section').forEach(function(s){s.classList.remove('active');});
+  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
+  document.getElementById('s-'+id).classList.add('active');
+  el.classList.add('active');
+}
+
+function toggleArg(head){
+  var body=head.nextElementSibling;
+  body.classList.toggle('open');
+  head.querySelector('span').textContent=body.classList.contains('open')?'▲':'▼';
+}
+
+recalc();
+</script>
+</body>
+</html>

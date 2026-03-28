@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<title>Pilotage RA — Tableau de Bord</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;600;700;800&display=swap');
+
+:root{
+  --bg:#07090f;
+  --s1:#0c0f1a;
+  --s2:#111627;
+  --s3:#171e30;
+  --s4:#1d2438;
+  --border:#1e2640;
+  --border2:#2b3458;
+  --text:#dde3f5;
+  --muted:#4d5880;
+  --muted2:#7a87b5;
+  --accent:#f97316;
+  --accent2:#fb923c;
+  --green:#22d47a;
+  --green2:#16a05a;
+  --blue:#4da6ff;
+  --yellow:#f5c518;
+  --warn:#ff4757;
+  --purple:#b57bff;
+  --cyan:#2ee8d0;
+  --mono:'DM Mono',monospace;
+  --display:'Syne',sans-serif;
+  --sidebar-w:300px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--mono);overflow:hidden;}
+
+/* ══════════════════════════════════════
+   SHELL
+══════════════════════════════════════ */
+.shell{display:flex;flex-direction:column;height:100vh;}
+
+/* ══════════════════════════════════════
+   TOPBAR
+══════════════════════════════════════ */
+.topbar{
+  height:48px;flex-shrink:0;
+  background:var(--s1);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;
+  padding:0 20px;gap:16px;
+  position:relative;
+}
+.topbar::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent);
+  opacity:.3;
+}
+.tb-logo{font-family:var(--display);font-weight:800;font-size:12px;color:var(--accent);letter-spacing:2.5px;white-space:nowrap;}
+.tb-sep{width:1px;height:20px;background:var(--border2);}
+.tb-sub{font-size:9px;color:var(--muted);letter-spacing:1px;}
+.tb-spacer{flex:1;}
+.tb-date{font-size:10px;color:var(--muted2);letter-spacing:.5px;}
+.tb-btn{
+  font-size:9px;font-family:var(--mono);font-weight:500;letter-spacing:.8px;
+  padding:5px 12px;border-radius:2px;cursor:pointer;
+  background:transparent;border:1px solid var(--border2);color:var(--muted2);
+  display:flex;align-items:center;gap:6px;transition:all .15s;white-space:nowrap;
+}
+.tb-btn:hover{border-color:var(--accent);color:var(--accent);}
+.sync-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.2};}
+
+/* ══════════════════════════════════════
+   BODY LAYOUT
+══════════════════════════════════════ */
+.body{flex:1;display:flex;overflow:hidden;}
+
+/* SIDEBAR GAUCHE — paramètres */
+.sidebar-left{
+  width:var(--sidebar-w);flex-shrink:0;
+  background:var(--s1);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow-y:auto;
+  transition:width .25s;
+}
+.sidebar-left.collapsed{width:36px;overflow:hidden;}
+.sl-toggle{
+  height:36px;display:flex;align-items:center;justify-content:flex-end;
+  padding:0 10px;border-bottom:1px solid var(--border);
+  font-size:11px;color:var(--muted);cursor:pointer;flex-shrink:0;
+  transition:color .15s;
+}
+.sl-toggle:hover{color:var(--accent);}
+.sl-content{padding:14px 16px;flex:1;}
+.sl-section{margin-bottom:16px;}
+.sl-title{
+  font-size:8px;font-weight:600;letter-spacing:1.5px;
+  color:var(--muted);text-transform:uppercase;
+  padding-bottom:8px;border-bottom:1px solid var(--border);
+  margin-bottom:10px;
+}
+.sl-row{margin-bottom:8px;}
+.sl-label{font-size:9px;color:var(--muted);letter-spacing:.3px;margin-bottom:3px;display:flex;justify-content:space-between;}
+.sl-label span{color:var(--muted2);}
+.sl-input{
+  width:100%;padding:5px 8px;
+  background:var(--s3);border:1px solid var(--border);
+  border-radius:2px;color:var(--text);
+  font-size:11px;font-family:var(--mono);outline:none;
+  transition:border-color .15s;
+}
+.sl-input:focus{border-color:var(--accent);}
+.sl-hint{font-size:9px;color:var(--muted);line-height:1.5;margin-top:4px;}
+
+/* missions compactes */
+.mis-item{
+  padding:6px 0;border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;
+}
+.mis-item:last-child{border:none;}
+.mis-name{font-size:10px;font-weight:500;color:var(--text);}
+.mis-client{font-size:9px;color:var(--muted);}
+.mis-badge{
+  font-size:9px;font-family:var(--mono);font-weight:600;
+  padding:2px 6px;border-radius:2px;white-space:nowrap;flex-shrink:0;
+}
+
+/* ══════════════════════════════════════
+   MAIN CONTENT
+══════════════════════════════════════ */
+.main-content{
+  flex:1;overflow:hidden;
+  display:flex;flex-direction:column;
+}
+
+/* KPI STRIP — ligne du haut toujours visible */
+.kpi-strip{
+  display:flex;gap:1px;background:var(--border);
+  border-bottom:1px solid var(--border);flex-shrink:0;
+  height:90px;
+}
+.kpi-card{
+  flex:1;background:var(--s1);
+  padding:14px 18px;
+  display:flex;flex-direction:column;justify-content:space-between;
+  position:relative;overflow:hidden;
+  transition:background .15s;cursor:default;
+}
+.kpi-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  opacity:.6;
+}
+.kpi-card.kc-green::before{background:var(--green);}
+.kpi-card.kc-yellow::before{background:var(--yellow);}
+.kpi-card.kc-blue::before{background:var(--blue);}
+.kpi-card.kc-orange::before{background:var(--accent);}
+.kpi-card.kc-warn::before{background:var(--warn);}
+.kpi-card.kc-purple::before{background:var(--purple);}
+.kpi-card::after{
+  content:'';position:absolute;right:-10px;bottom:-10px;
+  width:80px;height:80px;border-radius:50%;filter:blur(30px);opacity:.06;pointer-events:none;
+}
+.kpi-card.kc-green::after{background:var(--green);}
+.kpi-card.kc-yellow::after{background:var(--yellow);}
+.kpi-card.kc-blue::after{background:var(--blue);}
+.kpi-card.kc-orange::after{background:var(--accent);}
+.kpi-card.kc-warn::after{background:var(--warn);}
+.kpi-card.kc-purple::after{background:var(--purple);}
+
+.kpi-label{font-size:8px;font-weight:600;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;}
+.kpi-value{font-family:var(--display);font-weight:800;font-size:30px;line-height:1;letter-spacing:-1px;}
+.kpi-sub{font-size:9px;color:var(--muted2);display:flex;align-items:center;gap:6px;}
+.kpi-badge{
+  font-size:8px;padding:1px 6px;border-radius:10px;font-weight:600;letter-spacing:.3px;
+}
+.kb-green{background:rgba(34,212,122,.12);color:var(--green);}
+.kb-yellow{background:rgba(245,197,24,.12);color:var(--yellow);}
+.kb-warn{background:rgba(255,71,87,.12);color:var(--warn);}
+.kb-blue{background:rgba(77,166,255,.1);color:var(--blue);}
+.kb-muted{background:var(--s3);color:var(--muted2);}
+.kb-orange{background:rgba(249,115,22,.1);color:var(--accent);}
+
+/* ══════════════════════════════════════
+   GRILLE INFÉRIEURE
+══════════════════════════════════════ */
+.grid-body{
+  flex:1;overflow:hidden;
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr 1fr;
+  grid-template-rows:1fr 1fr;
+  gap:1px;background:var(--border);
+}
+.panel{
+  background:var(--s1);
+  padding:16px 18px;
+  display:flex;flex-direction:column;gap:8px;
+  overflow:hidden;position:relative;
+}
+.p-title{
+  font-size:8px;font-weight:600;letter-spacing:1.5px;
+  color:var(--muted);text-transform:uppercase;
+  display:flex;justify-content:space-between;align-items:center;
+  flex-shrink:0;
+}
+.p-badge{font-size:8px;padding:2px 7px;border-radius:10px;font-weight:600;}
+
+/* Stat rows */
+.st{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:5px 0;border-bottom:1px solid var(--border);font-size:10px;
+}
+.st:last-child{border:none;}
+.st-l{color:var(--muted2);}
+.st-r{font-weight:500;}
+
+/* Bar rows */
+.br{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin-bottom:7px;}
+.br-l{font-size:9px;color:var(--muted2);}
+.br-v{font-size:10px;font-weight:600;text-align:right;min-width:24px;}
+.bar-bg{height:3px;background:var(--s4);border-radius:2px;margin-top:2px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:2px;transition:width .7s cubic-bezier(.22,1,.36,1);}
+
+/* Pipeline stages */
+.pipe{margin-bottom:8px;}
+.pipe-hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px;}
+.pipe-nm{font-size:9px;font-weight:600;letter-spacing:.3px;}
+.pipe-ct{font-family:var(--display);font-size:18px;font-weight:800;line-height:1;}
+.pipe-track{height:4px;background:var(--s4);border-radius:2px;overflow:hidden;}
+.pipe-fill{height:100%;border-radius:2px;transition:width .7s cubic-bezier(.22,1,.36,1);}
+
+/* Ring SVG */
+.ring-wrap{display:flex;align-items:center;gap:14px;flex-shrink:0;}
+.ring-val{font-family:var(--display);font-size:20px;font-weight:800;line-height:1;}
+.ring-lbl{font-size:8px;color:var(--muted);letter-spacing:.5px;margin-top:2px;}
+.ring-sub{font-size:9px;color:var(--muted2);margin-top:4px;line-height:1.5;}
+
+/* Alertes */
+.alert-row{
+  display:flex;align-items:flex-start;gap:8px;
+  padding:6px 8px;border-radius:2px;
+  font-size:9px;line-height:1.5;margin-bottom:3px;
+  border-left:2px solid;
+}
+.ar-warn{background:rgba(255,71,87,.07);border-color:var(--warn);color:var(--text);}
+.ar-yellow{background:rgba(245,197,24,.06);border-color:var(--yellow);color:var(--text);}
+.ar-ok{background:rgba(34,212,122,.06);border-color:var(--green);color:var(--text);}
+.ar-info{background:rgba(77,166,255,.06);border-color:var(--blue);color:var(--text);}
+.ar-icon{font-size:10px;flex-shrink:0;margin-top:1px;}
+
+/* Actions list */
+.act-row{
+  display:flex;align-items:flex-start;gap:8px;
+  padding:6px 0;border-bottom:1px solid var(--border);
+  font-size:9px;
+}
+.act-row:last-child{border:none;}
+.act-type{
+  font-size:8px;padding:2px 5px;border-radius:2px;
+  font-weight:600;letter-spacing:.3px;white-space:nowrap;flex-shrink:0;
+}
+.at-retard{background:rgba(255,71,87,.15);color:var(--warn);}
+.at-soon{background:rgba(77,166,255,.1);color:var(--blue);}
+.act-name{font-weight:600;color:var(--text);}
+.act-meta{color:var(--muted2);}
+
+/* Scrollable inner */
+.p-scroll{overflow-y:auto;flex:1;}
+::-webkit-scrollbar{width:2px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:1px;}
+
+/* Sparkline */
+svg.spark{width:100%;height:28px;overflow:visible;}
+
+/* Score semaine */
+.score-big{font-family:var(--display);font-size:36px;font-weight:800;line-height:1;}
+
+/* Trend */
+.trend{font-size:9px;display:flex;align-items:center;gap:4px;}
+.trend-up{color:var(--green);}
+.trend-dn{color:var(--warn);}
+.trend-fl{color:var(--muted2);}
+
+/* Alerte fin de mission */
+.fin-mis{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:5px 7px;border-radius:2px;margin-bottom:4px;
+  font-size:9px;
+}
+.fm-warn{background:rgba(255,71,87,.1);border-left:2px solid var(--warn);}
+.fm-yellow{background:rgba(245,197,24,.08);border-left:2px solid var(--yellow);}
+.fm-cand{font-weight:600;color:var(--text);}
+.fm-client{color:var(--muted2);}
+.fm-days{font-weight:700;font-family:var(--mono);white-space:nowrap;}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ══ TOPBAR ══ -->
+<div class="topbar">
+  <div class="tb-logo">JT ARKPROD</div>
+  <div class="tb-sep"></div>
+  <div class="tb-sub">PILOTAGE RA · TEMPS RÉEL</div>
+  <div class="tb-spacer"></div>
+  <div class="tb-date" id="td-date"></div>
+  <div class="tb-btn" onclick="toggleSidebar()">⊞ PARAMS</div>
+  <div class="tb-btn" onclick="refresh()">
+    <div class="sync-dot"></div>
+    <span id="sync-lbl">SYNC</span>
+  </div>
+</div>
+
+<!-- ══ BODY ══ -->
+<div class="body">
+
+  <!-- SIDEBAR GAUCHE -->
+  <div class="sidebar-left" id="sidebar-left">
+    <div class="sl-toggle" onclick="toggleSidebar()" title="Réduire">◀ RÉDUIRE</div>
+    <div class="sl-content">
+
+      <div class="sl-section">
+        <div class="sl-title">Calcul marge</div>
+        <div class="sl-row">
+          <div class="sl-label">Taux client moyen (€/h)</div>
+          <input class="sl-input" id="cfg-tc" type="number" value="34" step="0.5" oninput="refresh()"/>
+        </div>
+        <div class="sl-row">
+          <div class="sl-label">Taux brut moyen (€/h)</div>
+          <input class="sl-input" id="cfg-tb" type="number" value="15.5" step="0.5" oninput="refresh()"/>
+        </div>
+        <div class="sl-row">
+          <div class="sl-label">Heures / sem / ETP <span>Base légale 35h</span></div>
+          <input class="sl-input" id="cfg-h" type="number" value="35" oninput="refresh()"/>
+          <div class="sl-hint">35h standard · Heures sup calculées en sus sur contrat</div>
+        </div>
+        <div class="sl-row">
+          <div class="sl-label">Charges fixes / mois (€)</div>
+          <input class="sl-input" id="cfg-ff" type="number" value="12000" step="500" oninput="refresh()"/>
+          <div class="sl-hint">Loyer + permanents + redevances + RA</div>
+        </div>
+      </div>
+
+      <div class="sl-section">
+        <div class="sl-title">KPI manuels</div>
+        <div class="sl-row">
+          <div class="sl-label">Factures impayées (€)</div>
+          <input class="sl-input" id="cfg-impaye" type="number" value="0" step="500" oninput="refresh()"/>
+        </div>
+        <div class="sl-row">
+          <div class="sl-label">CA mensuel réel (€) <span>0=auto</span></div>
+          <input class="sl-input" id="cfg-ca" type="number" value="0" step="1000" oninput="refresh()"/>
+        </div>
+        <div class="sl-row">
+          <div class="sl-label">DSO actuel (jours) <span>0=auto</span></div>
+          <input class="sl-input" id="cfg-dso" type="number" value="0" oninput="refresh()"/>
+        </div>
+        <div class="sl-row">
+          <div class="sl-label">Seuil ETP (depuis P&L)</div>
+          <input class="sl-input" id="cfg-seuil-etp" type="number" value="9" step="0.5" oninput="refresh()"/>
+        </div>
+        <div class="sl-row">
+          <div class="sl-label">Objectif CA mensuel (€)</div>
+          <input class="sl-input" id="cfg-obj-ca" type="number" value="0" step="1000" oninput="refresh()"/>
+          <div class="sl-hint">Laisser 0 si non défini</div>
+        </div>
+      </div>
+
+      <div class="sl-section">
+        <div class="sl-title">Objectifs RA (direction)</div>
+        <div class="sl-row">
+          <div class="sl-label">ETP cible (mois) <span id="obj-etp-ecart"></span></div>
+          <input class="sl-input" id="cfg-obj-etp" type="number" value="0" step="0.5" oninput="refresh()"/>
+        </div>
+        <div class="sl-row">
+          <div class="sl-label">Taux marge cible (%) <span id="obj-mb-ecart"></span></div>
+          <input class="sl-input" id="cfg-obj-mb" type="number" value="18" step="0.5" oninput="refresh()"/>
+        </div>
+        <div class="sl-row">
+          <div class="sl-label">RDV commerciaux / semaine <span id="obj-rdv-ecart"></span></div>
+          <input class="sl-input" id="cfg-obj-rdv" type="number" value="5" oninput="refresh()"/>
+        </div>
+        <div class="sl-row">
+          <div class="sl-label">Appels / semaine <span id="obj-appels-ecart"></span></div>
+          <input class="sl-input" id="cfg-obj-appels" type="number" value="20" oninput="refresh()"/>
+        </div>
+      </div>
+
+      <div class="sl-section">
+        <div class="sl-title">Missions en cours</div>
+        <div id="mis-list"><div style="font-size:9px;color:var(--muted)">Aucune mission détectée</div></div>
+      </div>
+
+      <div class="sl-section">
+        <div class="sl-title">Score semaine CRM</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="score-big" id="score-val" style="color:var(--accent)">—</div>
+          <div style="flex:1">
+            <div class="bar-bg" style="height:5px"><div class="bar-fill" id="score-bar" style="background:var(--accent)"></div></div>
+            <div style="font-size:9px;color:var(--muted);margin-top:3px" id="score-detail">Données depuis CRM</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+
+    <!-- KPI STRIP -->
+    <div class="kpi-strip">
+      <!-- Marge brute -->
+      <div class="kpi-card kc-green" id="kc-marge">
+        <div class="kpi-label">Marge brute</div>
+        <div class="kpi-value" id="kv-marge" style="color:var(--green)">—%</div>
+        <div class="kpi-sub">
+          <span class="kpi-badge" id="kb-marge">—</span>
+          <span id="ks-marge" style="color:var(--muted2)">Obj ≥ 18%</span>
+        </div>
+      </div>
+      <!-- RBE -->
+      <div class="kpi-card kc-yellow" id="kc-rbe">
+        <div class="kpi-label">RBE mensuel est.</div>
+        <div class="kpi-value" id="kv-rbe" style="color:var(--yellow)">—€</div>
+        <div class="kpi-sub">
+          <span class="kpi-badge" id="kb-rbe">—</span>
+          <span id="ks-rbe" style="color:var(--muted2)">—</span>
+        </div>
+      </div>
+      <!-- ETP / Seuil -->
+      <div class="kpi-card kc-blue" id="kc-etp">
+        <div class="kpi-label">ETP actifs / seuil</div>
+        <div class="kpi-value" id="kv-etp" style="color:var(--blue)">—/—</div>
+        <div class="kpi-sub">
+          <span class="kpi-badge" id="kb-etp">—</span>
+          <span id="ks-etp" style="color:var(--muted2)">—</span>
+        </div>
+      </div>
+      <!-- CA estimé -->
+      <div class="kpi-card kc-orange" id="kc-ca">
+        <div class="kpi-label">CA mensuel est.</div>
+        <div class="kpi-value" id="kv-ca" style="color:var(--accent)">—€</div>
+        <div class="kpi-sub">
+          <span class="kpi-badge" id="kb-ca">—</span>
+          <span id="ks-ca">—</span>
+        </div>
+      </div>
+      <!-- Coeff -->
+      <div class="kpi-card kc-purple" id="kc-coeff">
+        <div class="kpi-label">Coeff. facturation</div>
+        <div class="kpi-value" id="kv-coeff" style="color:var(--purple)">—</div>
+        <div class="kpi-sub">
+          <span class="kpi-badge" id="kb-coeff">—</span>
+          <span style="color:var(--muted2)">Plancher ×2.05</span>
+        </div>
+      </div>
+      <!-- Alertes count -->
+      <div class="kpi-card kc-warn" id="kc-alertes">
+        <div class="kpi-label">Alertes actives</div>
+        <div class="kpi-value" id="kv-alertes" style="color:var(--warn)">0</div>
+        <div class="kpi-sub">
+          <span class="kpi-badge" id="kb-alertes">—</span>
+          <span id="ks-alertes" style="color:var(--muted2)">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- GRILLE 4×2 -->
+    <div class="grid-body">
+
+      <!-- P1 : MARGE + SPARKLINE -->
+      <div class="panel">
+        <div class="p-title">Marge brute
+          <span class="p-badge kb-muted" id="pb-marge">—</span>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-end">
+          <div>
+            <div style="font-family:var(--display);font-size:38px;font-weight:800;line-height:1" id="pm-marge">—%</div>
+            <div class="trend" id="pm-trend" style="margin-top:4px"></div>
+          </div>
+          <div style="flex:1" id="spark-wrap"></div>
+        </div>
+        <div class="st"><span class="st-l">CA estimé / mois</span><span class="st-r" id="pm-ca">—</span></div>
+        <div class="st"><span class="st-l">Heures facturées / mois</span><span class="st-r" id="pm-h">—</span></div>
+        <div class="st"><span class="st-l">Masse salariale est.</span><span class="st-r" id="pm-ms">—</span></div>
+      </div>
+
+      <!-- P2 : SEUIL RENTABILITÉ -->
+      <div class="panel">
+        <div class="p-title">Seuil de rentabilité
+          <span class="p-badge" id="pb-seuil">—</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;margin-top:4px">
+          <div style="text-align:center">
+            <div style="font-size:8px;color:var(--muted);letter-spacing:.5px">ACTIFS</div>
+            <div style="font-family:var(--display);font-size:34px;font-weight:800;line-height:1" id="seuil-cur">—</div>
+          </div>
+          <div style="flex:1">
+            <div style="display:flex;justify-content:space-between;font-size:8px;color:var(--muted);margin-bottom:3px">
+              <span>0</span><span id="seuil-lbl">seuil</span>
+            </div>
+            <div style="height:10px;background:var(--s4);border-radius:5px;overflow:hidden">
+              <div id="seuil-prog" style="height:100%;border-radius:5px;transition:width .7s cubic-bezier(.22,1,.36,1)"></div>
+            </div>
+            <div style="font-size:9px;color:var(--muted2);margin-top:4px" id="seuil-txt">—</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:8px;color:var(--muted);letter-spacing:.5px">SEUIL</div>
+            <div style="font-family:var(--display);font-size:34px;font-weight:800;line-height:1;color:var(--accent)" id="seuil-need">—</div>
+          </div>
+        </div>
+        <div class="st"><span class="st-l">ETP manquants</span><span class="st-r" id="seuil-gap">—</span></div>
+        <div class="st"><span class="st-l">Marge / ETP / mois</span><span class="st-r" id="seuil-mbetp">—</span></div>
+        <div class="st"><span class="st-l">Frais fixes / mois</span><span class="st-r" id="seuil-ff">—</span></div>
+      </div>
+
+      <!-- P3 : TAUX DE TRANSFORMATION -->
+      <div class="panel">
+        <div class="p-title">Transformation CV→Mission
+          <span class="p-badge" id="pb-transfo">—</span>
+        </div>
+        <div class="ring-wrap" style="margin-top:4px">
+          <svg width="66" height="66" viewBox="0 0 66 66" style="flex-shrink:0">
+            <circle cx="33" cy="33" r="26" fill="none" stroke="var(--s4)" stroke-width="6"/>
+            <circle id="ring-transfo" cx="33" cy="33" r="26" fill="none" stroke="var(--purple)"
+                    stroke-width="6" stroke-linecap="round" stroke-dasharray="163.4"
+                    stroke-dashoffset="163.4" transform="rotate(-90 33 33)"
+                    style="transition:stroke-dashoffset .8s cubic-bezier(.22,1,.36,1)"/>
+          </svg>
+          <div>
+            <div class="ring-val" id="rv-transfo" style="color:var(--purple)">—%</div>
+            <div class="ring-lbl">CVs → MISSIONS</div>
+            <div class="ring-sub" id="rs-transfo">Objectif 15–25%</div>
+          </div>
+        </div>
+        <div class="st"><span class="st-l">CVs envoyés</span><span class="st-r" id="t-cvs">—</span></div>
+        <div class="st"><span class="st-l">Missions démarrées</span><span class="st-r" id="t-mis">—</span></div>
+        <div class="st"><span class="st-l">Besoins ouverts</span><span class="st-r" id="t-besoins">—</span></div>
+      </div>
+
+      <!-- P4 : ALERTES + FINS DE MISSION -->
+      <div class="panel">
+        <div class="p-title">Alertes
+          <span class="p-badge" id="pb-alertes">—</span>
+        </div>
+        <div class="p-scroll" id="alertes-list"></div>
+        <div style="border-top:1px solid var(--border);padding-top:8px;flex-shrink:0">
+          <div style="font-size:8px;color:var(--muted);letter-spacing:1px;margin-bottom:6px">FINS DE MISSION</div>
+          <div id="fins-mis-list"><div style="font-size:9px;color:var(--muted)">Aucune fin imminente</div></div>
+        </div>
+      </div>
+
+      <!-- P5 : PIPELINE COMMERCIAL -->
+      <div class="panel">
+        <div class="p-title">Pipeline commercial
+          <span class="p-badge kb-muted" id="pb-prospects">—</span>
+        </div>
+        <div style="margin-top:4px;flex:1">
+          <div class="pipe">
+            <div class="pipe-hd">
+              <span class="pipe-nm" style="color:var(--accent)">🔥 CHAUD</span>
+              <span class="pipe-ct" style="color:var(--accent)" id="pp-chaud">—</span>
+            </div>
+            <div class="pipe-track"><div class="pipe-fill" id="pf-chaud" style="background:var(--accent)"></div></div>
+          </div>
+          <div class="pipe">
+            <div class="pipe-hd">
+              <span class="pipe-nm" style="color:var(--yellow)">~ TIÈDE</span>
+              <span class="pipe-ct" style="color:var(--yellow)" id="pp-tiede">—</span>
+            </div>
+            <div class="pipe-track"><div class="pipe-fill" id="pf-tiede" style="background:var(--yellow)"></div></div>
+          </div>
+          <div class="pipe">
+            <div class="pipe-hd">
+              <span class="pipe-nm" style="color:var(--blue)">❄ FROID</span>
+              <span class="pipe-ct" style="color:var(--blue)" id="pp-froid">—</span>
+            </div>
+            <div class="pipe-track"><div class="pipe-fill" id="pf-froid" style="background:var(--blue)"></div></div>
+          </div>
+          <div class="pipe">
+            <div class="pipe-hd">
+              <span class="pipe-nm" style="color:var(--green)">✓ CLIENT</span>
+              <span class="pipe-ct" style="color:var(--green)" id="pp-client">—</span>
+            </div>
+            <div class="pipe-track"><div class="pipe-fill" id="pf-client" style="background:var(--green)"></div></div>
+          </div>
+        </div>
+        <div class="st"><span class="st-l">Besoins ouverts</span><span class="st-r" id="pp-besoins">—</span></div>
+        <div class="st"><span class="st-l">Taux client</span><span class="st-r" id="pp-txclient">—</span></div>
+      </div>
+
+      <!-- P6 : ACTIONS DU JOUR -->
+      <div class="panel">
+        <div class="p-title">Actions du jour
+          <span class="p-badge" id="pb-actions">—</span>
+        </div>
+        <div class="p-scroll" id="actions-list" style="flex:1"></div>
+        <div style="border-top:1px solid var(--border);padding-top:8px;flex-shrink:0">
+          <div class="st"><span class="st-l">En retard</span><span class="st-r" id="act-retard" style="color:var(--warn)">—</span></div>
+          <div class="st"><span class="st-l">Dans les 7 jours</span><span class="st-r" id="act-soon">—</span></div>
+        </div>
+      </div>
+
+      <!-- P7 : BASE CANDIDATS -->
+      <div class="panel">
+        <div class="p-title">Base candidats
+          <span class="p-badge kb-muted" id="pb-cands">—</span>
+        </div>
+        <div class="br">
+          <div><div class="br-l" style="color:var(--yellow)">⚙ EN MISSION</div><div class="bar-bg"><div class="bar-fill" id="bf-mission" style="background:var(--yellow)"></div></div></div>
+          <div class="br-v" id="bv-mission" style="color:var(--yellow)">—</div>
+        </div>
+        <div class="br">
+          <div><div class="br-l" style="color:var(--green)">✓ DISPONIBLE</div><div class="bar-bg"><div class="bar-fill" id="bf-dispo" style="background:var(--green)"></div></div></div>
+          <div class="br-v" id="bv-dispo" style="color:var(--green)">—</div>
+        </div>
+        <div class="br">
+          <div><div class="br-l" style="color:var(--blue)">⏳ PRÉAVIS</div><div class="bar-bg"><div class="bar-fill" id="bf-preavis" style="background:var(--blue)"></div></div></div>
+          <div class="br-v" id="bv-preavis" style="color:var(--blue)">—</div>
+        </div>
+        <div class="br">
+          <div><div class="br-l">✗ INDISPO</div><div class="bar-bg"><div class="bar-fill" id="bf-indispo" style="background:var(--muted)"></div></div></div>
+          <div class="br-v" id="bv-indispo" style="color:var(--muted2)">—</div>
+        </div>
+        <div class="st"><span class="st-l">Total vivier</span><span class="st-r" id="cv-total">—</span></div>
+        <div class="st"><span class="st-l">Taux dispo immédiate</span><span class="st-r" id="cv-tdispo">—</span></div>
+        <div class="st"><span class="st-l">Habilitations expirées</span><span class="st-r" id="cv-habilit" style="color:var(--warn)">—</span></div>
+      </div>
+
+      <!-- P8 : FIDÉLISATION + DSO -->
+      <div class="panel">
+        <div class="p-title">Fidélisation & recouvrement
+          <span class="p-badge" id="pb-fidel">—</span>
+        </div>
+        <div class="ring-wrap" style="margin-top:4px">
+          <svg width="56" height="56" viewBox="0 0 56 56" style="flex-shrink:0">
+            <circle cx="28" cy="28" r="22" fill="none" stroke="var(--s4)" stroke-width="5"/>
+            <circle id="ring-fidel" cx="28" cy="28" r="22" fill="none" stroke="var(--green)"
+                    stroke-width="5" stroke-linecap="round" stroke-dasharray="138.2"
+                    stroke-dashoffset="138.2" transform="rotate(-90 28 28)"
+                    style="transition:stroke-dashoffset .8s cubic-bezier(.22,1,.36,1)"/>
+          </svg>
+          <div>
+            <div class="ring-val" id="rv-fidel" style="color:var(--green)">—%</div>
+            <div class="ring-lbl">CLIENTS RÉCURRENTS</div>
+            <div class="ring-sub" id="rs-fidel">Objectif ≥ 60%</div>
+          </div>
+        </div>
+        <div class="st"><span class="st-l">Total clients actifs</span><span class="st-r" id="f-clients">—</span></div>
+        <div class="st"><span class="st-l">Avec activité journal</span><span class="st-r" id="f-actifs">—</span></div>
+        <div style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px">
+          <div style="font-size:8px;color:var(--muted);letter-spacing:1px;margin-bottom:6px">DSO / RECOUVREMENT</div>
+          <div class="st"><span class="st-l">DSO estimé (jours)</span><span class="st-r" id="f-dso">—</span></div>
+          <div class="st"><span class="st-l">Impayés déclarés</span><span class="st-r" id="f-impaye">—</span></div>
+          <div class="st"><span class="st-l">Progression vs objectif CA</span><span class="st-r" id="f-prog-ca">—</span></div>
+        </div>
+      </div>
+
+    </div><!-- /grid-body -->
+  </div><!-- /main-content -->
+</div><!-- /body -->
+</div><!-- /shell -->
+
+<script>
+// ──────────────────────────────────────────
+// UTILS
+// ──────────────────────────────────────────
+var TODAY = new Date();
+function fmt(n){return new Intl.NumberFormat('fr-FR',{maximumFractionDigits:0}).format(Math.round(n));}
+function pct(n){return Math.round(n*10)/10+'%';}
+function g(id){return parseFloat(document.getElementById(id).value)||0;}
+function gSafe(id){var e=document.getElementById(id);return e?parseFloat(e.value)||0:0;}
+
+function setDate(){
+  var d=TODAY;
+  var days=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  var months=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+  document.getElementById('td-date').textContent=days[d.getDay()]+' '+d.getDate()+' '+months[d.getMonth()]+' '+d.getFullYear();
+}
+
+function setBadge(id,text,cls){
+  var el=document.getElementById(id); if(!el)return;
+  el.textContent=text;
+  el.className=(el.className.split(' ')[0]||'p-badge')+' '+cls;
+}
+
+function setRing(id,val,max,color){
+  var el=document.getElementById(id); if(!el)return;
+  var r=parseFloat(el.getAttribute('r'));
+  var circ=2*Math.PI*r;
+  var fill=Math.min(1,Math.max(0,val/(max||1)));
+  el.style.strokeDashoffset=circ*(1-fill);
+  if(color)el.setAttribute('stroke',color);
+}
+
+function sparkSVG(vals,color){
+  if(!vals||vals.length<2)return '';
+  var min=Math.min.apply(null,vals),max=Math.max.apply(null,vals),range=max-min||1;
+  var w=200,h=28,pad=3;
+  var pts=vals.map(function(v,i){
+    return (pad+(i/(vals.length-1))*(w-2*pad))+','+(h-pad-(v-min)/range*(h-2*pad));
+  });
+  var path='M'+pts.join(' L');
+  var area=path+' L'+pts[pts.length-1].split(',')[0]+','+(h-pad)+' L'+pad+','+(h-pad)+' Z';
+  return '<svg class="spark" viewBox="0 0 200 28" preserveAspectRatio="none">'
+    +'<defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="'+color+'" stop-opacity=".3"/><stop offset="100%" stop-color="'+color+'" stop-opacity=".02"/></linearGradient></defs>'
+    +'<path d="'+area+'" fill="url(#sg)"/>'
+    +'<path d="'+path+'" fill="none" stroke="'+color+'" stroke-width="1.5" stroke-linecap="round"/>'
+    +'</svg>';
+}
+
+// ──────────────────────────────────────────
+// LECTURE DONNÉES
+// ──────────────────────────────────────────
+function getCRM(){try{return JSON.parse(localStorage.getItem('crm_btp_db')||'[]');}catch(e){return[];}}
+function getCands(){
+  try{
+    var raw=localStorage.getItem('cands_btp_v2');
+    if(!raw)return[];
+    var d=JSON.parse(raw);
+    return Array.isArray(d)?d:(d.candidats||[]);
+  }catch(e){return[];}
+}
+function getScore(){try{return JSON.parse(localStorage.getItem('crm_kpi_semaine')||'{}');}catch(e){return {};}}
+
+// ──────────────────────────────────────────
+// CALCUL PRINCIPAL
+// ──────────────────────────────────────────
+function computeAll(){
+  var DB=getCRM(), cands=getCands();
+  var tc=g('cfg-tc'), tb=g('cfg-tb'), hsem=g('cfg-h'), ff=g('cfg-ff');
+  var impaye=g('cfg-impaye'), caManuel=g('cfg-ca'), dsoManuel=g('cfg-dso');
+  var seuilETP=g('cfg-seuil-etp'), objCA=g('cfg-obj-ca');
+
+  // ── MISSIONS actives ──
+  var missions=[];
+  cands.forEach(function(c){
+    var m=c.mission||{};
+    if(m.client){
+      missions.push({
+        candidat:(c.prenom||'')+' '+(c.nom||'').charAt(0)+'.',
+        nomComplet:(c.prenom||'')+' '+(c.nom||''),
+        client:m.client, qualif:c.qualif||'',
+        dateFin:m.fin||m.date_fin||'', tc:parseFloat(m.tc)||tc
+      });
+    }
+  });
+  DB.forEach(function(p){
+    (p.besoins||[]).forEach(function(b){
+      (b.cvs||[]).forEach(function(cv){
+        if(cv.mission==='oui'){
+          var alreadyIn=missions.some(function(m){return m.nomComplet&&m.nomComplet.toLowerCase()===((cv.candidat||'').split('—')[0].trim()).toLowerCase();});
+          if(!alreadyIn) missions.push({candidat:cv.candidat||'?',nomComplet:cv.candidat||'?',client:p.nom||'',qualif:b.qualif||'',dateFin:b.date_fin||'',tc:parseFloat(b.tauxClient)||tc});
+        }
+      });
+    });
+  });
+  var etpActifs=missions.length;
+
+  // ── CA / MARGE ──
+  // Calcul heures : base 35h légale + majorations heures sup
+  // 36e-43e : +25% | 44e+ : +50%
+  var h35=35, hMois35=h35*47/12;
+  var hSup1=Math.max(0,Math.min(hsem,43)-35); // heures à +25%
+  var hSup2=Math.max(0,hsem-43);              // heures à +50%
+  // Taux brut effectif pondéré (majoré)
+  var tbMaj=tb*h35 + tb*1.25*hSup1 + tb*1.50*hSup2;
+  var tbParH=hsem>0?tbMaj/hsem:tb; // TB moyen pondéré /h
+  var hMois=hsem*47/12;
+  var hMois35Calc=h35*47/12;
+  var caAuto=etpActifs*hMois*tc;
+  var ca=caManuel>0?caManuel:caAuto;
+  var hTotal=etpActifs*hMois;
+  var chargesPatronales=0.43; // Paris BTP ACOSS 2025
+  // Masse salariale sur base majorée
+  var sbBase=etpActifs*hMois*tbParH;
+  var ifm=sbBase*0.10;
+  var icp=(sbBase+ifm)*0.10;
+  var ms=(sbBase+ifm+icp)*(1+chargesPatronales);
+  var mb=ca-ms;
+  var mbPct=ca>0?mb/ca*100:0;
+  var coeff=tb>0?tc/tb:0;
+  var rbe=mb-ff;
+
+  // ── FINS DE MISSION imminentes ──
+  var finsMission=[];
+  missions.forEach(function(m){
+    if(!m.dateFin)return;
+    var df=new Date(m.dateFin);
+    if(isNaN(df.getTime()))return;
+    var diff=Math.round((df-TODAY)/86400000);
+    if(diff<=7)finsMission.push({candidat:m.candidat,client:m.client,diff:diff});
+  });
+  finsMission.sort(function(a,b){return a.diff-b.diff;});
+
+  // ── PIPELINE ──
+  var statuts={chaud:0,tiede:0,froid:0,client:0,veille:0};
+  var totalProspects=DB.length;
+  DB.forEach(function(p){var s=p.statut||'froid';if(statuts[s]!==undefined)statuts[s]++;});
+  var txClient=totalProspects>0?statuts.client/totalProspects*100:0;
+
+  // ── BESOINS + TRANSFORMATION ──
+  var totalCVs=0,totalMissionsStart=0,totalBesoinsOuverts=0;
+  DB.forEach(function(p){
+    (p.besoins||[]).forEach(function(b){
+      if(!b.clos)totalBesoinsOuverts++;
+      (b.cvs||[]).forEach(function(cv){totalCVs++;if(cv.mission==='oui')totalMissionsStart++;});
+    });
+  });
+  var tauxTransfo=totalCVs>0?totalMissionsStart/totalCVs*100:0;
+
+  // ── FIDÉLISATION ──
+  var clientsAvecJournal=DB.filter(function(p){return p.statut==='client'&&(p.journal||[]).length>0;}).length;
+  var fidel=statuts.client>0?clientsAvecJournal/statuts.client*100:0;
+
+  // ── CANDIDATS ──
+  var cntDispo={mission:0,dispo:0,preavis:0,indispo:0};
+  var habilitExpires=0;
+  cands.forEach(function(c){
+    var d=c.dispo||'indispo';
+    if(cntDispo[d]!==undefined)cntDispo[d]++;
+    // Habilitations expirées
+    var h=c.habilitations||[];
+    h.forEach(function(hb){
+      if(hb.expiration){
+        var exp=new Date(hb.expiration);
+        if(!isNaN(exp.getTime())&&exp<TODAY)habilitExpires++;
+      }
+    });
+  });
+  var totalCands=cands.length;
+  var tauxDispoImm=totalCands>0?(cntDispo.dispo)/totalCands*100:0;
+
+  // ── ACTIONS DU JOUR ──
+  var retard=[],soon=[];
+  DB.forEach(function(p){
+    if(!p.nextDate)return;
+    var d=new Date(p.nextDate);
+    if(isNaN(d.getTime()))return;
+    var diff=Math.round((d-TODAY)/86400000);
+    if(diff<0)retard.push({nom:p.nom,diff:diff,action:p.nextType||'action',detail:p.nextDetail||''});
+    else if(diff<=7)soon.push({nom:p.nom,diff:diff,action:p.nextType||'action',detail:p.nextDetail||''});
+  });
+  retard.sort(function(a,b){return a.diff-b.diff;});
+  soon.sort(function(a,b){return a.diff-b.diff;});
+
+  // ── SEUIL ──
+  var mbParH=tc-tb*(1+chargesPatronales+0.10+0.10*1.10);
+  var mbParETP=mbParH*hMois;
+  var etpGap=Math.max(0,seuilETP-etpActifs);
+
+  // ── DSO ──
+  var dso=dsoManuel>0?dsoManuel:(impaye>0&&ca>0?Math.round(impaye/ca*30):0);
+
+  // ── SCORE CRM ──
+  var scoreKpi=getScore();
+  var score=scoreKpi.score||0;
+
+  // ── ALERTES ──
+  var alertes=[];
+  if(mbPct>0&&mbPct<12)alertes.push({t:'warn',m:'Marge critique : '+pct(mbPct)+' (seuil mini 12%)'});
+  else if(mbPct>=12&&mbPct<16)alertes.push({t:'yellow',m:'Marge faible : '+pct(mbPct)+' — objectif 18%'});
+  if(rbe<0)alertes.push({t:'warn',m:'RBE négatif : '+fmt(rbe)+'€/mois'});
+  if(etpGap>0)alertes.push({t:'yellow',m:etpGap+' ETP manquant(s) pour le seuil'});
+  if(coeff>0&&coeff<2.05)alertes.push({t:'warn',m:'Coeff insuffisant ×'+Math.round(coeff*100)/100+' — perte à chaque heure'});
+  if(retard.length>0)alertes.push({t:'yellow',m:retard.length+' action(s) CRM en retard'});
+  if(impaye>0)alertes.push({t:'warn',m:'Impayés : '+fmt(impaye)+'€'});
+  if(dso>60)alertes.push({t:'warn',m:'DSO '+dso+'j — seuil alerte 60j'});
+  else if(dso>45)alertes.push({t:'yellow',m:'DSO '+dso+'j — surveiller délais clients'});
+  if(cntDispo.dispo===0&&cntDispo.preavis===0&&totalCands>0)alertes.push({t:'yellow',m:'Aucun candidat disponible — risque sur nouvelles missions'});
+  if(habilitExpires>0)alertes.push({t:'warn',m:habilitExpires+' habilitation(s) expirée(s) dans le vivier'});
+  // Alertes visites médicales expirées ou imminentes
+  var vmExpirees=0, vmProches=0;
+  cands.forEach(function(c){
+    var vm=c.visite_medicale||{};
+    if(!vm.expiration) return;
+    var exp=new Date(vm.expiration);
+    if(isNaN(exp.getTime())) return;
+    var diff=Math.round((exp-TODAY)/86400000);
+    if(diff<0) vmExpirees++;
+    else if(diff<=30) vmProches++;
+  });
+  if(vmExpirees>0)alertes.push({t:'warn',m:vmExpirees+' visite(s) médicale(s) expirée(s) — renouvellement urgent'});
+  if(vmProches>0)alertes.push({t:'yellow',m:vmProches+' visite(s) médicale(s) à renouveler dans 30 jours'});
+  // Alertes fins de mission J-7 et J-3
+  finsMission.filter(function(f){return f.diff<=7&&f.diff>3;}).forEach(function(f){
+    alertes.push({t:'yellow',m:'Fin de mission J-'+f.diff+' : '+f.candidat+' chez '+f.client});
+  });
+  finsMission.filter(function(f){return f.diff<=3;}).forEach(function(f){
+    alertes.push({t:'warn',m:'Fin de mission J-'+f.diff+' : '+f.candidat+' chez '+f.client+' — à renouveler'});
+  });
+  // Objectifs RA : écarts
+  var objETP=gSafe('cfg-obj-etp'), objMB=gSafe('cfg-obj-mb'), objRDV=gSafe('cfg-obj-rdv'), objAppels=gSafe('cfg-obj-appels');
+  var scoreKpiRaw=getScore();
+  if(objETP>0&&etpActifs<objETP*0.8) alertes.push({t:'yellow',m:'ETP : '+etpActifs+'/'+objETP+' — écart direction '+(objETP-etpActifs)+' ETP'});
+  if(objMB>0&&mbPct>0&&mbPct<objMB-3) alertes.push({t:'yellow',m:'Marge : '+Math.round(mbPct)+'% vs objectif '+objMB+'% — écart '+Math.round(objMB-mbPct)+'pts'});
+  if(objAppels>0&&scoreKpiRaw.appels!==undefined&&scoreKpiRaw.appels<objAppels*0.7) alertes.push({t:'yellow',m:'Appels semaine : '+scoreKpiRaw.appels+'/'+objAppels+' (objectif direction)'});
+
+  return {
+    ca,mb,mbPct,coeff,rbe,etpActifs,hTotal,ms,
+    statuts,totalProspects,txClient,
+    totalCVs,totalMissionsStart,totalBesoinsOuverts,tauxTransfo,
+    clientsAvecJournal,fidel,
+    cntDispo,totalCands,tauxDispoImm,habilitExpires,
+    retard,soon,missions,finsMission,
+    seuilETP,etpGap,mbParETP,ff,
+    score,scoreKpi,
+    dso,impaye,objCA,alertes
+  };
+}
+
+// ──────────────────────────────────────────
+// RENDU
+// ──────────────────────────────────────────
+function refresh(){
+  var d=computeAll();
+  var el=function(id){return document.getElementById(id);};
+  var set=function(id,v){var e=el(id);if(e)e.textContent=v;};
+  var col=function(id,c){var e=el(id);if(e)e.style.color=c;};
+
+  // ── KPI STRIP ──
+  var mbColor=d.mbPct>=18?'var(--green)':d.mbPct>=12?'var(--yellow)':'var(--warn)';
+  var mbCls=d.mbPct>=18?'kb-green':d.mbPct>=12?'kb-yellow':'kb-warn';
+  col('kv-marge',mbColor);
+  set('kv-marge',d.mbPct>0?pct(d.mbPct):'—%');
+  setBadge('kb-marge',d.mbPct>=18?'✓ BON':d.mbPct>=12?'⚠ FAIBLE':'✗ CRITIQUE',mbCls);
+  set('ks-marge','Obj ≥ 18% · ×'+Math.round(d.coeff*100)/100);
+
+  var rbeColor=d.rbe>5000?'var(--green)':d.rbe>=0?'var(--yellow)':'var(--warn)';
+  col('kv-rbe',rbeColor);
+  set('kv-rbe',(d.rbe>0?'+':'')+fmt(d.rbe)+'€');
+  setBadge('kb-rbe',d.rbe>5000?'✓ RENTABLE':d.rbe>=0?'⚖ ÉQUILIBRE':'✗ DÉFICIT',d.rbe>5000?'kb-green':d.rbe>=0?'kb-yellow':'kb-warn');
+  set('ks-rbe','FF: '+fmt(d.ff)+'€ · ETP: '+d.etpActifs);
+
+  var etpColor=d.etpActifs>=d.seuilETP?'var(--green)':d.etpActifs>=d.seuilETP*.7?'var(--yellow)':'var(--warn)';
+  col('kv-etp',etpColor);
+  set('kv-etp',d.etpActifs+'/'+d.seuilETP);
+  setBadge('kb-etp',d.etpGap===0?'✓ SEUIL ATTEINT':'−'+d.etpGap+' ETP',d.etpGap===0?'kb-green':d.etpGap<=3?'kb-yellow':'kb-warn');
+  set('ks-etp',d.mbParETP>0?fmt(d.mbParETP)+'€/ETP/mois':'—');
+
+  col('kv-ca','var(--accent)');
+  set('kv-ca',fmt(d.ca)+'€');
+  var progCA=d.objCA>0?Math.round(d.ca/d.objCA*100):null;
+  setBadge('kb-ca',progCA!==null?progCA+'% obj':'CA AUTO','kb-orange');
+  set('ks-ca',d.etpActifs+' ETP · '+fmt(d.hTotal)+'h/mois');
+
+  var coeffColor=d.coeff>=2.2?'var(--green)':d.coeff>=2.05?'var(--yellow)':'var(--warn)';
+  col('kv-coeff',coeffColor);
+  set('kv-coeff',d.coeff>0?'×'+Math.round(d.coeff*100)/100:'—');
+  setBadge('kb-coeff',d.coeff>=2.2?'✓ BON':d.coeff>=2.05?'⚠ LIMITE':'✗ INSUFFISANT',d.coeff>=2.2?'kb-green':d.coeff>=2.05?'kb-yellow':'kb-warn');
+
+  var nAlertes=d.alertes.length;
+  col('kv-alertes',nAlertes===0?'var(--green)':nAlertes<=2?'var(--yellow)':'var(--warn)');
+  set('kv-alertes',nAlertes);
+  setBadge('kb-alertes',nAlertes===0?'✓ OK':nAlertes+' active(s)',nAlertes===0?'kb-green':nAlertes<=2?'kb-yellow':'kb-warn');
+  set('ks-alertes',d.retard.length>0?d.retard.length+' action(s) en retard':'—');
+
+  // ── P1 MARGE BRUTE ──
+  set('pm-marge',d.mbPct>0?pct(d.mbPct):'—%');
+  el('pm-marge').style.color=mbColor;
+  setBadge('pb-marge',d.mbPct>=18?'✓ BON':d.mbPct>=12?'⚠ FAIBLE':'CRITIQUE','p-badge '+(d.mbPct>=18?'kb-green':d.mbPct>=12?'kb-yellow':'kb-warn'));
+  set('pm-ca',d.ca>0?fmt(d.ca)+'€':'—');
+  set('pm-h',d.hTotal>0?fmt(d.hTotal)+'h':'—');
+  set('pm-ms',d.ms>0?fmt(d.ms)+'€':'—');
+
+  // Sparkline
+  var sparkData=JSON.parse(localStorage.getItem('tdb_spark_marge')||'[]');
+  if(sparkData.length===0)sparkData=[14,15,16,14.5,17,d.mbPct||17];
+  el('spark-wrap').innerHTML=sparkSVG(sparkData,mbColor);
+
+  // Trend
+  var prev=sparkData[sparkData.length-2]||d.mbPct;
+  var diffM=d.mbPct-prev;
+  var tEl=el('pm-trend');
+  if(tEl){
+    if(diffM>0.3)tEl.innerHTML='<span class="trend-up">▲ +'+pct(diffM)+' vs précédent</span>';
+    else if(diffM<-0.3)tEl.innerHTML='<span class="trend-dn">▼ '+pct(diffM)+' vs précédent</span>';
+    else tEl.innerHTML='<span class="trend-fl">― Stable</span>';
+  }
+
+  // ── P2 SEUIL ──
+  var pctS=d.seuilETP>0?Math.min(1,d.etpActifs/d.seuilETP):0;
+  var sColor=pctS>=1?'var(--green)':pctS>=.7?'var(--yellow)':'var(--warn)';
+  set('seuil-cur',d.etpActifs);
+  el('seuil-cur').style.color=sColor;
+  set('seuil-need',d.seuilETP);
+  el('seuil-prog').style.width=(pctS*100)+'%';
+  el('seuil-prog').style.background=sColor;
+  set('seuil-lbl',d.seuilETP+' ETP');
+  set('seuil-txt',pctS>=1?'Seuil atteint ✓':'Manque '+d.etpGap+' ETP · +'+fmt(d.mbParETP)+'€/ETP/mois');
+  setBadge('pb-seuil',pctS>=1?'✓ ATTEINT':Math.round(pctS*100)+'%','p-badge '+(pctS>=1?'kb-green':pctS>=.7?'kb-yellow':'kb-warn'));
+  set('seuil-gap',d.etpGap>0?d.etpGap+' ETP':'Atteint ✓');
+  el('seuil-gap').style.color=d.etpGap>0?'var(--warn)':'var(--green)';
+  set('seuil-mbetp',d.mbParETP>0?fmt(d.mbParETP)+'€':'—');
+  set('seuil-ff',fmt(d.ff)+'€');
+
+  // ── P3 TRANSFORMATION ──
+  setRing('ring-transfo',d.tauxTransfo,30,d.tauxTransfo>=15?'var(--green)':d.tauxTransfo>=8?'var(--yellow)':'var(--purple)');
+  set('rv-transfo',pct(d.tauxTransfo));
+  el('rv-transfo').style.color=d.tauxTransfo>=15?'var(--green)':d.tauxTransfo>=8?'var(--yellow)':'var(--purple)';
+  set('rs-transfo',d.totalCVs+' CVs · '+d.totalMissionsStart+' missions');
+  setBadge('pb-transfo',d.tauxTransfo>=15?'✓ BON':d.tauxTransfo>0?'⚠ FAIBLE':'— N/A','p-badge '+(d.tauxTransfo>=15?'kb-green':d.tauxTransfo>0?'kb-yellow':'kb-muted'));
+  set('t-cvs',d.totalCVs);
+  set('t-mis',d.totalMissionsStart);
+  set('t-besoins',d.totalBesoinsOuverts);
+
+  // ── P4 ALERTES ──
+  var aHtml='';
+  if(d.alertes.length===0){
+    aHtml='<div class="alert-row ar-ok"><span class="ar-icon">✓</span><span>Tous les indicateurs sont dans les normes.</span></div>';
+  }
+  d.alertes.slice(0,6).forEach(function(a){
+    var cls={warn:'ar-warn',yellow:'ar-yellow',info:'ar-info',ok:'ar-ok'}[a.t]||'ar-info';
+    var ic={warn:'🔴',yellow:'⚠',info:'ℹ',ok:'✓'}[a.t]||'·';
+    aHtml+='<div class="alert-row '+cls+'"><span class="ar-icon">'+ic+'</span><span>'+a.m+'</span></div>';
+  });
+  el('alertes-list').innerHTML=aHtml;
+  setBadge('pb-alertes',d.alertes.length+' alerte(s)','p-badge '+(d.alertes.length===0?'kb-green':d.alertes.length<=2?'kb-yellow':'kb-warn'));
+
+  // Fins de mission
+  var fmHtml='';
+  if(d.finsMission.length===0){
+    fmHtml='<div style="font-size:9px;color:var(--muted)">Aucune fin imminente (≤7j)</div>';
+  }
+  d.finsMission.slice(0,4).forEach(function(f){
+    var cls=f.diff<=3?'fm-warn':'fm-yellow';
+    var daysLbl=f.diff<=0?'TERMINÉE':f.diff===1?'1j':f.diff+'j';
+    var dColor=f.diff<=3?'var(--warn)':'var(--yellow)';
+    fmHtml+='<div class="fin-mis '+cls+'">'+
+      '<div><div class="fm-cand">'+f.candidat+'</div><div class="fm-client">'+f.client+'</div></div>'+
+      '<div class="fm-days" style="color:'+dColor+'">'+daysLbl+'</div>'+
+      '</div>';
+  });
+  el('fins-mis-list').innerHTML=fmHtml;
+
+  // ── P5 PIPELINE ──
+  var maxP=Math.max(d.statuts.chaud,d.statuts.tiede,d.statuts.froid,d.statuts.client,1);
+  set('pp-chaud',d.statuts.chaud);
+  set('pp-tiede',d.statuts.tiede);
+  set('pp-froid',d.statuts.froid);
+  set('pp-client',d.statuts.client);
+  el('pf-chaud').style.width=(d.statuts.chaud/maxP*100)+'%';
+  el('pf-tiede').style.width=(d.statuts.tiede/maxP*100)+'%';
+  el('pf-froid').style.width=(d.statuts.froid/maxP*100)+'%';
+  el('pf-client').style.width=(d.statuts.client/maxP*100)+'%';
+  setBadge('pb-prospects',d.totalProspects+' prospects','p-badge kb-muted');
+  set('pp-besoins',d.totalBesoinsOuverts);
+  set('pp-txclient',d.totalProspects>0?pct(d.txClient):'—');
+
+  // ── P6 ACTIONS DU JOUR ──
+  var acHtml='';
+  d.retard.slice(0,3).forEach(function(a){
+    acHtml+='<div class="act-row"><span class="act-type at-retard">'+Math.abs(a.diff)+'J RETARD</span>'
+      +'<div><div class="act-name">'+a.nom+'</div>'
+      +'<div class="act-meta">'+(a.detail||a.action)+'</div></div></div>';
+  });
+  d.soon.slice(0,4).forEach(function(a){
+    acHtml+='<div class="act-row"><span class="act-type at-soon">J+'+(a.diff||0)+'</span>'
+      +'<div><div class="act-name">'+a.nom+'</div>'
+      +'<div class="act-meta">'+(a.detail||a.action)+'</div></div></div>';
+  });
+  if(!acHtml)acHtml='<div style="font-size:9px;color:var(--muted);padding:8px 0">Aucune action planifiée</div>';
+  el('actions-list').innerHTML=acHtml;
+  var retBadge=d.retard.length>0?[d.retard.length+' RETARD','kb-warn']:['À JOUR','kb-green'];
+  setBadge('pb-actions',retBadge[0],'p-badge '+retBadge[1]);
+  set('act-retard',d.retard.length);
+  set('act-soon',d.soon.length);
+
+  // ── P7 CANDIDATS ──
+  var maxC=Math.max(d.cntDispo.mission,d.cntDispo.dispo,d.cntDispo.preavis,d.cntDispo.indispo,1);
+  set('bv-mission',d.cntDispo.mission); el('bf-mission').style.width=(d.cntDispo.mission/maxC*100)+'%';
+  set('bv-dispo',d.cntDispo.dispo); el('bf-dispo').style.width=(d.cntDispo.dispo/maxC*100)+'%';
+  set('bv-preavis',d.cntDispo.preavis); el('bf-preavis').style.width=(d.cntDispo.preavis/maxC*100)+'%';
+  set('bv-indispo',d.cntDispo.indispo); el('bf-indispo').style.width=(d.cntDispo.indispo/maxC*100)+'%';
+  set('cv-total',d.totalCands);
+  set('cv-tdispo',d.totalCands>0?pct(d.tauxDispoImm):'—');
+  set('cv-habilit',d.habilitExpires>0?d.habilitExpires+' ⚠':'—');
+  setBadge('pb-cands',d.totalCands+' profils','p-badge kb-muted');
+
+  // ── P8 FIDÉLISATION + DSO ──
+  setRing('ring-fidel',d.fidel,100,d.fidel>=60?'var(--green)':d.fidel>=40?'var(--yellow)':'var(--muted)');
+  set('rv-fidel',pct(d.fidel));
+  el('rv-fidel').style.color=d.fidel>=60?'var(--green)':d.fidel>=40?'var(--yellow)':'var(--muted2)';
+  set('rs-fidel','Base : '+d.statuts.client+' clients · Obj ≥ 60%');
+  setBadge('pb-fidel',d.fidel>=60?'✓ BON':d.fidel>=40?'⚠ MOYEN':'— N/A','p-badge '+(d.fidel>=60?'kb-green':d.fidel>=40?'kb-yellow':'kb-muted'));
+  set('f-clients',d.statuts.client);
+  set('f-actifs',d.clientsAvecJournal);
+  set('f-dso',d.dso>0?d.dso+'j':'—');
+  el('f-dso').style.color=d.dso>60?'var(--warn)':d.dso>45?'var(--yellow)':'var(--text)';
+  set('f-impaye',d.impaye>0?fmt(d.impaye)+'€':'—');
+  el('f-impaye').style.color=d.impaye>0?'var(--warn)':'var(--muted2)';
+  var progCAdisp=d.objCA>0?pct(Math.round(d.ca/d.objCA*100)):'—';
+  set('f-prog-ca',progCAdisp);
+
+  // ── SIDEBAR MISSIONS ──
+  var mHtml='';
+  if(d.missions.length===0){
+    mHtml='<div style="font-size:9px;color:var(--muted)">Aucune mission active</div>';
+  }
+  d.missions.slice(0,12).forEach(function(m){
+    var joursR='',jColor='var(--muted2)',cls='';
+    if(m.dateFin){
+      var df=new Date(m.dateFin);
+      var diff2=Math.round((df-TODAY)/86400000);
+      if(diff2<=0){joursR='FIN';jColor='var(--warn)';cls='fm-warn';}
+      else if(diff2<=3){joursR=diff2+'j ⚠';jColor='var(--warn)';cls='fm-warn';}
+      else if(diff2<=7){joursR=diff2+'j';jColor='var(--yellow)';cls='fm-yellow';}
+      else{joursR=diff2+'j';jColor='var(--muted2)';}
+    }
+    mHtml+='<div class="mis-item">'+
+      '<div><div class="mis-name">'+m.candidat+'</div><div class="mis-client">'+m.client+'</div></div>'+
+      '<div class="mis-badge" style="background:rgba(0,0,0,.2);color:'+jColor+'">'+joursR+'</div>'+
+      '</div>';
+  });
+  el('mis-list').innerHTML=mHtml;
+
+  // ── SCORE CRM ──
+  var score=d.score||0;
+  set('score-val',score||'—');
+  el('score-val').style.color=score>=80?'var(--green)':score>=50?'var(--yellow)':'var(--accent)';
+  el('score-bar').style.width=(score)+'%';
+  el('score-bar').style.background=score>=80?'var(--green)':score>=50?'var(--yellow)':'var(--accent)';
+  var sk=d.scoreKpi;
+  set('score-detail',sk.appels?sk.appels+' appels · '+(sk.rdv||0)+' RDV · '+(sk.cv_push||0)+' CV':'Données depuis CRM');
+
+  // ── OBJECTIFS RA — ÉCARTS ──
+  function ecartSpan(reel, obj, inverse){
+    if(!obj) return '';
+    var pct=obj>0?Math.round(reel/obj*100):0;
+    var ok=inverse?(reel<=obj*1.1):(reel>=obj*0.9);
+    var color=ok?'var(--green)':'var(--warn)';
+    return '<span style="font-size:9px;color:'+color+'">'+pct+'%</span>';
+  }
+  var objETPv=gSafe('cfg-obj-etp'), objMBv=gSafe('cfg-obj-mb');
+  var objRDVv=gSafe('cfg-obj-rdv'), objAppelsv=gSafe('cfg-obj-appels');
+  var elObjEtp=el('obj-etp-ecart'), elObjMb=el('obj-mb-ecart');
+  var elObjRdv=el('obj-rdv-ecart'), elObjApp=el('obj-appels-ecart');
+  if(elObjEtp) elObjEtp.innerHTML=ecartSpan(d.etpActifs,objETPv,false);
+  if(elObjMb) elObjMb.innerHTML=ecartSpan(d.mbPct,objMBv,false);
+  if(elObjRdv) elObjRdv.innerHTML=ecartSpan(d.scoreKpi.rdv||0,objRDVv,false);
+  if(elObjApp) elObjApp.innerHTML=ecartSpan(d.scoreKpi.appels||0,objAppelsv,false);
+
+  // ── SYNC LABEL ──
+  el('sync-lbl').textContent=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+
+  // Sauvegarder config
+  localStorage.setItem('tdb_cfg',JSON.stringify({
+    tc:g('cfg-tc'),tb:g('cfg-tb'),h:g('cfg-h'),ff:g('cfg-ff'),
+    impaye:g('cfg-impaye'),ca:g('cfg-ca'),dso:g('cfg-dso'),
+    seuilEtp:g('cfg-seuil-etp'),objCa:g('cfg-obj-ca'),
+    objEtp:gSafe('cfg-obj-etp'),objMb:gSafe('cfg-obj-mb'),
+    objRdv:gSafe('cfg-obj-rdv'),objAppels:gSafe('cfg-obj-appels')
+  }));
+}
+
+// ──────────────────────────────────────────
+// SIDEBAR TOGGLE
+// ──────────────────────────────────────────
+function toggleSidebar(){
+  var sl=document.getElementById('sidebar-left');
+  sl.classList.toggle('collapsed');
+}
+
+// ──────────────────────────────────────────
+// INIT
+// ──────────────────────────────────────────
+function init(){
+  setDate();
+  try{
+    var cfg=JSON.parse(localStorage.getItem('tdb_cfg')||'{}');
+    var map={tc:'cfg-tc',tb:'cfg-tb',h:'cfg-h',ff:'cfg-ff',
+             impaye:'cfg-impaye',ca:'cfg-ca',dso:'cfg-dso',
+             seuilEtp:'cfg-seuil-etp',objCa:'cfg-obj-ca',
+             objEtp:'cfg-obj-etp',objMb:'cfg-obj-mb',
+             objRdv:'cfg-obj-rdv',objAppels:'cfg-obj-appels'};
+    Object.entries(map).forEach(function(kv){
+      if(cfg[kv[0]]!==undefined){var e=document.getElementById(kv[1]);if(e)e.value=cfg[kv[0]];}
+    });
+  }catch(e){}
+  refresh();
+  setInterval(refresh,60000);
+}
+
+window.addEventListener('load',init);
+window.addEventListener('storage',function(e){
+  if(['crm_btp_db','cands_btp_v2'].includes(e.key))refresh();
+});
+
+  // --- DÉBUT DU PATCH DEEPSEEK (TABLEAU DE BORD - TDB) ---
+(function() {
+    window.addEventListener('message', function(e) {
+        if(!e.data) return;
+        
+        // Rafraîchissement automatique si un autre module modifie les données
+        if(e.data.type === 'crm_updated' || 
+           e.data.type === 'candidats_updated' || 
+           e.data.type === 'missions_updated' || 
+           e.data.type === 'clients_updated') {
+            
+            if(typeof refresh === 'function') {
+                refresh();
+            }
+        }
+    });
+})();
+// --- FIN DU PATCH DEEPSEEK (TABLEAU DE BORD) ---
+</script>
+</body>
+</html>

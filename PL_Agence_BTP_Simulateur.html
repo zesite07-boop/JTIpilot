@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<title>P&L Agence BTP Intérim — Simulateur</title>
+<style>
+:root{
+  --bg:#0f1117;--surface:#1a1d27;--surface2:#21263a;--surface3:#2a2f45;
+  --border:#2e3350;--border2:#3d4466;
+  --text:#e8eaf6;--muted:#7880a8;--muted2:#a0a8d0;
+  --accent:#f97316;--green:#22c55e;--blue:#60a5fa;--yellow:#eab308;
+  --warn:#ef4444;--cyan:#06b6d4;--purple:#a78bfa;
+  --mono:'Courier New',monospace;--sans:'Segoe UI',Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;min-height:100vh;}
+
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;justify-content:space-between;align-items:center;}
+.header h1{font-size:14px;font-weight:700;color:var(--accent);font-family:var(--mono);letter-spacing:1px;}
+.header p{font-size:10px;color:var(--muted);font-family:var(--mono);}
+.badge{font-size:9px;font-family:var(--mono);padding:3px 8px;border-radius:10px;font-weight:700;}
+.badge-green{background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3);}
+.badge-warn{background:rgba(239,68,68,.15);color:var(--warn);border:1px solid rgba(239,68,68,.3);}
+.badge-yellow{background:rgba(234,179,8,.15);color:var(--yellow);border:1px solid rgba(234,179,8,.3);}
+
+.layout{display:grid;grid-template-columns:380px 1fr;height:calc(100vh - 57px);}
+
+/* SIDEBAR INPUTS */
+.sidebar{background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;padding:16px;}
+.section{margin-bottom:18px;}
+.section-title{font-family:var(--mono);font-size:9px;font-weight:700;color:var(--accent);letter-spacing:1px;padding-bottom:6px;border-bottom:1px solid var(--border);margin-bottom:10px;}
+.field{margin-bottom:8px;}
+.field label{display:block;font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:3px;letter-spacing:.3px;}
+.field input,.field select{width:100%;padding:6px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;color:var(--text);font-size:12px;font-family:var(--mono);outline:none;}
+.field input:focus,.field select:focus{border-color:var(--accent);}
+.field .unit{font-size:10px;color:var(--muted);margin-left:4px;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.hint{font-size:9px;color:var(--muted);margin-top:2px;line-height:1.4;}
+.etp-bar{height:4px;background:var(--surface3);border-radius:2px;margin-top:4px;}
+.etp-fill{height:100%;border-radius:2px;background:var(--accent);transition:width .3s;}
+
+/* MAIN */
+.main{overflow-y:auto;padding:20px;}
+
+/* KPI CARDS */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:14px 16px;}
+.kpi-card .val{font-size:22px;font-weight:700;font-family:var(--mono);margin-bottom:2px;}
+.kpi-card .lbl{font-size:9px;color:var(--muted);font-family:var(--mono);letter-spacing:.5px;}
+.kpi-card .sub{font-size:10px;color:var(--muted2);margin-top:4px;}
+.kpi-card.warn{border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.05);}
+.kpi-card.ok{border-color:rgba(34,197,94,.3);background:rgba(34,197,94,.04);}
+.kpi-card.neutral{border-color:rgba(234,179,8,.3);background:rgba(234,179,8,.04);}
+
+/* P&L TABLE */
+.pl-block{background:var(--surface);border:1px solid var(--border);border-radius:6px;margin-bottom:16px;overflow:hidden;}
+.pl-block-title{padding:10px 16px;background:var(--surface2);border-bottom:1px solid var(--border);font-family:var(--mono);font-size:10px;font-weight:700;color:var(--muted2);letter-spacing:.5px;display:flex;justify-content:space-between;align-items:center;}
+.pl-row{display:grid;grid-template-columns:1fr auto auto auto;gap:0;border-bottom:1px solid var(--border);align-items:center;}
+.pl-row:last-child{border-bottom:none;}
+.pl-row.total{background:var(--surface2);font-weight:700;}
+.pl-row.subtotal{background:rgba(249,115,22,.05);border-top:2px solid var(--border);}
+.pl-row.result-pos{background:rgba(34,197,94,.08);border-top:2px solid rgba(34,197,94,.3);}
+.pl-row.result-neg{background:rgba(239,68,68,.08);border-top:2px solid rgba(239,68,68,.3);}
+.pl-cell{padding:8px 14px;font-size:12px;}
+.pl-cell.label{color:var(--muted2);}
+.pl-cell.label.sub{padding-left:28px;font-size:11px;color:var(--muted);}
+.pl-cell.label.bold{color:var(--text);font-weight:700;}
+.pl-cell.num{font-family:var(--mono);font-size:11px;text-align:right;color:var(--text);}
+.pl-cell.pct{font-family:var(--mono);font-size:10px;text-align:right;color:var(--muted);min-width:52px;}
+.pl-cell.neg{color:var(--warn);}
+.pl-cell.pos{color:var(--green);}
+.pl-cell.accent{color:var(--accent);}
+.pl-cell.yellow{color:var(--yellow);}
+
+/* SEUIL */
+.seuil-block{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:16px;margin-bottom:16px;}
+.seuil-title{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--muted2);letter-spacing:.5px;margin-bottom:12px;}
+.seuil-meter{height:20px;background:var(--surface3);border-radius:4px;overflow:hidden;position:relative;margin-bottom:8px;}
+.seuil-fill{height:100%;border-radius:4px;transition:width .4s;position:relative;}
+.seuil-label{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:10px;font-family:var(--mono);font-weight:700;color:#fff;white-space:nowrap;}
+.seuil-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px;}
+.seuil-item{background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:10px;text-align:center;}
+.seuil-item .sv{font-size:16px;font-weight:700;font-family:var(--mono);}
+.seuil-item .sl{font-size:9px;color:var(--muted);font-family:var(--mono);letter-spacing:.3px;margin-top:2px;}
+
+/* SCENARIOS */
+.scenarios{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+.scenario-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:14px;cursor:pointer;transition:all .15s;}
+.scenario-card:hover{border-color:var(--border2);}
+.scenario-card.active{border-color:var(--accent);background:rgba(249,115,22,.06);}
+.scenario-card .s-title{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.5px;margin-bottom:8px;}
+.scenario-card .s-val{font-size:18px;font-weight:700;font-family:var(--mono);}
+.scenario-card .s-sub{font-size:9px;color:var(--muted);margin-top:3px;}
+
+/* GRAPHIQUE mensuel */
+.chart-bar-row{display:grid;grid-template-columns:60px 1fr auto;gap:8px;align-items:center;margin-bottom:4px;}
+.chart-bar-bg{background:var(--surface3);border-radius:2px;height:16px;overflow:hidden;}
+.chart-bar-fill{height:100%;border-radius:2px;transition:width .3s;}
+.chart-bar-val{font-family:var(--mono);font-size:10px;text-align:right;min-width:70px;}
+
+/* ALERTES */
+.alert{border-radius:4px;padding:10px 14px;margin-bottom:8px;font-size:11px;line-height:1.6;display:flex;gap:8px;}
+.alert-warn{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:var(--warn);}
+.alert-ok{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);color:var(--green);}
+.alert-info{background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.2);color:var(--blue);}
+.alert-yellow{background:rgba(234,179,8,.08);border:1px solid rgba(234,179,8,.2);color:var(--yellow);}
+
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:16px;}
+.tab{padding:8px 16px;font-family:var(--mono);font-size:10px;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>P&L AGENCE BTP INTÉRIM — SIMULATEUR</h1>
+    <p>Franchise / Réseau existant · IDF · Mise à jour en temps réel</p>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <span id="badge-resultat" class="badge badge-yellow">— Calculer</span>
+    <span style="font-size:10px;color:var(--muted);font-family:var(--mono)" id="header-rbe"></span>
+  </div>
+</div>
+
+<div class="layout">
+  <!-- SIDEBAR PARAMÈTRES -->
+  <div class="sidebar">
+
+    <!-- SCÉNARIOS RAPIDES -->
+    <div class="section">
+      <div class="section-title">SCÉNARIOS RAPIDES</div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <button onclick="loadScenario('demarrage')" style="padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;color:var(--muted2);font-family:var(--mono);font-size:10px;cursor:pointer;text-align:left;font-weight:700">🌱 DÉMARRAGE (3 ETP)</button>
+        <button onclick="loadScenario('equilibre')" style="padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;color:var(--muted2);font-family:var(--mono);font-size:10px;cursor:pointer;text-align:left;font-weight:700">⚖ ÉQUILIBRE (8 ETP)</button>
+        <button onclick="loadScenario('croisiere')" style="padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;color:var(--muted2);font-family:var(--mono);font-size:10px;cursor:pointer;text-align:left;font-weight:700">🚀 CROISIÈRE (15 ETP)</button>
+        <button onclick="loadScenario('performance')" style="padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;color:var(--muted2);font-family:var(--mono);font-size:10px;cursor:pointer;text-align:left;font-weight:700">🏆 PERFORMANCE (25 ETP)</button>
+      </div>
+    </div>
+
+    <!-- VOLUME D'ACTIVITÉ -->
+    <div class="section">
+      <div class="section-title">VOLUME D'ACTIVITÉ</div>
+      <div class="field">
+        <label>ETP placés en permanence <span id="etp-val" style="color:var(--accent);font-weight:700">8</span></label>
+        <input type="range" id="etp" min="1" max="40" value="8" oninput="document.getElementById('etp-val').textContent=this.value;calc()"/>
+        <div class="etp-bar"><div class="etp-fill" id="etp-bar" style="width:20%"></div></div>
+        <div class="hint">1 ETP = 1 intérimaire travaillant 39h/sem en continu</div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Taux horaire client moy. (€/h)</label>
+          <input type="number" id="taux_client" value="34" step="0.5" oninput="calc()"/>
+        </div>
+        <div class="field">
+          <label>Taux horaire brut moy. (€/h)</label>
+          <input type="number" id="taux_brut" value="15.5" step="0.5" oninput="calc()"/>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Heures / semaine / ETP</label>
+          <input type="number" id="h_sem" value="39" oninput="calc()"/>
+        </div>
+        <div class="field">
+          <label>Semaines actives / an</label>
+          <input type="number" id="s_an" value="47" oninput="calc()"/>
+        </div>
+      </div>
+      <div class="field">
+        <label>Taux de remplissage réel (%)</label>
+        <input type="range" id="fill_rate" min="50" max="100" value="80" oninput="document.getElementById('fill-val').textContent=this.value+'%';calc()"/>
+        <div style="font-size:10px;color:var(--yellow);font-family:var(--mono);margin-top:2px"><span id="fill-val">80%</span> <span style="color:var(--muted)">— vacances, périodes creuses, recherche</span></div>
+      </div>
+    </div>
+
+    <!-- REDEVANCE FRANCHISE -->
+    <div class="section">
+      <div class="section-title">FRANCHISE / RÉSEAU</div>
+      <div class="field-row">
+        <div class="field">
+          <label>Redevance (% CA)</label>
+          <input type="number" id="redevance_pct" value="6" step="0.5" oninput="calc()"/>
+          <div class="hint">Fourchette réseau BTP : 5–9%</div>
+        </div>
+        <div class="field">
+          <label>Droit d'entrée (€, amorti 5 ans)</label>
+          <input type="number" id="droit_entree" value="25000" step="1000" oninput="calc()"/>
+        </div>
+      </div>
+      <div class="field">
+        <label>Royalties marketing (% CA)</label>
+        <input type="number" id="royalties_mkt" value="1.5" step="0.25" oninput="calc()"/>
+      </div>
+    </div>
+
+    <!-- FRAIS FIXES -->
+    <div class="section">
+      <div class="section-title">CHARGES FIXES MENSUELLES (€)</div>
+      <div class="field-row">
+        <div class="field">
+          <label>Loyer + charges</label>
+          <input type="number" id="loyer" value="3000" step="100" oninput="calc()"/>
+        </div>
+        <div class="field">
+          <label>Salaire(s) permanents brut</label>
+          <input type="number" id="sal_perm" value="2400" step="100" oninput="calc()"/>
+          <div class="hint">+45% charges → coût réel</div>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Logiciels (ATS, CRM, paie)</label>
+          <input type="number" id="logiciels" value="400" step="50" oninput="calc()"/>
+        </div>
+        <div class="field">
+          <label>Téléphonie + internet</label>
+          <input type="number" id="telecom" value="150" step="25" oninput="calc()"/>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Véhicule(s)</label>
+          <input type="number" id="vehicule" value="400" step="50" oninput="calc()"/>
+        </div>
+        <div class="field">
+          <label>Assurances</label>
+          <input type="number" id="assurance" value="200" step="25" oninput="calc()"/>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Fournitures / divers</label>
+          <input type="number" id="divers" value="150" step="25" oninput="calc()"/>
+        </div>
+        <div class="field">
+          <label>Expert-comptable</label>
+          <input type="number" id="compta" value="250" step="25" oninput="calc()"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- VOTRE RÉMUNÉRATION -->
+    <div class="section">
+      <div class="section-title">VOTRE RÉMUNÉRATION CIBLE</div>
+      <div class="field">
+        <label>Salaire RA brut mensuel (€)</label>
+        <input type="number" id="sal_ra" value="3800" step="100" oninput="calc()"/>
+        <div class="hint">3 800 € brut = objectif CDI · +45% charges = coût entreprise 5 510 €/mois</div>
+      </div>
+    </div>
+
+  </div><!-- /sidebar -->
+
+  <!-- MAIN RÉSULTATS -->
+  <div class="main">
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('pl',this)">P&L MENSUEL</div>
+      <div class="tab" onclick="switchTab('seuil',this)">SEUIL DE RENTABILITÉ</div>
+      <div class="tab" onclick="switchTab('annuel',this)">PROJECTION ANNUELLE</div>
+      <div class="tab" onclick="switchTab('alertes',this)">ALERTES & RATIOS</div>
+    </div>
+
+    <!-- TAB P&L -->
+    <div id="tab-pl" class="tab-content active">
+      <div class="kpi-grid" id="kpi-grid"></div>
+      <div id="pl-table"></div>
+    </div>
+
+    <!-- TAB SEUIL -->
+    <div id="tab-seuil" class="tab-content">
+      <div class="seuil-block">
+        <div class="seuil-title">COUVERTURE DES CHARGES FIXES</div>
+        <div class="seuil-meter"><div class="seuil-fill" id="seuil-fill"></div><div class="seuil-label" id="seuil-label"></div></div>
+        <div class="seuil-grid" id="seuil-grid"></div>
+      </div>
+      <div id="seuil-detail"></div>
+    </div>
+
+    <!-- TAB ANNUEL -->
+    <div id="tab-annuel" class="tab-content">
+      <div id="annuel-content"></div>
+    </div>
+
+    <!-- TAB ALERTES -->
+    <div id="tab-alertes" class="tab-content">
+      <div id="alertes-content"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function fmt(n){return new Intl.NumberFormat('fr-FR',{maximumFractionDigits:0}).format(Math.round(n));}
+function fmtK(n){return (n>=1000||n<=-1000)?Math.round(n/100)/10+'k':Math.round(n)+'';}
+function pct(n){return Math.round(n*10)/10+'%';}
+
+function switchTab(id,el){
+  document.querySelectorAll('.tab-content').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+  document.getElementById('tab-'+id).classList.add('active');
+  el.classList.add('active');
+}
+
+var SCENARIOS={
+  demarrage:{etp:3,taux_client:32,taux_brut:14.5,h_sem:39,s_an:47,fill_rate:70,loyer:2500,sal_perm:0,sal_ra:2000,logiciels:300,telecom:120,vehicule:350,assurance:180,divers:100,compta:200,redevance_pct:6,royalties_mkt:1.5,droit_entree:25000},
+  equilibre:{etp:8,taux_client:34,taux_brut:15.5,h_sem:39,s_an:47,fill_rate:80,loyer:3000,sal_perm:2400,sal_ra:3800,logiciels:400,telecom:150,vehicule:400,assurance:200,divers:150,compta:250,redevance_pct:6,royalties_mkt:1.5,droit_entree:25000},
+  croisiere:{etp:15,taux_client:35,taux_brut:16,h_sem:39,s_an:47,fill_rate:85,loyer:3500,sal_perm:5200,sal_ra:4200,logiciels:600,telecom:200,vehicule:600,assurance:250,divers:200,compta:300,redevance_pct:6,royalties_mkt:1.5,droit_entree:25000},
+  performance:{etp:25,taux_client:36,taux_brut:16.5,h_sem:39,s_an:47,fill_rate:88,loyer:4000,sal_perm:9600,sal_ra:5000,logiciels:900,telecom:280,vehicule:900,assurance:350,divers:300,compta:400,redevance_pct:6,royalties_mkt:1.5,droit_entree:25000}
+};
+
+function loadScenario(name){
+  var s=SCENARIOS[name];
+  Object.keys(s).forEach(function(k){
+    var el=document.getElementById(k);
+    if(el){el.value=s[k];if(k==='etp'){document.getElementById('etp-val').textContent=s[k];}if(k==='fill_rate'){document.getElementById('fill-val').textContent=s[k]+'%';}}
+  });
+  calc();
+}
+
+function g(id){return parseFloat(document.getElementById(id).value)||0;}
+
+function calc(){
+  // ── INPUTS ──
+  var etp=g('etp');
+  var tc=g('taux_client');
+  var tb=g('taux_brut');
+  var hsem=g('h_sem');
+  var san=g('s_an');
+  var fill=g('fill_rate')/100;
+  var loyer=g('loyer');
+  var sal_perm_brut=g('sal_perm');
+  var logiciels=g('logiciels');
+  var telecom=g('telecom');
+  var vehicule=g('vehicule');
+  var assurance=g('assurance');
+  var divers=g('divers');
+  var compta=g('compta');
+  var redev_pct=g('redevance_pct')/100;
+  var royal_pct=g('royalties_mkt')/100;
+  var droit=g('droit_entree');
+  var sal_ra_brut=g('sal_ra');
+
+  // ETP bar
+  document.getElementById('etp-bar').style.width=Math.min(100,etp/40*100)+'%';
+
+  // ── CALCULS MENSUELS ──
+  var h_mois=hsem*san/12; // heures/mois/ETP
+  var h_total=etp*h_mois*fill; // heures totales facturées/mois
+
+  // CA = heures × taux client
+  var ca=h_total*tc;
+
+  // Masse salariale intérimaire
+  // Salaire brut + charges patronales 43% + IFM 10% + ICP 10%
+  var sb=h_total*tb; // salaire brut total
+  var charges_int=sb*0.43; // charges patronales
+  var ifm=sb*0.10; // indemnité fin mission
+  var icp=(sb+ifm)*0.10; // indemnité congés payés
+  var ms_total=sb+charges_int+ifm+icp;
+
+  // Marge brute
+  var mb=ca-ms_total;
+  var mb_pct=ca>0?mb/ca*100:0;
+
+  // Redevance franchise
+  var redevance=ca*redev_pct;
+  var royalties=ca*royal_pct;
+  var droit_amorti=droit/5/12; // amorti sur 5 ans
+
+  // Charges permanents
+  var cout_perm=sal_perm_brut*1.45;
+
+  // Charges RA
+  var cout_ra=sal_ra_brut*1.45;
+
+  // Total frais fixes
+  var fixes_hors_ra=loyer+cout_perm+logiciels+telecom+vehicule+assurance+divers+compta+redevance+royalties+droit_amorti;
+  var fixes_total=fixes_hors_ra+cout_ra;
+
+  // RBE (Résultat Brut d'Exploitation) = MB - Frais fixes totaux
+  var rbe=mb-fixes_total;
+  var rbe_pct=ca>0?rbe/ca*100:0;
+
+  // ── SEUIL DE RENTABILITÉ ──
+  // ETP nécessaires pour couvrir les charges fixes
+  var h_par_etp_mois=h_mois*fill;
+  var mb_par_h=tc-tb*2.05; // marge par heure (simplifié : tb × coeff 2.05 couvre charges+IFM+ICP)
+  var mb_par_etp=h_par_etp_mois*mb_par_h;
+  var etp_seuil_sans_ra=mb_par_etp>0?fixes_hors_ra/mb_par_etp:999;
+  var etp_seuil_avec_ra=mb_par_etp>0?fixes_total/mb_par_etp:999;
+
+  // ── RATIOS ──
+  var taux_marge_brute=mb_pct;
+  var coeff_facturation=tc/tb; // coefficient moyen
+  var coeff_min=tc/(tb*2.05); // vérifie si coeff couvre les charges
+
+  // ── UPDATE ETP BAR ──
+  var etp_coverage=etp_seuil_avec_ra>0?Math.min(100,etp/etp_seuil_avec_ra*100):100;
+
+  // ── KPI CARDS ──
+  var kpiColor=rbe>=0?'var(--green)':rbe>-2000?'var(--yellow)':'var(--warn)';
+  var mbColor=mb_pct>=18?'var(--green)':mb_pct>=14?'var(--yellow)':'var(--warn)';
+  document.getElementById('kpi-grid').innerHTML=
+    kpi('CA MENSUEL',fmt(ca)+'€','Heures facturées : '+fmt(h_total),'var(--blue)')
+   +kpi('MARGE BRUTE',fmt(mb)+'€',pct(mb_pct)+' du CA — objectif ≥18%',mbColor)
+   +kpi('FRAIS FIXES',fmt(fixes_total)+'€','dont RA : '+fmt(cout_ra)+'€','var(--muted2)')
+   +kpi('RBE MENSUEL',fmt(rbe)+'€',pct(rbe_pct)+' du CA',kpiColor,rbe<0);
+
+  // Badge header
+  var badge=document.getElementById('badge-resultat');
+  var headerRbe=document.getElementById('header-rbe');
+  if(rbe>5000){badge.className='badge badge-green';badge.textContent='RENTABLE';}
+  else if(rbe>=0){badge.className='badge badge-yellow';badge.textContent='À L\'ÉQUILIBRE';}
+  else{badge.className='badge badge-warn';badge.textContent='DÉFICIT '+fmt(-rbe)+'€/mois';}
+  headerRbe.textContent=etp+' ETP · CA '+fmt(ca)+'€/mois · RBE '+fmt(rbe)+'€/mois';
+
+  // ── P&L TABLE ──
+  renderPL(ca,sb,charges_int,ifm,icp,ms_total,mb,mb_pct,
+           redevance,royalties,droit_amorti,loyer,cout_perm,
+           cout_ra,logiciels,telecom,vehicule,assurance,divers,compta,
+           fixes_total,rbe,rbe_pct);
+
+  // ── SEUIL ──
+  renderSeuil(etp,etp_seuil_sans_ra,etp_seuil_avec_ra,mb_par_etp,fixes_hors_ra,fixes_total,etp_coverage,h_par_etp_mois,mb_par_h,tc,tb);
+
+  // ── ANNUEL ──
+  renderAnnuel(ca,mb,fixes_total,rbe,etp,fill,san);
+
+  // ── ALERTES ──
+  renderAlertes(mb_pct,rbe,coeff_facturation,etp,etp_seuil_avec_ra,tc,tb,redev_pct,royal_pct,sal_ra_brut,loyer);
+
+  // Store for other tabs
+  window._lastCalc={ca,mb,mb_pct,fixes_total,rbe,rbe_pct,etp,etp_seuil_avec_ra,etp_seuil_sans_ra};
+}
+
+function kpi(lbl,val,sub,color,warn){
+  return '<div class="kpi-card'+(warn?' warn':'')+'">'
+    +'<div class="val" style="color:'+color+'">'+val+'</div>'
+    +'<div class="lbl">'+lbl+'</div>'
+    +'<div class="sub">'+sub+'</div>'
+    +'</div>';
+}
+
+function plRow(label,val,pctVal,cls,subLabel){
+  var labelCls='pl-cell label'+(subLabel?' sub':'')+(cls&&cls.includes('bold')?' bold':'');
+  return '<div class="pl-row '+(cls||'')+'">'
+    +'<div class="'+labelCls+'">'+label+'</div>'
+    +'<div class="pl-cell num '+(val<0&&!cls?'neg':'')+'">'+fmt(Math.abs(val))+'€</div>'
+    +'<div class="pl-cell num" style="color:'+(val<0?'var(--warn)':'var(--muted2)')+'">'+fmt(val)+'€</div>'
+    +'<div class="pl-cell pct">'+pctVal+'</div>'
+    +'</div>';
+}
+
+function renderPL(ca,sb,cp,ifm,icp,ms,mb,mbp,
+                  rev,rym,drt,lyr,perm,ra,log,tel,veh,ass,div,cpt,
+                  fx,rbe,rbep){
+  var h='<div class="pl-block">'
+    +'<div class="pl-block-title"><span>COMPTE DE RÉSULTAT MENSUEL ESTIMÉ</span><span style="color:var(--muted);font-size:9px">Montant absolu · Signé · % CA</span></div>'
+    +'<div class="pl-row" style="background:var(--surface3);font-weight:700">'
+    +'<div class="pl-cell label bold">CHIFFRE D\'AFFAIRES</div>'
+    +'<div class="pl-cell num accent">'+fmt(ca)+'€</div>'
+    +'<div class="pl-cell num accent">'+fmt(ca)+'€</div>'
+    +'<div class="pl-cell pct accent">100%</div>'
+    +'</div>';
+
+  // Masse salariale intérimaire
+  h+='<div class="pl-row"><div class="pl-cell label" style="font-size:10px;color:var(--muted);padding:5px 14px;font-family:var(--mono);letter-spacing:.5px">CHARGES INTÉRIMAIRES</div><div class="pl-cell"></div><div class="pl-cell"></div><div class="pl-cell"></div></div>';
+  h+=plRowSimple('  Salaires bruts','-'+fmt(sb)+'€','var(--muted)');
+  h+=plRowSimple('  Charges patronales (43%)','-'+fmt(cp)+'€','var(--muted)');
+  h+=plRowSimple('  IFM (10%)','-'+fmt(ifm)+'€','var(--muted)');
+  h+=plRowSimple('  ICP (10%)','-'+fmt(icp)+'€','var(--muted)');
+  h+=plRowBold('TOTAL MASSE SALARIALE','-'+fmt(ms)+'€',pct(ms/ca*100),'var(--warn)');
+  h+=plRowBold('MARGE BRUTE','+'+fmt(mb)+'€',pct(mbp),(mbp>=18?'var(--green)':mbp>=14?'var(--yellow)':'var(--warn)'));
+
+  // Frais de structure
+  h+='<div class="pl-row"><div class="pl-cell label" style="font-size:10px;color:var(--muted);padding:5px 14px;font-family:var(--mono);letter-spacing:.5px">FRAIS DE STRUCTURE</div><div class="pl-cell"></div><div class="pl-cell"></div><div class="pl-cell"></div></div>';
+  h+=plRowSimple('  Loyer + charges','-'+fmt(lyr)+'€','var(--muted)');
+  if(perm>0) h+=plRowSimple('  Permanents (brut+charges)','-'+fmt(perm)+'€','var(--muted)');
+  h+=plRowSimple('  Redevance franchise','-'+fmt(rev)+'€','var(--muted)');
+  h+=plRowSimple('  Royalties marketing','-'+fmt(rym)+'€','var(--muted)');
+  h+=plRowSimple('  Logiciels','-'+fmt(log)+'€','var(--muted)');
+  h+=plRowSimple('  Téléphonie + Internet','-'+fmt(tel)+'€','var(--muted)');
+  if(veh>0) h+=plRowSimple('  Véhicule(s)','-'+fmt(veh)+'€','var(--muted)');
+  if(ass>0) h+=plRowSimple('  Assurances','-'+fmt(ass)+'€','var(--muted)');
+  if(div>0) h+=plRowSimple('  Divers / fournitures','-'+fmt(div)+'€','var(--muted)');
+  if(cpt>0) h+=plRowSimple('  Expert-comptable','-'+fmt(cpt)+'€','var(--muted)');
+  if(drt>0) h+=plRowSimple('  Droit d\'entrée (amorti 5 ans)','-'+fmt(drt)+'€','var(--muted)');
+  h+=plRowSimple('  Rémunération RA (brut+charges)','-'+fmt(ra)+'€','var(--yellow)');
+  h+=plRowBold('TOTAL FRAIS FIXES','-'+fmt(fx)+'€',pct(fx/ca*100),'var(--muted2)');
+
+  // RBE
+  var rbeColor=rbe>=0?'var(--green)':'var(--warn)';
+  var rbeCls=rbe>=0?'result-pos':'result-neg';
+  h+='<div class="pl-row '+rbeCls+'">'
+    +'<div class="pl-cell label bold" style="color:'+rbeColor+'">RÉSULTAT BRUT D\'EXPLOITATION</div>'
+    +'<div class="pl-cell num" style="color:'+rbeColor+';font-size:14px;font-weight:700">'+(rbe>=0?'+':'')+fmt(rbe)+'€</div>'
+    +'<div class="pl-cell num" style="color:'+rbeColor+'">'+(rbe>=0?'+':'')+fmt(rbe)+'€</div>'
+    +'<div class="pl-cell pct" style="color:'+rbeColor+'">'+pct(rbep)+'</div>'
+    +'</div>';
+
+  h+='</div>';
+  document.getElementById('pl-table').innerHTML=h;
+}
+
+function plRowSimple(label,val,color){
+  return '<div class="pl-row">'
+    +'<div class="pl-cell label sub">'+label+'</div>'
+    +'<div class="pl-cell num" style="color:'+color+'">'+val+'</div>'
+    +'<div class="pl-cell"></div><div class="pl-cell pct"></div>'
+    +'</div>';
+}
+function plRowBold(label,val,p,color){
+  return '<div class="pl-row subtotal">'
+    +'<div class="pl-cell label bold" style="color:'+color+'">'+label+'</div>'
+    +'<div class="pl-cell num" style="color:'+color+'">'+val+'</div>'
+    +'<div class="pl-cell num" style="color:'+color+'">'+val+'</div>'
+    +'<div class="pl-cell pct" style="color:'+color+'">'+p+'</div>'
+    +'</div>';
+}
+
+function renderSeuil(etp,sans_ra,avec_ra,mb_par_etp,ff_sans,ff_total,coverage,h_mois,mb_h,tc,tb){
+  // Jauge
+  var fill=document.getElementById('seuil-fill');
+  var lbl=document.getElementById('seuil-label');
+  var pctFill=Math.min(100,Math.max(0,coverage));
+  fill.style.width=pctFill+'%';
+  fill.style.background=pctFill>=100?'var(--green)':pctFill>=70?'var(--yellow)':'var(--warn)';
+  lbl.textContent=Math.round(pctFill)+'% des charges couvertes';
+
+  document.getElementById('seuil-grid').innerHTML=
+    seuilItem(Math.ceil(sans_ra*10)/10,'ETP SEUIL','(hors rémunération RA)','var(--muted2)')
+   +seuilItem(Math.ceil(avec_ra*10)/10,'ETP SEUIL COMPLET','(avec rémunération RA)','var(--accent)')
+   +seuilItem(fmt(mb_par_etp)+'€','MARGE / ETP / MOIS','contribution de chaque ETP aux charges','var(--green)');
+
+  var etp_manque=Math.max(0,avec_ra-etp);
+  var h='<div class="pl-block">'
+    +'<div class="pl-block-title">ANALYSE SEUIL DE RENTABILITÉ</div>';
+
+  h+='<div style="padding:14px 16px">';
+
+  if(etp>=avec_ra){
+    h+='<div class="alert alert-ok">✓ Ton activité couvre toutes les charges fixes, y compris ta rémunération. RBE positif.</div>';
+  } else if(etp>=sans_ra){
+    h+='<div class="alert alert-yellow">⚠ Les charges de structure sont couvertes, mais ta rémunération RA n\'est pas encore rentabilisée (besoin de '+Math.ceil((avec_ra-etp)*10)/10+' ETP supplémentaires).</div>';
+  } else {
+    h+='<div class="alert alert-warn">✗ Il manque '+Math.ceil(etp_manque*10)/10+' ETP pour atteindre le seuil de rentabilité complet. Chaque ETP supplémentaire rapporte '+fmt(mb_par_etp)+'€/mois de marge.</div>';
+  }
+
+  // Table de sensibilité
+  h+='<div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.5px;margin:14px 0 8px">SENSIBILITÉ : IMPACT DE ±1€/H SUR LE TAUX CLIENT</div>';
+  h+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">';
+  [-2,-1,0,1,2].slice(0,4).forEach(function(d){
+    var tcv=tc+d;
+    var mbH=(tcv-tb*2.05)*h_mois*etp;
+    var color=d>0?'var(--green)':d<0?'var(--warn)':'var(--accent)';
+    h+='<div style="background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:8px;text-align:center">'
+      +'<div style="font-size:14px;font-weight:700;color:'+color+'">'+fmt(mbH)+'€</div>'
+      +'<div style="font-size:9px;color:var(--muted);margin-top:2px">TC='+(d>=0?'+':'')+d+'€/h ('+tcv+'€)</div>'
+      +'</div>';
+  });
+  h+='</div>';
+
+  h+='<div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.5px;margin:14px 0 8px">TABLE ETP → RBE MENSUEL</div>';
+  h+='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11px">';
+  h+='<tr style="border-bottom:1px solid var(--border)"><th style="padding:6px;text-align:left;color:var(--muted);font-weight:700">ETP</th><th style="padding:6px;text-align:right;color:var(--muted);font-weight:700">CA/mois</th><th style="padding:6px;text-align:right;color:var(--muted);font-weight:700">Marge brute</th><th style="padding:6px;text-align:right;color:var(--muted);font-weight:700">RBE</th><th style="padding:6px;text-align:right;color:var(--muted);font-weight:700">Marge%</th></tr>';
+  [3,5,8,10,12,15,18,20,25,30].forEach(function(e){
+    var hm=g('h_sem')*g('s_an')/12*g('fill_rate')/100;
+    var caE=e*hm*tc;
+    var msE=e*hm*tb*(1+0.43+0.10+0.10*1.10);
+    var mbE=caE-msE;
+    var rbeE=mbE-ff_total;
+    var color=rbeE>5000?'var(--green)':rbeE>=0?'var(--yellow)':'var(--warn)';
+    var bg=e===Math.round(etp)?'background:rgba(249,115,22,.1);':'';
+    h+='<tr style="border-bottom:1px solid var(--border);'+bg+'">'
+      +'<td style="padding:6px;font-weight:700;color:'+(e===Math.round(etp)?'var(--accent)':'var(--text)')+'">'+e+(e===Math.round(etp)?' ◀':'')+' ETP</td>'
+      +'<td style="padding:6px;text-align:right;color:var(--text)">'+fmt(caE)+'€</td>'
+      +'<td style="padding:6px;text-align:right;color:var(--text)">'+fmt(mbE)+'€</td>'
+      +'<td style="padding:6px;text-align:right;font-weight:700;color:'+color+'">'+(rbeE>=0?'+':'')+fmt(rbeE)+'€</td>'
+      +'<td style="padding:6px;text-align:right;color:var(--muted)">'+pct(caE>0?mbE/caE*100:0)+'</td>'
+      +'</tr>';
+  });
+  h+='</table></div>';
+  h+='</div></div>';
+  document.getElementById('seuil-detail').innerHTML=h;
+}
+
+function seuilItem(val,label,sub,color){
+  return '<div class="seuil-item"><div class="sv" style="color:'+color+'">'+val+'</div><div class="sl">'+label+'</div><div style="font-size:9px;color:var(--muted);margin-top:2px">'+sub+'</div></div>';
+}
+
+function renderAnnuel(ca,mb,fx,rbe,etp,fill,san){
+  var mois=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+  // Saisonnalité BTP (indices)
+  var sais=[0.8,0.85,1.0,1.05,1.1,1.1,0.7,0.5,1.05,1.1,1.0,0.75];
+  var caAn=0,rbeAn=0;
+  var rows='';
+  var maxCa=ca*1.2;
+  mois.forEach(function(m,i){
+    var caM=ca*sais[i];
+    var mbM=mb*sais[i];
+    var rbeM=rbeM=mbM-fx;
+    caAn+=caM;rbeAn+=rbeM;
+    var color=rbeM>0?'var(--green)':'var(--warn)';
+    var w=Math.max(5,Math.min(100,caM/maxCa*100));
+    rows+='<div class="chart-bar-row">'
+      +'<div style="font-family:var(--mono);font-size:10px;color:var(--muted)">'+m+'</div>'
+      +'<div class="chart-bar-bg"><div class="chart-bar-fill" style="width:'+w+'%;background:'+(rbeM>0?'var(--green)':'var(--warn)')+'"></div></div>'
+      +'<div class="chart-bar-val" style="color:'+color+'">'+(rbeM>=0?'+':'')+fmtK(rbeM)+'€</div>'
+      +'</div>';
+  });
+
+  var h='<div class="pl-block"><div class="pl-block-title">PROJECTION ANNUELLE (avec saisonnalité BTP)</div><div style="padding:14px 16px">';
+  h+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">';
+  h+=annKpi('CA ANNUEL',fmt(caAn)+'€','var(--blue)');
+  h+=annKpi('MARGE BRUTE',fmt(mb*12*0.91)+'€ est.','var(--accent)');// légèrement réduit par saisonnalité
+  h+=annKpi('RBE ANNUEL',(rbeAn>=0?'+':'')+fmt(rbeAn)+'€',rbeAn>=0?'var(--green)':'var(--warn)');
+  h+=annKpi('REVENU RA',fmt(g('sal_ra')*12)+'€ brut','var(--yellow)');
+  h+='</div>';
+  h+='<div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.5px;margin-bottom:10px">RBE MENSUEL AVEC SAISONNALITÉ BTP</div>';
+  h+=rows;
+  h+='<div style="font-size:10px;color:var(--muted);margin-top:10px;line-height:1.6">⚠ Juillet-Août : activité chantiers en baisse (-30/50%). Prévoir trésorerie 2-3 mois de charges fixes. Décembre : chute activité fin d\'année.</div>';
+  h+='</div></div>';
+  document.getElementById('annuel-content').innerHTML=h;
+}
+
+function annKpi(lbl,val,color){
+  return '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:12px;text-align:center">'
+    +'<div style="font-size:18px;font-weight:700;font-family:var(--mono);color:'+color+'">'+val+'</div>'
+    +'<div style="font-size:9px;color:var(--muted);font-family:var(--mono);letter-spacing:.5px;margin-top:3px">'+lbl+'</div>'
+    +'</div>';
+}
+
+function renderAlertes(mbp,rbe,coeff,etp,etp_seuil,tc,tb,rev,rym,sal_ra,loyer){
+  var h='';
+
+  // Marge brute
+  if(mbp<12){h+='<div class="alert alert-warn">🔴 ALERTE MARGE CRITIQUE — '+pct(mbp)+' de marge brute. En dessous de 12%, l\'agence ne peut pas couvrir ses frais de structure. Vérifier taux client ou taux candidats.</div>';}
+  else if(mbp<16){h+='<div class="alert alert-yellow">⚠ MARGE BRUTE FAIBLE — '+pct(mbp)+'. Objectif minimum 18% en BTP IDF. Pression sur les taux à surveiller.</div>';}
+  else{h+='<div class="alert alert-ok">✓ Marge brute satisfaisante à '+pct(mbp)+'.</div>';}
+
+  // Coefficient
+  var coeff_reel=tc/tb;
+  if(coeff_reel<2.0){h+='<div class="alert alert-warn">🔴 COEFFICIENT INSUFFISANT — '+Math.round(coeff_reel*100)/100+'. Le seuil minimal pour couvrir charges (×2.05) est 2.0. En dessous, chaque heure travaillée génère une perte sur la masse salariale.</div>';}
+  else if(coeff_reel<2.2){h+='<div class="alert alert-yellow">⚠ Coefficient '+Math.round(coeff_reel*100)/100+' — juste au-dessus du seuil. Marge de sécurité faible. Objectif BTP IDF N3 : 2.2–2.4.</div>';}
+  else{h+='<div class="alert alert-ok">✓ Coefficient facturation correct : '+Math.round(coeff_reel*100)/100+'.</div>';}
+
+  // ETP vs seuil
+  if(etp<etp_seuil){h+='<div class="alert alert-warn">🔴 SOUS LE SEUIL — '+Math.round(etp)+' ETP placés pour un seuil de '+Math.ceil(etp_seuil*10)/10+' ETP. Chaque mois en dessous = perte réelle sur ta trésorerie.</div>';}
+  else{h+='<div class="alert alert-ok">✓ Au-dessus du seuil de rentabilité ('+Math.round(etp)+' ETP / seuil '+Math.ceil(etp_seuil*10)/10+').</div>';}
+
+  // Redevance totale
+  var rev_total=(rev+rym)*100;
+  if(rev_total>9){h+='<div class="alert alert-yellow">⚠ Redevances franchise élevées — '+pct(rev_total)+' du CA. Négocier palier dégressif au-delà de X€ de CA annuel.</div>';}
+  else{h+='<div class="alert alert-info">ℹ Redevances franchise : '+pct(rev_total)+' du CA. Dans la norme secteur (5-9%).</div>';}
+
+  // Loyer
+  if(loyer>3500){h+='<div class="alert alert-yellow">⚠ Loyer élevé ('+fmt(loyer)+'€/mois). À ce niveau, il représente un poste de charges significatif. S\'assurer que l\'emplacement génère un flux de prospection justificatif.</div>';}
+
+  // RBE
+  if(rbe<0){h+='<div class="alert alert-warn">🔴 RBE NÉGATIF — '+fmt(-rbe)+'€/mois de déficit. Sur 12 mois : '+fmt(-rbe*12)+'€ de trésorerie consommée. Durée maximale tenable : calculer ton fonds de roulement disponible.</div>';}
+  else if(rbe<2000){h+='<div class="alert alert-yellow">⚠ RBE faible (+'+fmt(rbe)+'€/mois). La moindre vacance ou impayé efface la marge. Renforcer le volume ou réduire les charges variables.</div>';}
+
+  // Benchmarks direction
+  h+='<div class="pl-block" style="margin-top:16px"><div class="pl-block-title">BENCHMARKS DIRECTION — CE QU\'UNE DG ATTEND</div><div style="padding:14px 16px">';
+  var ratios=[
+    ['Taux de marge brute','18–24%',pct(mbp),mbp>=18],
+    ['Coefficient facturation moyen','2.2–2.4×',(Math.round(coeff_reel*100)/100)+'×',coeff_reel>=2.2],
+    ['RBE / CA','>8%',pct(rbe/Math.max(1,g('taux_client')*g('etp')*g('h_sem')*g('s_an')/12*g('fill_rate')/100)*100),rbe>0],
+    ['ETP au-dessus du seuil','>0',Math.max(0,etp-etp_seuil).toFixed(1)+' ETP sup.',etp>=etp_seuil],
+    ['Concentration client','<30% sur 1 client','À surveiller',true],
+    ['Délai recouvrement (DSO)','<45 jours','À mesurer',true],
+  ];
+  ratios.forEach(function(r){
+    h+='<div style="display:grid;grid-template-columns:1fr auto auto auto;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">'
+      +'<div style="font-size:11px;color:var(--muted2)">'+r[0]+'</div>'
+      +'<div style="font-family:var(--mono);font-size:10px;color:var(--muted)">Objectif : '+r[1]+'</div>'
+      +'<div style="font-family:var(--mono);font-size:11px;font-weight:700;color:'+(r[3]?'var(--green)':'var(--warn)')+'">'+r[2]+'</div>'
+      +'<div style="font-size:14px">'+(r[3]?'✓':'✗')+'</div>'
+      +'</div>';
+  });
+  h+='</div></div>';
+
+  document.getElementById('alertes-content').innerHTML=h;
+}
+
+// Init
+calc();
+</script>
+</body>
+</html>

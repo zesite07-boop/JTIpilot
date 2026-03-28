@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#f97316"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<title>JTIpilot — Outils de Pilotage</title>
+<title id="page-title">JTIPilot — Outils de Pilotage</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -285,8 +285,8 @@ html,body{height:100%;overflow:hidden;font-family:var(--sans);}
   <div class="nav-logo">
     <div class="nav-logo-icon">🏗</div>
     <div>
-      <div class="nav-logo-text">JTIpilot</div>
-      <div class="nav-logo-sub">OUTILS DE PILOTAGE</div>
+      <div class="nav-logo-text" id="nav-agency-name">RA BTP</div>
+      <div class="nav-logo-sub" id="nav-agency-sub">OUTILS DE PILOTAGE</div>
     </div>
   </div>
 
@@ -337,9 +337,9 @@ html,body{height:100%;overflow:hidden;font-family:var(--sans);}
     <div class="nav-item" onclick="load('objections','Objections Direction','Défendre sa marge')" id="ni-objections">
       <span class="ni-icon">🗣</span><span class="ni-label">Objections Direction</span>
     </div>
-    <a class="nav-item" href="rome.html" id="ni-rome" style="text-decoration:none;color:var(--muted2)">
-      <span class="ni-icon">📋</span><span class="ni-label">ROME</span>
-    </a>
+    <div class="nav-item" onclick="load('rome','Référentiel ROME','Fiches métiers BTP')" id="ni-rome">
+      <span class="ni-icon">📚</span><span class="ni-label">Référentiel ROME</span>
+    </div>
   </div>
 
   <div class="nav-divider"></div>
@@ -386,7 +386,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--sans);}
 <!-- CONTENU IFRAMES -->
 <div class="content" id="content">
   <div id="splash">
-    <div class="splash-title">JTIpilot — OUTILS DE PILOTAGE</div>
+    <div class="splash-title">RA BTP — OUTILS DE PILOTAGE</div>
     <div class="splash-sub" id="today-date-sub"></div>
     <div class="splash-kpis" id="splash-kpis">
       <div class="sk-item" onclick="loadWithFilter('candidats','Base Candidats','Vivier &amp; disponibilités','dispo','tous')" style="cursor:pointer" title="Voir tous les candidats">
@@ -560,7 +560,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--sans);}
       <div class="import-zone" id="dz-json" ondragover="dzOver(event,'json')" ondragleave="dzLeave('json')" ondrop="dzDrop(event,'json')" onclick="document.getElementById('fi-json').click()">
         <div class="iz-icon">💾</div>
         <div class="iz-text">Glisser-déposer ou cliquer</div>
-        <div class="iz-sub">Fichier JSON export JTIpilot</div>
+        <div class="iz-sub">Fichier JSON export RA BTP</div>
       </div>
       <input type="file" id="fi-json" accept=".json" style="display:none" onchange="handleImportFile(this,'json')"/>
       <div class="log-zone" id="log-json"></div>
@@ -918,6 +918,19 @@ setInterval(function() {
 // ─────────────────────────────────────────
 // BACKUP & EXPORT
 // ─────────────────────────────────────────
+// ── Chargement nom agence depuis localStorage ──
+(function() {
+  try {
+    var ag = JSON.parse(localStorage.getItem('agence_btp') || '{}');
+    var nom = ag.nom || 'JTIPilot';
+    var emetteur = ag.emetteur || '';
+    var el = document.getElementById('nav-agency-name');
+    if(el) el.textContent = nom;
+    var sub = document.getElementById('nav-agency-sub');
+    if(sub && emetteur) sub.textContent = 'par ' + emetteur;
+  } catch(e) {}
+})();
+
 var BACKUP_KEYS = ['crm_btp_db','cands_btp_v2','flc_clients','jtp_missions','grilles_btp','agence_btp','tdb_cfg','crm_kpi_semaine','tdb_spark_marge','jtp_theme'];
 
 function openBackup() {
@@ -1410,7 +1423,7 @@ function processXML(text, type) {
 function processJSON(text, type) {
   try {
     var data = JSON.parse(text);
-    // Backup complet JTIpilot
+    // Backup complet RA BTP
     if (data.data) {
       var count = 0;
       Object.keys(data.data).forEach(function(k) {
