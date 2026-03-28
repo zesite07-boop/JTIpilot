@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <link rel="manifest" href="manifest.json"/>
 <meta name="theme-color" content="#f97316"/>
-<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <title>JTIpilot — Outils de Pilotage</title>
 <style>
@@ -90,6 +90,8 @@ html,body{height:100%;overflow:hidden;font-family:var(--sans);}
   padding:1px 5px;border-radius:8px;
   background:rgba(249,115,22,.15);color:var(--accent);
 }
+a.nav-item-link{text-decoration:none;color:inherit;}
+a.nav-item-link:hover{color:var(--text);}
 
 .nav-divider{height:1px;background:var(--border);margin:4px 14px;}
 
@@ -337,8 +339,8 @@ html,body{height:100%;overflow:hidden;font-family:var(--sans);}
     <div class="nav-item" onclick="load('objections','Objections Direction','Défendre sa marge')" id="ni-objections">
       <span class="ni-icon">🗣</span><span class="ni-label">Objections Direction</span>
     </div>
-    <a class="nav-item" href="rome.html" id="ni-rome" style="text-decoration:none;color:var(--muted2)">
-      <span class="ni-icon">📋</span><span class="ni-label">ROME</span>
+    <a class="nav-item nav-item-link" href="rome.html" id="ni-rome" title="Référentiel ROME — métiers BTP">
+      <span class="ni-icon">📋</span><span class="ni-label" id="ni-rome-label">ROME</span>
     </a>
   </div>
 
@@ -918,20 +920,46 @@ setInterval(function() {
 // ─────────────────────────────────────────
 // BACKUP & EXPORT
 // ─────────────────────────────────────────
-// Nom agence : JSON localStorage agence_btp (champ nom), comme candidats2.html
-(function () {
+// Nom agence : JSON localStorage agence_btp (champ nom), comme candidats2.html — toujours des libellés non vides
+function applyAgencyBrandingFromStorage() {
+  var DEFAULT_NOM = 'JTIpilot';
+  var DEFAULT_SUB = 'OUTILS DE PILOTAGE';
+  var nom = DEFAULT_NOM;
+  var subText = DEFAULT_SUB;
   try {
-    var ag = JSON.parse(localStorage.getItem('agence_btp') || '{}');
-    var nom = (ag && ag.nom && String(ag.nom).trim()) || 'JTIpilot';
-    var emetteur = (ag && ag.emetteur && String(ag.emetteur).trim()) || '';
-    var el = document.getElementById('nav-agency-name');
-    if (el) el.textContent = nom;
-    var sub = document.getElementById('nav-agency-sub');
-    if (sub && emetteur) sub.textContent = 'par ' + emetteur;
-    var splash = document.getElementById('splash-agency-title');
-    if (splash) splash.textContent = nom + ' — OUTILS DE PILOTAGE';
+    var raw = localStorage.getItem('agence_btp');
+    if (raw) {
+      var ag = JSON.parse(raw);
+      if (ag && typeof ag === 'object') {
+        var n = ag.nom != null ? String(ag.nom).trim() : '';
+        if (n) nom = n;
+        var em = ag.emetteur != null ? String(ag.emetteur).trim() : '';
+        if (em) subText = 'par ' + em;
+      }
+    }
   } catch (e) {}
-})();
+  nom = (nom && String(nom).trim()) || DEFAULT_NOM;
+  subText = (subText && String(subText).trim()) || DEFAULT_SUB;
+  var el = document.getElementById('nav-agency-name');
+  if (el) el.textContent = nom;
+  var sub = document.getElementById('nav-agency-sub');
+  if (sub) sub.textContent = subText;
+  var splash = document.getElementById('splash-agency-title');
+  if (splash) splash.textContent = nom + ' — OUTILS DE PILOTAGE';
+}
+applyAgencyBrandingFromStorage();
+function ensureNavReferenceLabels() {
+  var rl = document.getElementById('ni-rome-label');
+  if (rl && !String(rl.textContent || '').trim()) rl.textContent = 'ROME';
+}
+ensureNavReferenceLabels();
+setTimeout(function() {
+  var na = document.getElementById('nav-agency-name');
+  var sp = document.getElementById('splash-agency-title');
+  if (na && !String(na.textContent || '').trim()) na.textContent = 'JTIpilot';
+  if (sp && !String(sp.textContent || '').trim()) sp.textContent = 'JTIpilot — OUTILS DE PILOTAGE';
+  ensureNavReferenceLabels();
+}, 0);
 
 var BACKUP_KEYS = ['crm_btp_db','cands_btp_v2','flc_clients','jtp_missions','grilles_btp','agence_btp','tdb_cfg','crm_kpi_semaine','tdb_spark_marge','jtp_theme'];
 
@@ -944,43 +972,56 @@ function closeBackup() {
 }
 
 function renderBackupStats() {
-  var crm = [], cands = [], missions = [], clients = [];
-  try { crm = JSON.parse(localStorage.getItem('crm_btp_db') || '[]'); } catch(e) {}
-  try { cands = JSON.parse(localStorage.getItem('cands_btp_v2') || '[]'); } catch(e) {}
-  try { missions = JSON.parse(localStorage.getItem('jtp_missions') || '[]'); } catch(e) {}
-  try { clients = JSON.parse(localStorage.getItem('flc_clients') || '[]'); } catch(e) {}
+  var statsEl = document.getElementById('backup-stats');
+  var lastEl = document.getElementById('backup-last');
+  try {
+    var crm = [], cands = [], missions = [], clients = [];
+    try { crm = JSON.parse(localStorage.getItem('crm_btp_db') || '[]'); } catch(e) {}
+    try { cands = JSON.parse(localStorage.getItem('cands_btp_v2') || '[]'); } catch(e) {}
+    try { missions = JSON.parse(localStorage.getItem('jtp_missions') || '[]'); } catch(e) {}
+    try { clients = JSON.parse(localStorage.getItem('flc_clients') || '[]'); } catch(e) {}
+    if (!Array.isArray(crm)) crm = [];
+    if (!Array.isArray(cands)) cands = [];
+    if (!Array.isArray(missions)) missions = [];
+    if (!Array.isArray(clients)) clients = [];
 
-  var dispo = cands.filter(function(c){ return c.dispo === 'dispo'; }).length;
-  var missActives = missions.filter(function(m){ return m.statut !== 'cloturee'; }).length;
+    var dispo = cands.filter(function(c){ return c.dispo === 'dispo'; }).length;
+    var missActives = missions.filter(function(m){ return m.statut !== 'cloturee'; }).length;
 
-  var stats = [
-    { val: crm.length, lbl: 'PROSPECTS' },
-    { val: cands.length, lbl: 'CANDIDATS' },
-    { val: dispo, lbl: 'DISPOS' },
-    { val: missActives, lbl: 'MISSIONS' }
-  ];
-  var html = '';
-  stats.forEach(function(s) {
-    html += '<div style="background:var(--s3);border:1px solid var(--border);border-radius:2px;padding:10px;text-align:center">'
-      + '<div style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--accent)">' + s.val + '</div>'
-      + '<div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:.5px;margin-top:2px">' + s.lbl + '</div>'
-      + '</div>';
-  });
-  document.getElementById('backup-stats').innerHTML = html;
+    var stats = [
+      { val: crm.length, lbl: 'PROSPECTS' },
+      { val: cands.length, lbl: 'CANDIDATS' },
+      { val: dispo, lbl: 'DISPOS' },
+      { val: missActives, lbl: 'MISSIONS' }
+    ];
+    var html = '';
+    stats.forEach(function(s) {
+      html += '<div style="background:var(--s3);border:1px solid var(--border);border-radius:2px;padding:10px;text-align:center">'
+        + '<div style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--accent)">' + s.val + '</div>'
+        + '<div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:.5px;margin-top:2px">' + s.lbl + '</div>'
+        + '</div>';
+    });
+    if (statsEl) statsEl.innerHTML = html;
 
-  // Calcul taille données
-  var totalBytes = 0;
-  BACKUP_KEYS.forEach(function(k) {
-    var v = localStorage.getItem(k);
-    if (v) totalBytes += v.length;
-  });
-  var sizeStr = totalBytes > 1024*1024 ? (totalBytes/1024/1024).toFixed(2) + ' Mo' : (totalBytes/1024).toFixed(0) + ' Ko';
+    var totalBytes = 0;
+    BACKUP_KEYS.forEach(function(k) {
+      var v = localStorage.getItem(k);
+      if (v) totalBytes += v.length;
+    });
+    var sizeStr = totalBytes > 1024*1024 ? (totalBytes/1024/1024).toFixed(2) + ' Mo' : (totalBytes/1024).toFixed(0) + ' Ko';
 
-  var lastStr = localStorage.getItem('jtp_last_backup') || '';
-  var lastLabel = lastStr ? 'Dernière sauvegarde : ' + lastStr : 'Aucune sauvegarde récente enregistrée';
-  document.getElementById('backup-last').innerHTML =
-    '📦 Données localStorage : <strong style="color:var(--cyan)">' + sizeStr + '</strong>'
-    + ' &nbsp;·&nbsp; ' + lastLabel;
+    var lastStr = localStorage.getItem('jtp_last_backup') || '';
+    var lastLabel = lastStr ? 'Dernière sauvegarde : ' + lastStr : 'Aucune sauvegarde récente enregistrée';
+    if (lastEl) {
+      lastEl.innerHTML =
+        '📦 Données localStorage : <strong style="color:var(--cyan)">' + sizeStr + '</strong>'
+        + ' &nbsp;·&nbsp; ' + lastLabel;
+    }
+  } catch (e) {
+    console.warn('[Backup] renderBackupStats:', e);
+    if (statsEl) statsEl.innerHTML = '<div style="padding:10px;font-family:var(--mono);font-size:11px;color:var(--muted)">Impossible de lire les statistiques — données localStorage corrompues ou indisponibles.</div>';
+    if (lastEl) lastEl.innerHTML = '📦 <span style="color:var(--muted)">Estimation indisponible</span>';
+  }
 }
 
 function exportAll() {
@@ -1653,13 +1694,17 @@ document.getElementById('modal-backup').addEventListener('click', function(e) {
 <script src="supabase_sync.js"></script>
 <!-- PWA Service Worker -->
 <script>
-if('serviceWorker' in navigator) {
+if('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
   window.addEventListener('load', function() {
-    navigator.serviceWorker.register('/sw.js').then(function(reg) {
-      console.log('[SW] Enregistré:', reg.scope);
-    }).catch(function(err) {
-      console.log('[SW] Erreur:', err);
-    });
+    var swUrl = new URL('sw.js', window.location.href);
+    var scopeUrl = new URL('./', window.location.href).href;
+    navigator.serviceWorker.register(swUrl.href, { scope: scopeUrl })
+      .then(function(reg) {
+        console.log('[SW] Enregistré:', reg.scope);
+      })
+      .catch(function(err) {
+        console.warn('[SW] Ignoré — déployer sw.js à côté de index.html ou utiliser HTTPS.', err && err.message ? err.message : err);
+      });
   });
 }
 // Install prompt PWA

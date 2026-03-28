@@ -15,6 +15,22 @@
     try { return JSON.parse(localStorage.getItem(CFG_KEY) || '{}'); } catch(e) { return {}; }
   }
 
+  /** Base projet Supabase sans slash final ni suffixe /rest/v1 */
+  function normalizeSupabaseUrl(raw) {
+    var u = (raw || '').trim().replace(/\/+$/, '');
+    if (!u) return '';
+    u = u.replace(/\/rest\/v1\/?$/i, '');
+    return u;
+  }
+
+  /** Valide le nom de table PostgREST (évite chemins mal formés) */
+  function assertSafeTableName(table) {
+    if (!table || typeof table !== 'string' || !/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(table)) {
+      throw new Error('Nom de table Supabase invalide : ' + String(table));
+    }
+    return table;
+  }
+
   // Tables Supabase → clés localStorage
   var TABLE_MAP = {
     'crm_prospects':  'crm_btp_db',
@@ -39,35 +55,66 @@
   // ── API FETCH ────────────────────────────────────────────────────
   function sbFetch(path, opts) {
     var cfg = getCfg();
+    cfg.url = normalizeSupabaseUrl(cfg.url);
     if(!cfg.url || !cfg.key) return Promise.reject(new Error('Supabase non configuré'));
-    var url = cfg.url.replace(/\/$/, '') + '/rest/v1/' + path;
+    var pathClean = String(path || '').replace(/^\/+/, '');
+    if(!pathClean) return Promise.reject(new Error('Chemin REST vide'));
+    var base = cfg.url.replace(/\/$/, '');
+    var url = base + '/rest/v1/' + pathClean;
     var headers = {
       'Content-Type': 'application/json',
       'apikey': cfg.key,
       'Authorization': 'Bearer ' + cfg.key,
       'Prefer': 'return=representation'
     };
-    // Merger les headers sans perdre apikey/Authorization
     var finalOpts = Object.assign({}, opts || {});
     finalOpts.headers = Object.assign({}, headers, opts && opts.headers ? opts.headers : {});
-    return fetch(url, finalOpts)
+    return Promise.resolve()
+      .then(function() { return fetch(url, finalOpts); })
       .then(function(r) {
-        if(!r.ok) return r.text().then(function(t) { throw new Error(r.status + ': ' + t); });
+        if(!r.ok) {
+          return r.text().then(function(t) {
+            var snippet = (t || '').replace(/\s+/g, ' ').trim().slice(0, 500);
+            var errMsg = 'HTTP ' + r.status;
+            if (snippet) errMsg += ' — ' + snippet;
+            if (r.status === 500) errMsg += ' (vérifiez schéma SQL, RLS et types colonnes id / _payload)';
+            var err = new Error(errMsg);
+            err.status = r.status;
+            throw err;
+          });
+        }
+        if (r.status === 204) return [];
+        var ct = (r.headers.get('content-type') || '').toLowerCase();
+        if (ct.indexOf('application/json') === -1) return r.text().then(function() { return []; });
         return r.json().catch(function() { return []; });
+      })
+      .catch(function(e) {
+        if (e && typeof e.status === 'number') throw e;
+        var msg = (e && e.message) ? e.message : String(e);
+        if (e instanceof TypeError) msg = 'Réseau / CORS : ' + msg;
+        throw new Error('[Supabase] ' + msg);
       });
   }
 
   // ── UPSERT (insert or update by id) ─────────────────────────────
+  // POST /rest/v1/<table>?on_conflict=id + Prefer: resolution=merge-duplicates
   function upsertRecords(table, records) {
     if(!records || !records.length) return Promise.resolve([]);
-    // Ajouter updated_at sur chaque record
+    assertSafeTableName(table);
     var now = new Date().toISOString();
-    var rows = records.map(function(r) {
-      var row = JSON.parse(JSON.stringify(r));
-      row.updated_at = row.updated_at || now;
-      row._payload = JSON.stringify(r); // stocker le JSON complet
-      return { id: r.id, updated_at: row.updated_at, _payload: row._payload };
-    });
+    var rows = [];
+    try {
+      records.forEach(function(r) {
+        if (!r || r.id == null || r.id === '') return;
+        var row = JSON.parse(JSON.stringify(r));
+        row.updated_at = row.updated_at || now;
+        row._payload = JSON.stringify(r);
+        rows.push({ id: String(r.id), updated_at: row.updated_at, _payload: row._payload });
+      });
+    } catch (e) {
+      return Promise.reject(new Error('Préparation upsert impossible : ' + (e.message || e)));
+    }
+    if (!rows.length) return Promise.resolve([]);
     return sbFetch(table + '?on_conflict=id', {
       method: 'POST',
       headers: {
@@ -80,6 +127,7 @@
 
   // ── FETCH REMOTE ─────────────────────────────────────────────────
   function fetchRemote(table) {
+    assertSafeTableName(table);
     return sbFetch(table + '?select=id,updated_at,_payload&order=updated_at.desc');
   }
 
@@ -157,7 +205,11 @@
       SB.syncing = false;
       SB.errors++;
       setSyncStatus('error');
-      console.error('[JTISync] Erreur:', e);
+      var detail = (e && e.message) ? e.message : String(e);
+      console.error('[JTISync] Erreur sync:', detail);
+      try {
+        if (!silent) showSyncToast('✗ Sync : ' + detail.slice(0, 120) + (detail.length > 120 ? '…' : ''));
+      } catch (ex) {}
     });
   }
 
@@ -350,7 +402,7 @@
     var key = (document.getElementById('sb-key')||{}).value || '';
     var rt  = (document.getElementById('sb-realtime')||{}).checked || false;
     if(!url || !key) { alert('URL et clé requis'); return; }
-    var cfg = { url: url.trim(), key: key.trim(), realtime: rt };
+    var cfg = { url: normalizeSupabaseUrl(url.trim()), key: key.trim(), realtime: rt };
     localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
     closeSyncModal();
     syncAll(false);
@@ -363,7 +415,7 @@
     if(!url || !key) { setSetupStatus('error','URL et clé requis'); return; }
     // Sauver temporairement pour le test
     var prev = localStorage.getItem(CFG_KEY);
-    localStorage.setItem(CFG_KEY, JSON.stringify({url:url,key:key}));
+    localStorage.setItem(CFG_KEY, JSON.stringify({ url: normalizeSupabaseUrl(url), key: key }));
     setSetupStatus('loading','Test de connexion…');
     sbFetch('crm_prospects?select=id&limit=1')
       .then(function() { setSetupStatus('ok','✓ Connexion réussie — tables accessibles'); })
