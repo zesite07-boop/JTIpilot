@@ -3,1778 +3,785 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<link rel="manifest" href="manifest.json"/>
-<meta name="theme-color" content="#f97316"/>
-<meta name="mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<title>JTIpilot — Outils de Pilotage</title>
+<title>JTIPilot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"/>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
-  --bg:#0a0c14;--s1:#0f1117;--s2:#181c27;--s3:#1e2335;
-  --border:#2a2f45;--border2:#363d58;
-  --text:#e2e8f0;--muted:#64748b;--muted2:#94a3b8;
-  --accent:#f97316;--accent2:#ea6c0a;
-  --green:#22c55e;--warn:#ef4444;--blue:#3b82f6;--cyan:#06b6d4;
-  --mono:'IBM Plex Mono',monospace;
-  --sans:'IBM Plex Sans',sans-serif;
+  --bg:#F4F6FA;
+  --white:#ffffff;
+  --border:#EDEEF2;
+  --text:#1e293b;
+  --muted:#94a3b8;
+  --muted2:#64748b;
+  --accent:#f97316;
+  --green:#22c55e;
+  --blue:#3b82f6;
+  --amber:#f59e0b;
+  --red:#ef4444;
+  --purple:#a855f7;
+  --cyan:#06b6d4;
+  --sans:"IBM Plex Sans",sans-serif;
+  --mono:"IBM Plex Mono",monospace;
   --nav-w:220px;
-  --top-h:48px;
+  --top-h:56px;
+  --radius:8px;
+  --radius-lg:10px;
 }
-html,body{height:100%;overflow:hidden;font-family:var(--sans);}
+html,body{height:100%;font-family:var(--sans);background:var(--bg);color:var(--text);overflow:hidden;}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:2px;}
 
-/* TOPBAR */
-.topbar{
-  position:fixed;top:0;left:0;right:0;height:var(--top-h);
-  background:var(--s1);border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 16px 0 calc(var(--nav-w) + 16px);z-index:100;
-}
-.topbar-left{display:flex;align-items:center;gap:12px;}
-.page-title{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);letter-spacing:.5px;}
-.page-sub{font-size:10px;color:var(--muted);font-family:var(--mono);}
-.topbar-right{display:flex;align-items:center;gap:8px;}
-.top-kpi{
-  font-family:var(--mono);font-size:10px;
-  padding:4px 10px;border-radius:2px;
-  background:var(--s2);border:1px solid var(--border);
-  color:var(--muted2);white-space:nowrap;
-}
-.top-kpi span{color:var(--accent);font-weight:700;}
-.btn-import{
-  font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.5px;
-  padding:5px 12px;border-radius:2px;cursor:pointer;border:none;
-  background:var(--s2);border:1px solid var(--border2);color:var(--muted2);
-  transition:all .15s;
-}
-.btn-import:hover{border-color:var(--accent);color:var(--accent);}
-
-/* NAV LATÉRALE */
+/* ── SIDEBAR ── */
 .nav{
   position:fixed;top:0;left:0;bottom:0;width:var(--nav-w);
-  background:var(--s1);border-right:1px solid var(--border);
-  display:flex;flex-direction:column;z-index:200;
-  transition:transform .25s cubic-bezier(.22,1,.36,1);
+  background:var(--white);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;z-index:200;overflow-y:auto;
 }
 .nav-logo{
-  height:var(--top-h);padding:0 16px;
-  display:flex;align-items:center;gap:10px;
-  border-bottom:1px solid var(--border);flex-shrink:0;
+  height:var(--top-h);padding:0 20px;
+  display:flex;align-items:center;
+  border-bottom:1px solid var(--border);
+  font-size:17px;font-weight:600;color:var(--text);
+  flex-shrink:0;letter-spacing:-0.3px;
 }
-.nav-logo-icon{font-size:20px;}
-.nav-logo-text{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--accent);letter-spacing:1px;line-height:1.2;}
-.nav-logo-sub{font-size:9px;color:var(--muted);letter-spacing:.5px;}
-
-.nav-section{padding:12px 0 4px;}
-.nav-section-title{
-  font-family:var(--mono);font-size:9px;font-weight:700;
-  color:var(--muted);letter-spacing:1.5px;
-  padding:0 14px 4px;text-transform:uppercase;
+.nav-logo em{color:var(--accent);font-style:normal;}
+.nav-section{
+  font-size:9px;font-weight:500;color:var(--muted);
+  letter-spacing:1.3px;text-transform:uppercase;
+  padding:14px 20px 4px;
 }
 .nav-item{
   display:flex;align-items:center;gap:10px;
-  padding:9px 14px;cursor:pointer;
-  border-left:3px solid transparent;
-  transition:all .12s;color:var(--muted2);font-size:11px;
+  padding:9px 20px;font-size:12px;color:var(--muted2);
+  cursor:pointer;transition:all .12s;
+  border-right:3px solid transparent;
+  user-select:none;
 }
-.nav-item:hover{background:var(--s2);color:var(--text);}
-.nav-item.active{
-  background:var(--s2);color:var(--accent);
-  border-left-color:var(--accent);
+.nav-item:hover{background:var(--bg);color:var(--text);}
+.nav-item.active{background:#FFF4EE;color:var(--accent);border-right-color:var(--accent);font-weight:500;}
+.nav-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.nav-badge{
+  margin-left:auto;font-size:9px;font-weight:500;
+  padding:1px 6px;border-radius:10px;
 }
-.nav-item .ni-icon{font-size:14px;width:18px;text-align:center;flex-shrink:0;}
-.nav-item .ni-label{font-family:var(--sans);font-size:11px;font-weight:500;}
-.nav-item .ni-badge{
-  margin-left:auto;font-family:var(--mono);font-size:8px;font-weight:700;
-  padding:1px 5px;border-radius:8px;
-  background:rgba(249,115,22,.15);color:var(--accent);
-}
-a.nav-item-link{text-decoration:none;color:inherit;}
-a.nav-item-link:hover{color:var(--text);}
-
-.nav-divider{height:1px;background:var(--border);margin:4px 14px;}
-
+.nb-orange{background:#FFF4EE;color:var(--accent);}
+.nb-green{background:#DCFCE7;color:#16a34a;}
+.nb-purple{background:#F3E8FF;color:#9333ea;}
+.nb-red{background:#FEE2E2;color:#dc2626;}
 .nav-bottom{
-  margin-top:auto;padding:12px 14px;border-top:1px solid var(--border);
+  margin-top:auto;padding:12px 20px;
+  border-top:1px solid var(--border);
   font-family:var(--mono);font-size:9px;color:var(--muted);
 }
 
-/* CONTENU — IFRAME */
-.content{
-  position:fixed;
-  top:var(--top-h);left:var(--nav-w);right:0;bottom:0;
-  background:var(--bg);
+/* ── TOPBAR ── */
+.topbar{
+  position:fixed;top:0;left:var(--nav-w);right:0;height:var(--top-h);
+  background:var(--white);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 24px;gap:12px;z-index:100;
 }
-.content iframe{
-  width:100%;height:100%;border:none;
-  display:none;
+.topbar-title{font-size:17px;font-weight:500;color:var(--text);}
+.topbar-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.topbar-right{display:flex;align-items:center;gap:8px;margin-left:auto;}
+.btn{
+  font-size:12px;font-weight:500;padding:7px 14px;
+  border-radius:6px;cursor:pointer;border:none;
+  font-family:var(--sans);transition:opacity .12s;
 }
-.content iframe.active{display:block;}
+.btn:hover{opacity:.85;}
+.btn-ghost{background:var(--white);border:1px solid var(--border);color:var(--muted2);}
+.btn-primary{background:var(--accent);color:#fff;}
 
-/* SPLASH */
-#splash{
-  width:100%;height:100%;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  background:var(--bg);color:var(--text);
+/* ── MAIN ── */
+.main{
+  position:fixed;top:var(--top-h);left:var(--nav-w);right:0;bottom:0;
+  overflow-y:auto;background:var(--bg);
 }
-#splash.hidden{display:none;}
-.splash-grid{
-  display:grid;grid-template-columns:repeat(4,1fr);gap:12px;
-  max-width:760px;width:100%;padding:0 20px;margin-top:24px;
-}
-.splash-card{
-  background:var(--s1);border:1px solid var(--border);
-  border-radius:4px;padding:16px 14px;cursor:pointer;
-  transition:all .15s;text-align:center;
-}
-.splash-card:hover{border-color:var(--accent);background:var(--s2);}
-.splash-card .sc-icon{font-size:28px;margin-bottom:8px;}
-.splash-card .sc-name{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--muted2);letter-spacing:.5px;}
-.splash-card .sc-desc{font-size:10px;color:var(--muted);margin-top:4px;line-height:1.4;}
-.splash-title{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;}
-.splash-sub{font-size:12px;color:var(--muted);margin-top:6px;font-family:var(--mono);}
-.splash-kpis{
-  display:flex;gap:16px;margin-top:16px;
-  background:var(--s1);border:1px solid var(--border);
-  border-radius:4px;padding:12px 20px;
-}
-.sk-item{text-align:center;}
-.sk-val{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--accent);}
-.sk-lbl{font-size:9px;color:var(--muted);font-family:var(--mono);letter-spacing:.5px;margin-top:2px;}
 
-/* MODAL IMPORT */
-.modal-bg{
-  position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:600;
-  display:flex;align-items:center;justify-content:center;
-  opacity:0;pointer-events:none;transition:opacity .2s;backdrop-filter:blur(4px);
+/* ── KPI STRIP ── */
+.kpi-strip{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:10px;
+  padding:14px 24px;background:var(--white);
+  border-bottom:1px solid var(--border);
 }
-.modal-bg.open{opacity:1;pointer-events:all;}
-.modal{
-  background:var(--s1);border:1px solid var(--border2);border-radius:6px;
-  padding:24px;width:560px;max-height:80vh;overflow-y:auto;position:relative;
-}
-.modal h3{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent);margin-bottom:4px;letter-spacing:.5px;}
-.modal p{font-size:11px;color:var(--muted2);margin-bottom:16px;line-height:1.6;}
-.modal-close{position:absolute;top:14px;right:16px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;}
+.kpi{background:var(--bg);border-radius:var(--radius);padding:12px 14px;}
+.kpi-n{font-size:22px;font-weight:500;line-height:1.1;}
+.kpi-l{font-size:10px;color:var(--muted);margin-top:2px;}
+.kpi-bar{height:3px;background:#E2E8F0;border-radius:2px;margin-top:8px;overflow:hidden;}
+.kpi-bar-fill{height:100%;border-radius:2px;transition:width .4s;}
 
-.import-zone{
-  border:2px dashed var(--border2);border-radius:4px;
-  padding:24px;text-align:center;cursor:pointer;
-  transition:all .2s;margin-bottom:12px;
-}
-.import-zone:hover,.import-zone.drag{border-color:var(--accent);background:rgba(249,115,22,.04);}
-.import-zone .iz-icon{font-size:32px;margin-bottom:8px;}
-.import-zone .iz-text{font-family:var(--mono);font-size:11px;color:var(--muted2);}
-.import-zone .iz-sub{font-size:10px;color:var(--muted);margin-top:4px;}
+/* ── BOARD ── */
+.board{padding:16px 24px;display:flex;flex-direction:column;gap:10px;}
 
-.import-tabs{display:flex;gap:0;border:1px solid var(--border);border-radius:3px;overflow:hidden;margin-bottom:14px;}
-.import-tab{
-  flex:1;padding:7px 6px;font-family:var(--mono);font-size:10px;font-weight:700;
-  text-align:center;cursor:pointer;color:var(--muted);background:var(--s2);
-  border:none;border-right:1px solid var(--border);letter-spacing:.3px;transition:all .15s;
+/* ── GROUPE ── */
+.group{background:var(--white);border-radius:var(--radius-lg);overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+.group-header{
+  display:flex;align-items:center;gap:10px;padding:12px 16px;
+  cursor:pointer;border-left:4px solid transparent;
+  transition:background .12s;user-select:none;
 }
-.import-tab:last-child{border-right:none;}
-.import-tab.active{background:var(--s3);color:var(--accent);}
+.group-header:hover{background:#FAFBFF;}
+.gh-orange{border-left-color:var(--accent);}
+.gh-red{border-left-color:var(--red);}
+.gh-blue{border-left-color:var(--blue);}
+.gh-amber{border-left-color:var(--amber);}
+.gh-purple{border-left-color:var(--purple);}
+.gh-gray{border-left-color:var(--muted);}
+.group-title{font-size:13px;font-weight:500;color:var(--text);}
+.group-count{font-size:11px;color:var(--muted);}
+.group-chevron{margin-left:auto;font-size:11px;color:var(--muted);transition:transform .2s;}
+.group-chevron.open{transform:rotate(180deg);}
+.group-body{display:none;}
+.group-body.open{display:block;}
 
-.import-panel{display:none;}
-.import-panel.active{display:block;}
-
-.format-card{
-  background:var(--s2);border:1px solid var(--border);border-radius:3px;
-  padding:10px 14px;margin-bottom:8px;font-size:11px;line-height:1.6;
+/* ── COL HEADERS ── */
+.col-headers{
+  display:grid;gap:0;
+  padding:5px 16px;
+  background:#F8F9FB;
+  border-top:1px solid var(--border);
+  border-bottom:1px solid #F1F5F9;
 }
-.format-card strong{font-family:var(--mono);font-size:10px;color:var(--cyan);display:block;margin-bottom:4px;}
+.col-h{font-size:9px;color:var(--muted);font-weight:500;letter-spacing:.8px;text-transform:uppercase;}
 
-.log-zone{
-  background:var(--bg);border:1px solid var(--border);border-radius:3px;
-  padding:10px;font-family:var(--mono);font-size:10px;color:var(--muted2);
-  min-height:60px;max-height:120px;overflow-y:auto;margin-top:8px;
-  display:none;
+/* ── PULSE ROW ── */
+.pulse-row{
+  display:grid;gap:0;align-items:center;
+  padding:10px 16px;border-bottom:1px solid #F8F9FB;
+  transition:background .12s;cursor:pointer;
 }
-.log-zone.show{display:block;}
-.log-ok{color:var(--green);}
-.log-warn{color:var(--accent);}
-.log-err{color:var(--warn);}
+.pulse-row:last-child{border-bottom:none;}
+.pulse-row:hover{background:#FAFBFF;}
+.pulse-row:hover .row-name{color:var(--accent);}
+.row-name{font-size:13px;font-weight:500;color:var(--text);transition:color .12s;line-height:1.3;}
+.row-sub{font-size:10px;color:var(--muted);margin-top:1px;}
 
-.btn-primary{
-  font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.5px;
-  padding:8px 18px;border-radius:2px;cursor:pointer;border:none;
-  background:var(--accent);color:#fff;transition:all .15s;
+/* ── STATUS BUTTONS ── */
+.sb{
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:6px 10px;border-radius:6px;
+  font-size:11px;font-weight:500;color:#fff;
+  min-width:96px;text-align:center;
+  cursor:pointer;transition:opacity .12s;border:none;
+  font-family:var(--sans);
 }
-.btn-primary:hover{background:var(--accent2);}
-.btn-outline{
-  font-family:var(--mono);font-size:11px;font-weight:700;
-  padding:8px 18px;border-radius:2px;cursor:pointer;
-  background:transparent;border:1px solid var(--border2);color:var(--muted2);transition:all .15s;
-}
-.btn-outline:hover{border-color:var(--accent);color:var(--accent);}
+.sb:hover{opacity:.85;}
+.sb-green{background:var(--green);}
+.sb-orange{background:var(--accent);}
+.sb-amber{background:var(--amber);}
+.sb-red{background:var(--red);}
+.sb-blue{background:var(--blue);}
+.sb-purple{background:var(--purple);}
+.sb-gray{background:var(--muted);}
+.sb-cyan{background:var(--cyan);}
+.sb-pink{background:#ec4899;}
 
-/* RESPONSIVE — toggle nav mobile */
-.nav-toggle{display:none;}
+/* ── ACTION TAGS ── */
+.at{font-size:10px;font-weight:500;padding:3px 8px;border-radius:4px;white-space:nowrap;}
+.at-orange{background:#FFF4EE;color:var(--accent);}
+.at-red{background:#FEE2E2;color:#dc2626;}
+.at-amber{background:#FEF3C7;color:#d97706;}
+.at-blue{background:#DBEAFE;color:#2563eb;}
+.at-green{background:#DCFCE7;color:#16a34a;}
+.at-gray{background:#F1F5F9;color:var(--muted2);}
+
+/* ── TAUX / DATE ── */
+.cell-taux{font-size:12px;font-weight:500;color:var(--text);}
+.cell-date{font-size:11px;color:var(--muted2);}
+
+/* ── EMPTY STATE ── */
+.group-empty{
+  padding:20px 16px;
+  text-align:center;font-size:12px;color:var(--muted);
+  font-family:var(--mono);
+}
+
+/* ── MODULE PLACEHOLDER ── */
+.module-ph{
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;height:60vh;
+  color:var(--muted);font-size:12px;gap:8px;
+  font-family:var(--mono);
+}
+
+/* ── RESPONSIVE ── */
 @media(max-width:900px){
-  .nav{transform:translateX(-100%);}
-  .nav.open{transform:translateX(0);}
-  .content{left:0;}
-  .topbar{padding-left:52px;}
-  .nav-toggle{
-    display:flex;align-items:center;justify-content:center;
-    position:fixed;top:8px;left:8px;z-index:300;
-    width:32px;height:32px;background:var(--s2);border:1px solid var(--border);
-    border-radius:3px;cursor:pointer;font-size:16px;color:var(--muted2);
-  }
+  .kpi-strip{grid-template-columns:repeat(2,1fr);}
 }
-
-::-webkit-scrollbar{width:3px;}
-::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
-
-/* ── VUE TODAY ── */
-.today-panel{margin:0 0 18px 0;}
-.today-section-title{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border);}
-.today-item{display:flex;gap:10px;padding:8px 10px;border:1px solid var(--border);border-radius:3px;margin-bottom:5px;cursor:pointer;transition:all .12s;background:var(--s2);}
-.today-item:hover{border-color:var(--border2);background:var(--s3);}
-.today-item.warn{border-left:3px solid var(--warn);}
-.today-item.yellow{border-left:3px solid #fbbf24;}
-.today-item .ti-icon{font-size:15px;flex-shrink:0;margin-top:1px;}
-.today-item .ti-body{flex:1;min-width:0;}
-.today-item .ti-title{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.today-item .ti-sub{font-size:10px;color:var(--muted2);font-family:var(--mono);margin-top:1px;}
-.today-item .ti-badge{font-family:var(--mono);font-size:9px;padding:2px 6px;border-radius:2px;font-weight:700;white-space:nowrap;flex-shrink:0;align-self:flex-start;}
-.today-empty{font-size:11px;color:var(--muted);font-family:var(--mono);padding:6px 0;}
-.splash-today{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;padding:18px;overflow-y:auto;}
-@media(max-width:900px){.splash-today{grid-template-columns:1fr;}}
-
-/* ── MODAL OVERLAY (unifié, z-index > nav 200) ── */
-.modal-overlay{
-  display:none;position:fixed;inset:0;
-  background:rgba(0,0,0,.75);
-  z-index:600;
-  align-items:center;justify-content:center;
-  padding:20px;box-sizing:border-box;
-}
-.modal-overlay.open{display:flex;}
-.modal-overlay .modal{
-  background:var(--s1);border:1px solid var(--border);
-  border-radius:6px;padding:22px;
-  width:min(560px,95vw);max-height:90vh;overflow-y:auto;
-  position:relative;
-}
-.modal-overlay .modal h3{
-  font-family:var(--mono);font-size:13px;font-weight:700;
-  color:var(--accent);margin-bottom:16px;letter-spacing:.5px;
-}
-.modal-overlay p{font-size:11px;color:var(--muted2);margin-bottom:14px;line-height:1.6;}
-.modal-overlay .field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
-.modal-overlay .field label{font-size:10px;color:var(--muted);font-family:var(--mono);font-weight:700;letter-spacing:.3px;}
-.modal-overlay .field input,.modal-overlay .field select,.modal-overlay .field textarea{
-  background:var(--s2);border:1px solid var(--border);color:var(--text);
-  padding:7px 10px;border-radius:3px;font-size:12px;font-family:var(--sans);width:100%;box-sizing:border-box;
-}
-.modal-overlay .field input:focus,.modal-overlay .field select:focus{border-color:var(--accent);outline:none;}
-.modal-overlay .btn-primary{padding:6px 14px;background:var(--accent);color:#fff;border:none;border-radius:3px;font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;}
-.modal-overlay .btn-primary:hover{opacity:.85;}
-.modal-overlay .btn-cancel{padding:6px 14px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:3px;font-family:var(--mono);font-size:11px;cursor:pointer;}
-
 </style>
 </head>
 <body>
 
-<!-- NAV TOGGLE MOBILE -->
-<div class="nav-toggle" onclick="toggleNav()" id="nav-toggle">☰</div>
-
-<!-- NAVIGATION -->
+<!-- NAV -->
 <nav class="nav" id="nav">
-  <div class="nav-logo">
-    <div class="nav-logo-icon">🏗</div>
-    <div>
-      <div class="nav-logo-text" id="nav-agency-name">JTIpilot</div>
-      <div class="nav-logo-sub" id="nav-agency-sub">OUTILS DE PILOTAGE</div>
-    </div>
+  <div class="nav-logo">JT<em>Pilot</em></div>
+
+  <div class="nav-section">Opérationnel</div>
+  <div class="nav-item active" data-mod="today" onclick="navigateTo('today')">
+    <div class="nav-dot" style="background:var(--accent)"></div>
+    Aujourd'hui
+    <span class="nav-badge nb-red" id="badge-today">—</span>
+  </div>
+  <div class="nav-item" data-mod="tdb" onclick="navigateTo('tdb')">
+    <div class="nav-dot" style="background:var(--blue)"></div>
+    Tableau de Bord
+  </div>
+  <div class="nav-item" data-mod="crm" onclick="navigateTo('crm')">
+    <div class="nav-dot" style="background:var(--blue)"></div>
+    CRM Prospection
+    <span class="nav-badge nb-orange" id="badge-crm">—</span>
+  </div>
+  <div class="nav-item" data-mod="candidats" onclick="navigateTo('candidats')">
+    <div class="nav-dot" style="background:var(--green)"></div>
+    Candidats
+    <span class="nav-badge nb-green" id="badge-cands">—</span>
+  </div>
+  <div class="nav-item" data-mod="missions" onclick="navigateTo('missions')">
+    <div class="nav-dot" style="background:var(--purple)"></div>
+    Missions
+    <span class="nav-badge nb-purple" id="badge-missions">—</span>
+  </div>
+  <div class="nav-item" data-mod="marge" onclick="navigateTo('marge')">
+    <div class="nav-dot" style="background:var(--muted)"></div>
+    Fiche Marge
   </div>
 
-  <div class="nav-section">
-    <div class="nav-section-title">OPÉRATIONNEL</div>
-    <div class="nav-item active" onclick="load('splash','Accueil','Dashboard global')" id="ni-splash">
-      <span class="ni-icon">⬡</span><span class="ni-label">Dashboard</span>
-    </div>
-    <div class="nav-item" onclick="load('tdb','Tableau de Bord','KPIs temps réel')" id="ni-tdb">
-      <span class="ni-icon">📊</span><span class="ni-label">Tableau de Bord RA</span>
-    </div>
-    <div class="nav-item" onclick="load('crm','CRM Prospection','Clients & pipeline')" id="ni-crm">
-      <span class="ni-icon">🎯</span><span class="ni-label">CRM Prospection</span>
-      <span class="ni-badge" id="badge-crm">—</span>
-    </div>
-    <div class="nav-item" onclick="load('candidats','Base Candidats','Vivier & disponibilités')" id="ni-candidats">
-      <span class="ni-icon">👷</span><span class="ni-label">Base Candidats</span>
-      <span class="ni-badge" id="badge-cands">—</span>
-    </div>
-    <div class="nav-item" onclick="load('missions','Missions','Missions actives')" id="ni-missions">
-      <span class="ni-icon">⚙</span><span class="ni-label">Missions</span>
-      <span class="ni-badge" id="badge-missions">—</span>
-    </div>
-    <div class="nav-item" onclick="load('marge','Fiche Marge','Calculateur à la volée')" id="ni-marge">
-      <span class="ni-icon">💶</span><span class="ni-label">Fiche Marge</span>
-    </div>
+  <div class="nav-section">Pilotage</div>
+  <div class="nav-item" data-mod="pl" onclick="navigateTo('pl')">
+    <div class="nav-dot" style="background:var(--purple)"></div>
+    Simulateur P&amp;L
   </div>
 
-  <div class="nav-divider"></div>
-
-  <div class="nav-section">
-    <div class="nav-section-title">PILOTAGE</div>
-    <div class="nav-item" onclick="load('pl','Simulateur P&L','Scénarios agence')" id="ni-pl">
-      <span class="ni-icon">📈</span><span class="ni-label">Simulateur P&L</span>
-    </div>
-    <div class="nav-item" onclick="load('clients','Fiche Lecture Client','Scoring solvabilité')" id="ni-clients">
-      <span class="ni-icon">🔍</span><span class="ni-label">Fiche Client</span>
-    </div>
+  <div class="nav-section">Référence</div>
+  <div class="nav-item" data-mod="juridique" onclick="navigateTo('juridique')">
+    <div class="nav-dot" style="background:var(--muted)"></div>
+    Juridique
+  </div>
+  <div class="nav-item" data-mod="objections" onclick="navigateTo('objections')">
+    <div class="nav-dot" style="background:var(--muted)"></div>
+    Objections
+  </div>
+  <div class="nav-item" data-mod="rome" onclick="navigateTo('rome')">
+    <div class="nav-dot" style="background:var(--muted)"></div>
+    ROME BTP
   </div>
 
-  <div class="nav-divider"></div>
-
-  <div class="nav-section">
-    <div class="nav-section-title">RÉFÉRENCE</div>
-    <div class="nav-item" onclick="load('juridique','Guide Juridique','Droits & réflexes')" id="ni-juridique">
-      <span class="ni-icon">⚖️</span><span class="ni-label">Guide Juridique</span>
-    </div>
-    <div class="nav-item" onclick="load('objections','Objections Direction','Défendre sa marge')" id="ni-objections">
-      <span class="ni-icon">🗣</span><span class="ni-label">Objections Direction</span>
-    </div>
-    <a class="nav-item nav-item-link" href="rome.html" id="ni-rome" title="Référentiel ROME — métiers BTP">
-      <span class="ni-icon">📋</span><span class="ni-label" id="ni-rome-label">ROME</span>
-    </a>
+  <div class="nav-section">Données</div>
+  <div class="nav-item" onclick="navigateTo('import')">
+    <div class="nav-dot" style="background:var(--muted)"></div>
+    Import logiciels
   </div>
-
-  <div class="nav-divider"></div>
-
-  <div class="nav-section">
-    <div class="nav-section-title">DONNÉES</div>
-    <div class="nav-item" onclick="openImport()" id="ni-import">
-      <span class="ni-icon">⬆</span><span class="ni-label">Import Logiciels</span>
-    </div>
-    <div class="nav-item" onclick="openProxyModal()" id="ni-proxy">
-      <span class="ni-icon">🔌</span><span class="ni-label">Proxy CF / IA</span>
-      <span class="ni-badge" id="badge-proxy" style="background:rgba(100,116,139,.15);color:#64748b">OFF</span>
-    </div>
-    <div class="nav-item" onclick="openSyncModal()" id="ni-sync">
-      <span class="ni-icon">☁</span><span class="ni-label">Sync Supabase</span>
-      <span class="ni-badge" id="badge-sync" style="background:rgba(100,116,139,.15);color:#64748b">OFF</span>
-    </div>
-    <div class="nav-item" onclick="openBackup()" id="ni-export">
-      <span class="ni-icon">⬇</span><span class="ni-label">Backup &amp; Export</span>
-    </div>
+  <div class="nav-item" onclick="exportAll()">
+    <div class="nav-dot" style="background:var(--muted)"></div>
+    Export JSON
+  </div>
+  <div class="nav-item" data-mod="parametres" onclick="navigateTo('parametres')">
+    <div class="nav-dot" style="background:var(--muted)"></div>
+    Paramètres
   </div>
 
   <div class="nav-bottom" id="nav-clock"></div>
-<div style="padding:6px 14px;border-top:1px solid var(--border);font-family:var(--mono);font-size:9px;color:var(--muted);cursor:pointer;" onclick="showKeyboardHelp()">⌨ Raccourcis <span style="color:var(--accent)">?</span></div>
 </nav>
 
 <!-- TOPBAR -->
 <div class="topbar">
-  <div class="topbar-left">
-    <div>
-      <div class="page-title" id="page-title">DASHBOARD</div>
-      <div class="page-sub" id="page-sub">Dashboard global</div>
-    </div>
+  <div>
+    <div class="topbar-title" id="topbar-title">Aujourd'hui</div>
+    <div class="topbar-sub" id="topbar-sub"></div>
   </div>
   <div class="topbar-right">
-    <div class="top-kpi">Prospects <span id="tk-prospects">—</span></div>
-    <div class="top-kpi">Missions actives <span id="tk-missions">—</span></div>
-    <div class="top-kpi">Candidats dispo <span id="tk-dispo">—</span></div>
-    <button id="btn-install-pwa" onclick="installPWA()" style="display:none;align-items:center;gap:5px;padding:5px 10px;background:rgba(249,115,22,.15);color:var(--accent);border:1px solid rgba(249,115,22,.3);border-radius:2px;font-family:var(--mono);font-size:10px;font-weight:700;cursor:pointer;letter-spacing:.3px;">📲 INSTALLER</button>
-    <button class="btn-import" onclick="openImport()">⬆ IMPORT LOGICIEL</button>
+    <div id="topbar-kpis" style="display:flex;gap:8px;"></div>
+    <button class="btn btn-ghost" onclick="exportAll()">Export JSON</button>
+    <button class="btn btn-primary" onclick="navigateTo('crm')">+ Nouveau besoin</button>
   </div>
 </div>
 
-<!-- CONTENU IFRAMES -->
-<div class="content" id="content">
-  <div id="splash">
-    <div class="splash-title" id="splash-agency-title">JTIpilot — OUTILS DE PILOTAGE</div>
-    <div class="splash-sub" id="today-date-sub"></div>
-    <div class="splash-kpis" id="splash-kpis">
-      <div class="sk-item" onclick="loadWithFilter('candidats','Base Candidats','Vivier &amp; disponibilités','dispo','tous')" style="cursor:pointer" title="Voir tous les candidats">
-        <div class="sk-val" id="sk-prospects">—</div><div class="sk-lbl">PROSPECTS</div>
-      </div>
-      <div class="sk-item" onclick="loadWithFilter('candidats','Base Candidats','Vivier &amp; disponibilités','dispo','mission')" style="cursor:pointer" title="Filtrer : missions actives">
-        <div class="sk-val" id="sk-missions">—</div><div class="sk-lbl">MISSIONS ACTIVES</div>
-      </div>
-      <div class="sk-item" onclick="loadWithFilter('candidats','Base Candidats','Vivier &amp; disponibilités','dispo','dispo')" style="cursor:pointer" title="Filtrer : candidats disponibles">
-        <div class="sk-val" id="sk-dispo">—</div><div class="sk-lbl">CANDIDATS DISPO</div>
-      </div>
-      <div class="sk-item" onclick="load('clients','Fiche Lecture Client','Scoring solvabilité')" style="cursor:pointer" title="Voir les clients scorés">
-        <div class="sk-val" id="sk-clients-score">—</div><div class="sk-lbl">CLIENTS SCORÉS</div>
-      </div>
-    </div>
-    <!-- VUE TODAY -->
-    <div class="splash-today" id="today-grid">
-      <div>
-        <div class="today-section-title">⚠ ACTIONS CRM EN RETARD</div>
-        <div id="today-retard"><div class="today-empty">Chargement…</div></div>
-      </div>
-      <div>
-        <div class="today-section-title">📋 MISSIONS QUI EXPIRENT ≤ 7J</div>
-        <div id="today-fins"><div class="today-empty">Chargement…</div></div>
-      </div>
-      <div>
-        <div class="today-section-title">👷 CANDIDATS EN PRÉAVIS / DISPO</div>
-        <div id="today-dispo"><div class="today-empty">Chargement…</div></div>
-      </div>
-    </div>
-    <div class="splash-grid">
-      <div class="splash-card" onclick="load('tdb','Tableau de Bord','KPIs temps réel')">
-        <div class="sc-icon">📊</div>
-        <div class="sc-name">TABLEAU DE BORD</div>
-        <div class="sc-desc">KPIs temps réel, alertes, missions actives</div>
-      </div>
-      <div class="splash-card" onclick="load('crm','CRM Prospection','Clients & pipeline')">
-        <div class="sc-icon">🎯</div>
-        <div class="sc-name">CRM PROSPECTION</div>
-        <div class="sc-desc">Pipeline, besoins clients, propales</div>
-      </div>
-      <div class="splash-card" onclick="load('candidats','Base Candidats','Vivier & disponibilités')">
-        <div class="sc-icon">👷</div>
-        <div class="sc-name">BASE CANDIDATS</div>
-        <div class="sc-desc">Vivier BTP, disponibilités, missions</div>
-      </div>
-      <div class="splash-card" onclick="load('marge','Fiche Marge','Calculateur à la volée')">
-        <div class="sc-icon">💶</div>
-        <div class="sc-name">FICHE MARGE</div>
-        <div class="sc-desc">Calculateur coûts, taux, coefficients</div>
-      </div>
-      <div class="splash-card" onclick="load('pl','Simulateur P&L','Scénarios agence')">
-        <div class="sc-icon">📈</div>
-        <div class="sc-name">SIMULATEUR P&L</div>
-        <div class="sc-desc">Scénarios, seuil rentabilité, projection</div>
-      </div>
-      <div class="splash-card" onclick="load('clients','Fiche Lecture Client','Scoring solvabilité')">
-        <div class="sc-icon">🔍</div>
-        <div class="sc-name">FICHE CLIENT</div>
-        <div class="sc-desc">Scoring solvabilité, décideurs, alertes</div>
-      </div>
-      <div class="splash-card" onclick="load('juridique','Guide Juridique','Droits & réflexes')">
-        <div class="sc-icon">⚖️</div>
-        <div class="sc-name">GUIDE JURIDIQUE</div>
-        <div class="sc-desc">Motifs, durées, AT, requalification</div>
-      </div>
-      <div class="splash-card" onclick="load('objections','Objections Direction','Défendre sa marge')">
-        <div class="sc-icon">🗣</div>
-        <div class="sc-name">OBJECTIONS</div>
-        <div class="sc-desc">Réponses direction, chiffres live</div>
-      </div>
-    </div>
-  </div>
-  <iframe id="if-tdb"        src="tdb.html"></iframe>
-  <iframe id="if-crm"        src="crm2.html"></iframe>
-  <iframe id="if-candidats"  src="candidats2.html"></iframe>
-  <iframe id="if-marge"      src="marge2.html"></iframe>
-  <iframe id="if-pl"         src="pl.html"></iframe>
-  <iframe id="if-clients"    src="clients.html"></iframe>
-  <iframe id="if-juridique"  src="juridique.html"></iframe>
-  <iframe id="if-objections" src="objections.html"></iframe>
-  <iframe id="if-missions"   src="missions.html"></iframe>
-  <iframe id="if-rome"       src="rome.html"></iframe>
+<!-- MAIN -->
+<div class="main" id="main">
+  <!-- Iframes modules externes -->
+  <iframe id="if-tdb"        src="tdb.html"        style="display:none;width:100%;height:100%;border:none;"></iframe>
+  <iframe id="if-crm"        src="crm2.html"       style="display:none;width:100%;height:100%;border:none;"></iframe>
+  <iframe id="if-candidats"  src="candidats2.html" style="display:none;width:100%;height:100%;border:none;"></iframe>
+  <iframe id="if-missions"   src="missions.html"   style="display:none;width:100%;height:100%;border:none;"></iframe>
+  <iframe id="if-marge"      src="marge2.html"     style="display:none;width:100%;height:100%;border:none;"></iframe>
+  <iframe id="if-pl"         src="pl.html"         style="display:none;width:100%;height:100%;border:none;"></iframe>
+  <iframe id="if-juridique"  src="juridique.html"  style="display:none;width:100%;height:100%;border:none;"></iframe>
+  <iframe id="if-objections" src="objections.html" style="display:none;width:100%;height:100%;border:none;"></iframe>
+  <iframe id="if-rome"       src="rome.html"       style="display:none;width:100%;height:100%;border:none;"></iframe>
+  <iframe id="if-parametres" src="parametres.html" style="display:none;width:100%;height:100%;border:none;"></iframe>
+  <iframe id="if-import"     src="import_demo.html" style="display:none;width:100%;height:100%;border:none;"></iframe>
+
+  <!-- Dashboard Today (rendu dynamiquement) -->
+  <div id="today-view"></div>
 </div>
-
-<!-- MODAL IMPORT LOGICIELS -->
-<div class="modal-bg" id="modal-import">
-  <div class="modal">
-    <button class="modal-close" onclick="closeImport()">×</button>
-    <h3>⬆ IMPORT LOGICIELS INTÉRIM</h3>
-    <p>Compatible Tempo, Anaël, Evolia — formats XLS, CSV, XML. Les données importées sont fusionnées avec votre base existante.</p>
-
-    <div class="import-tabs">
-      <button class="import-tab active" onclick="switchImportTab('tempo',this)">TEMPO</button>
-      <button class="import-tab" onclick="switchImportTab('anael',this)">ANAËL</button>
-      <button class="import-tab" onclick="switchImportTab('evolia',this)">EVOLIA</button>
-      <button class="import-tab" onclick="switchImportTab('csv',this)">CSV GÉNÉRIQUE</button>
-      <button class="import-tab" onclick="switchImportTab('json',this)">JSON BACKUP</button>
-    </div>
-
-    <!-- TEMPO -->
-    <div class="import-panel active" id="ip-tempo">
-      <div class="format-card">
-        <strong>EXPORT TEMPO — Format XLS attendu</strong>
-        Menu Tempo : Rapports → Contrats → Export Excel.<br>
-        Colonnes reconnues : <code>N° Contrat · Intérimaire · Société · Date début · Date fin · Qualification · Taux brut · Taux client · Heures</code>
-      </div>
-      <div class="import-zone" id="dz-tempo" ondragover="dzOver(event,'tempo')" ondragleave="dzLeave('tempo')" ondrop="dzDrop(event,'tempo')" onclick="document.getElementById('fi-tempo').click()">
-        <div class="iz-icon">📂</div>
-        <div class="iz-text">Glisser-déposer ou cliquer pour sélectionner</div>
-        <div class="iz-sub">Fichiers XLS, XLSX, CSV acceptés</div>
-      </div>
-      <input type="file" id="fi-tempo" accept=".xls,.xlsx,.csv" style="display:none" onchange="handleImportFile(this,'tempo')"/>
-      <div class="log-zone" id="log-tempo"></div>
-    </div>
-
-    <!-- ANAËL -->
-    <div class="import-panel" id="ip-anael">
-      <div class="format-card">
-        <strong>EXPORT ANAËL — Format XLS / XML attendu</strong>
-        Menu Anaël : Gestion → Missions → Exporter → Format standard.<br>
-        Colonnes reconnues : <code>CodeMission · NomInterimaire · RaisonSociale · DateDebut · DateFin · CodeQualif · TauxHoraireB · TauxHoraireC · NbHeures</code>
-      </div>
-      <div class="import-zone" id="dz-anael" ondragover="dzOver(event,'anael')" ondragleave="dzLeave('anael')" ondrop="dzDrop(event,'anael')" onclick="document.getElementById('fi-anael').click()">
-        <div class="iz-icon">📂</div>
-        <div class="iz-text">Glisser-déposer ou cliquer pour sélectionner</div>
-        <div class="iz-sub">Fichiers XLS, XLSX, CSV, XML acceptés</div>
-      </div>
-      <input type="file" id="fi-anael" accept=".xls,.xlsx,.csv,.xml" style="display:none" onchange="handleImportFile(this,'anael')"/>
-      <div class="log-zone" id="log-anael"></div>
-    </div>
-
-    <!-- EVOLIA -->
-    <div class="import-panel" id="ip-evolia">
-      <div class="format-card">
-        <strong>EXPORT EVOLIA — Format XLS / CSV attendu</strong>
-        Menu Evolia : Contrats → Liste → Exporter en Excel.<br>
-        Colonnes reconnues : <code>id_contrat · worker_lastname · worker_firstname · client_name · start_date · end_date · job_title · hourly_rate_b · hourly_rate_c · hours_worked</code>
-      </div>
-      <div class="import-zone" id="dz-evolia" ondragover="dzOver(event,'evolia')" ondragleave="dzLeave('evolia')" ondrop="dzDrop(event,'evolia')" onclick="document.getElementById('fi-evolia').click()">
-        <div class="iz-icon">📂</div>
-        <div class="iz-text">Glisser-déposer ou cliquer pour sélectionner</div>
-        <div class="iz-sub">Fichiers XLS, XLSX, CSV acceptés</div>
-      </div>
-      <input type="file" id="fi-evolia" accept=".xls,.xlsx,.csv" style="display:none" onchange="handleImportFile(this,'evolia')"/>
-      <div class="log-zone" id="log-evolia"></div>
-    </div>
-
-    <!-- CSV GÉNÉRIQUE -->
-    <div class="import-panel" id="ip-csv">
-      <div class="format-card">
-        <strong>CSV GÉNÉRIQUE — Mappage manuel des colonnes</strong>
-        Importez n'importe quel export CSV. Après chargement, associez chaque colonne au bon champ.
-      </div>
-      <div class="import-zone" id="dz-csv" ondragover="dzOver(event,'csv')" ondragleave="dzLeave('csv')" ondrop="dzDrop(event,'csv')" onclick="document.getElementById('fi-csv').click()">
-        <div class="iz-icon">📄</div>
-        <div class="iz-text">Glisser-déposer ou cliquer</div>
-        <div class="iz-sub">Fichier CSV séparateur virgule ou point-virgule</div>
-      </div>
-      <input type="file" id="fi-csv" accept=".csv,.txt" style="display:none" onchange="handleImportFile(this,'csv')"/>
-      <div id="csv-mapper" style="display:none;margin-top:10px"></div>
-      <div class="log-zone" id="log-csv"></div>
-    </div>
-
-    <!-- JSON BACKUP -->
-    <div class="import-panel" id="ip-json">
-      <div class="format-card">
-        <strong>JSON BACKUP — Restauration complète</strong>
-        Importez un export JSON précédemment généré depuis cet outil. Toutes les données (CRM, candidats, clients, config) sont restaurées en fusion.
-      </div>
-      <div class="import-zone" id="dz-json" ondragover="dzOver(event,'json')" ondragleave="dzLeave('json')" ondrop="dzDrop(event,'json')" onclick="document.getElementById('fi-json').click()">
-        <div class="iz-icon">💾</div>
-        <div class="iz-text">Glisser-déposer ou cliquer</div>
-        <div class="iz-sub">Fichier JSON export JTIpilot</div>
-      </div>
-      <input type="file" id="fi-json" accept=".json" style="display:none" onchange="handleImportFile(this,'json')"/>
-      <div class="log-zone" id="log-json"></div>
-    </div>
-
-    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
-      <a id="demo-dl" href="#" download="demo_tempo_export.csv" style="display:none"></a>
-      <button class="btn-outline" onclick="downloadDemo()">⬇ Fichier démo</button>
-      <button class="btn-outline" onclick="closeImport()">FERMER</button>
-    </div>
-  </div>
-</div>
-
-
-<!-- MODAL PROXY CLOUDFLARE -->
-<div class="modal-overlay" id="modal-proxy">
-  <div class="modal" style="max-width:480px">
-    <h3>🔌 PROXY CLOUDFLARE — IMPORT CV IA</h3>
-    <p style="font-size:11px;color:var(--muted2);margin-bottom:14px">
-      Permet l'import CV via Claude IA depuis GitHub Pages.<br>
-      Déployez <code style="color:var(--cyan)">cloudflare_worker.js</code> sur Cloudflare Workers (gratuit, 100k req/jour).
-    </p>
-    <div style="background:var(--s2);border:1px solid var(--border);border-radius:3px;padding:10px;margin-bottom:14px;font-size:10px;font-family:var(--mono);color:var(--muted2);line-height:1.8">
-      1. <a href="https://dash.cloudflare.com" target="_blank" style="color:var(--accent)">dash.cloudflare.com</a> → Workers & Pages → Create<br>
-      2. Coller le contenu de <code style="color:var(--cyan)">cloudflare_worker.js</code><br>
-      3. Deploy → copier l'URL du worker<br>
-      4. Option A : clé API dans le worker (env var) — recommandé<br>
-      5. Option B : clé API dans ce champ (stockée localement)
-    </div>
-    <div style="display:flex;flex-direction:column;gap:10px">
-      <div class="field">
-        <label>URL DU WORKER *</label>
-        <input type="text" id="proxy-url" placeholder="https://jtipilot-proxy.xxxx.workers.dev"
-          style="background:var(--s2);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:3px;font-size:12px;font-family:var(--mono);width:100%"/>
-      </div>
-      <div class="field">
-        <label>CLÉ API ANTHROPIC (optionnel si dans l'env du worker)</label>
-        <input type="password" id="proxy-key" placeholder="sk-ant-api…"
-          style="background:var(--s2);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:3px;font-size:12px;font-family:var(--mono);width:100%"/>
-      </div>
-    </div>
-    <div id="proxy-status" style="margin-top:10px;min-height:20px;font-size:11px;font-family:var(--mono)"></div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
-      <button onclick="testProxy()" style="padding:5px 12px;background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);border-radius:3px;color:#60a5fa;font-family:var(--mono);font-size:10px;cursor:pointer">TESTER</button>
-      <div style="display:flex;gap:8px">
-        <button onclick="clearProxyCfg()" style="padding:5px 10px;background:transparent;border:1px solid var(--warn);border-radius:3px;color:var(--warn);font-family:var(--mono);font-size:10px;cursor:pointer">EFFACER</button>
-        <button onclick="document.getElementById('modal-proxy').classList.remove('open')" class="btn-cancel">Fermer</button>
-        <button onclick="saveProxyCfg()" class="btn-primary">ENREGISTRER</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL BACKUP & EXPORT -->
-<div class="modal-bg" id="modal-backup">
-  <div class="modal" style="max-width:480px">
-    <button class="modal-close" onclick="closeBackup()">×</button>
-    <h3>💾 BACKUP &amp; EXPORT</h3>
-    <p style="color:var(--muted2);font-size:11px;margin-bottom:16px">Sauvegardez vos données localement. En cas de reset navigateur ou changement de machine, le JSON permet une restauration complète.</p>
-
-    <!-- Stats données -->
-    <div id="backup-stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px"></div>
-
-    <!-- Dernière sauvegarde -->
-    <div id="backup-last" style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:16px;padding:8px;background:var(--s2);border-radius:2px;border:1px solid var(--border)"></div>
-
-    <!-- Export JSON -->
-    <div style="background:var(--s2);border:1px solid var(--border);border-radius:3px;padding:14px;margin-bottom:10px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <div>
-          <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text)">JSON COMPLET</div>
-          <div style="font-size:10px;color:var(--muted2);margin-top:2px">CRM + Candidats + Clients + Config — restauration 100%</div>
-        </div>
-        <button class="btn-primary" onclick="exportAll()" style="white-space:nowrap">⬇ TÉLÉCHARGER</button>
-      </div>
-    </div>
-
-    <!-- Export XLSX Candidats -->
-    <div style="background:var(--s2);border:1px solid var(--border);border-radius:3px;padding:14px;margin-bottom:10px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <div>
-          <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text)">XLSX — CANDIDATS</div>
-          <div style="font-size:10px;color:var(--muted2);margin-top:2px">Vivier complet avec qualif, dispo, taux, coordonnées</div>
-        </div>
-        <button class="btn-import" onclick="exportXLSXCandidats()" style="white-space:nowrap">⬇ XLSX</button>
-      </div>
-    </div>
-
-    <!-- Export XLSX Missions -->
-    <div style="background:var(--s2);border:1px solid var(--border);border-radius:3px;padding:14px;margin-bottom:10px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <div>
-          <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text)">XLSX — MISSIONS</div>
-          <div style="font-size:10px;color:var(--muted2);margin-top:2px">Missions actives et clôturées avec TC, TB, coeff, marge</div>
-        </div>
-        <button class="btn-import" onclick="exportXLSXMissions()" style="white-space:nowrap">⬇ XLSX</button>
-      </div>
-    </div>
-
-    <!-- Export XLSX CRM -->
-    <div style="background:var(--s2);border:1px solid var(--border);border-radius:3px;padding:14px;margin-bottom:16px">
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <div>
-          <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text)">XLSX — CRM PROSPECTS</div>
-          <div style="font-size:10px;color:var(--muted2);margin-top:2px">Pipeline complet avec statuts, besoins, prochaine action</div>
-        </div>
-        <button class="btn-import" onclick="exportXLSXCRM()" style="white-space:nowrap">⬇ XLSX</button>
-      </div>
-    </div>
-
-    <div style="display:flex;justify-content:flex-end">
-      <button class="btn-outline" onclick="closeBackup()">FERMER</button>
-    </div>
-  </div>
-</div>
-
-<!-- SheetJS pour lire XLS/XLSX -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <script>
-// ─────────────────────────────────────────
+// ═══════════════════════════════════════════════
+// DONNÉES
+// ═══════════════════════════════════════════════
+var crmDB = [], candsDB = [], agenceDB = {};
+
+function loadAll() {
+  try { crmDB   = JSON.parse(localStorage.getItem('crm_btp_db') || '[]'); } catch(e) { crmDB=[]; }
+  try { candsDB  = JSON.parse(localStorage.getItem('cands_btp_v2') || '[]'); } catch(e) { candsDB=[]; }
+  try { agenceDB = JSON.parse(localStorage.getItem('agence_btp') || '{}'); } catch(e) { agenceDB={}; }
+  crmDB = crmDB.map(function(p){ if(p.statut) p.statut=p.statut.toLowerCase().trim(); return p; });
+}
+
+// ═══════════════════════════════════════════════
+// UTILITAIRES
+// ═══════════════════════════════════════════════
+function today() { return new Date().toISOString().slice(0,10); }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmt(d) { if(!d) return '—'; var p=d.split('-'); return p[2]+'/'+p[1]+'/'+p[0].slice(2); }
+function daysLeft(d) { if(!d) return null; return Math.round((new Date(d)-new Date(today()))/86400000); }
+function isOD(d) { return d && d < today(); }
+function isTD(d) { return d === today(); }
+function nrm(s) { return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+
+// ═══════════════════════════════════════════════
 // NAVIGATION
-// ─────────────────────────────────────────
-var currentModule = 'splash';
-var iframesLoaded = {};
+// ═══════════════════════════════════════════════
+var TITLES = {
+  today:'Aujourd\'hui', tdb:'Tableau de Bord RA', crm:'CRM Prospection',
+  candidats:'Base Candidats', missions:'Missions', marge:'Fiche Marge',
+  pl:'Simulateur P&L', juridique:'Guide Juridique', objections:'Objections',
+  rome:'Référentiel ROME', parametres:'Paramètres', import:'Import Logiciels'
+};
+var IFRAME_MODS = ['tdb','crm','candidats','missions','marge','pl','juridique','objections','rome','parametres','import'];
 
-function loadWithFilter(module, title, sub, filterKey, filterVal) {
-  localStorage.setItem('nav_filter', JSON.stringify({ module: filterKey, value: filterVal }));
-  load(module, title, sub);
-}
+function navigateTo(mod) {
+  loadAll();
 
-function load(id, title, sub) {
-  // Cacher splash + toutes iframes
-  document.getElementById('splash').classList.toggle('hidden', id !== 'splash');
-  document.querySelectorAll('.content iframe').forEach(function(f){ f.classList.remove('active'); });
+  // Nav active
+  document.querySelectorAll('.nav-item').forEach(function(el){
+    el.classList.toggle('active', el.dataset.mod === mod);
+  });
 
-  if (id !== 'splash') {
-    var iframe = document.getElementById('if-' + id);
-    if (iframe) iframe.classList.add('active');
+  // Topbar
+  document.getElementById('topbar-title').textContent = TITLES[mod] || mod;
+
+  // Masquer toutes les iframes + today-view
+  IFRAME_MODS.forEach(function(m){
+    var ifr = document.getElementById('if-'+m);
+    if(ifr) ifr.style.display = 'none';
+  });
+  document.getElementById('today-view').style.display = 'none';
+
+  if(mod === 'today') {
+    document.getElementById('today-view').style.display = 'block';
+    renderToday();
+  } else {
+    var ifr = document.getElementById('if-'+mod);
+    if(ifr) {
+      ifr.style.display = 'block';
+      ifr.style.width = '100%';
+      ifr.style.height = '100%';
+    }
   }
 
-  // Nav highlight
-  document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
-  var ni = document.getElementById('ni-' + id);
-  if (ni) ni.classList.add('active');
-  else document.getElementById('ni-splash').classList.add('active');
-
-  document.getElementById('page-title').textContent = title.toUpperCase();
-  document.getElementById('page-sub').textContent = sub;
-  currentModule = id;
-
-  // Fermer nav mobile
-  if (window.innerWidth <= 900) document.getElementById('nav').classList.remove('open');
+  refreshBadges();
 }
 
-function toggleNav() {
-  document.getElementById('nav').classList.toggle('open');
+// ═══════════════════════════════════════════════
+// BADGES NAV
+// ═══════════════════════════════════════════════
+function refreshBadges() {
+  var nChaud  = crmDB.filter(function(p){ return p.statut==='chaud'; }).length;
+  var nDispo  = candsDB.filter(function(c){ return c.dispo==='dispo'; }).length;
+  var nMis    = candsDB.filter(function(c){ return c.dispo==='mission'; }).length;
+  var nRetard = crmDB.filter(function(p){ return p.nextDate && isOD(p.nextDate); }).length;
+  var nDemar  = candsDB.filter(function(c){ return c.dispo==='mission' && c.mission && isTD(c.mission.date_debut); }).length;
+  var nBesoins = crmDB.reduce(function(a,p){ return a+(p.besoins||[]).filter(function(b){ return !b.clos && (b.statut==='ouvert'||b.statut==='encours'); }).length; }, 0);
+  var nToday  = nDemar + nRetard;
+
+  var b;
+  b=document.getElementById('badge-today');   if(b) b.textContent = nToday||'—';
+  b=document.getElementById('badge-crm');     if(b) b.textContent = nChaud+' chauds';
+  b=document.getElementById('badge-cands');   if(b) b.textContent = nDispo+' dispo';
+  b=document.getElementById('badge-missions');if(b) b.textContent = nMis||'—';
+
+  // Topbar KPIs rapides
+  var tk = document.getElementById('topbar-kpis');
+  if(tk) tk.innerHTML = ''
+    + kpiChip('Prospects', crmDB.length, '#64748b')
+    + kpiChip('Missions', nMis, '#a855f7')
+    + kpiChip('Dispo', nDispo, '#22c55e');
 }
 
+function kpiChip(label, val, color) {
+  return '<div style="font-size:11px;padding:4px 10px;border-radius:4px;background:var(--white);border:1px solid var(--border);color:'+color+';font-weight:500">'
+    + label + ' <strong>' + val + '</strong></div>';
+}
 
-// ─────────────────────────────────────────
-// VUE TODAY
-// ─────────────────────────────────────────
+// ═══════════════════════════════════════════════
+// KPI STRIP
+// ═══════════════════════════════════════════════
+function buildKPIStrip() {
+  var nMis    = candsDB.filter(function(c){ return c.dispo==='mission'; }).length;
+  var tdbCfg  = {};
+  try { tdbCfg = JSON.parse(localStorage.getItem('tdb_cfg')||'{}'); } catch(e){}
+  var tc      = parseFloat(tdbCfg.tc || 34);
+  var tb      = parseFloat(tdbCfg.tb || 15.5);
+  var ff      = parseFloat(tdbCfg.ff || 12000);
+  var seuil   = parseFloat(tdbCfg.seuilEtp || 9);
+  var hSem    = parseFloat(tdbCfg.h || 35);
+  var hMois   = hSem * 47 / 12;
+  var charges = 0.43;
+  var sbBase  = nMis * hMois * tb;
+  var ifm     = sbBase * 0.10;
+  var icp     = (sbBase+ifm) * 0.10;
+  var ms      = (sbBase+ifm+icp) * (1+charges);
+  var ca      = nMis * hMois * tc;
+  var mb      = ca - ms;
+  var mbPct   = ca > 0 ? Math.round(mb/ca*1000)/10 : 0;
+  var rbe     = mb - ff;
+  var etpPct  = seuil > 0 ? Math.min(100, Math.round(nMis/seuil*100)) : 100;
+
+  var kpis = [
+    { n: nMis+' ETP', l: 'Seuil '+seuil+' — '+(nMis>=seuil?'dépassé ✓':'à combler'), c: nMis>=seuil?'#22c55e':'#f59e0b', pct: etpPct, pc: nMis>=seuil?'#22c55e':'#f59e0b' },
+    { n: mbPct+'%',   l: 'Marge brute — obj 18%', c: mbPct>=18?'#22c55e':mbPct>=12?'#3b82f6':'#ef4444', pct: Math.min(100,Math.round(mbPct/18*100)), pc: '#3b82f6' },
+    { n: fmtCA(ca),   l: 'CA estimé mensuel', c: '#f97316', pct: 68, pc: '#f97316' },
+    { n: (rbe>=0?'+':'')+fmtCA(rbe), l: 'RBE — FF '+(ff/1000)+'k€', c: rbe>=0?'#a855f7':'#ef4444', pct: rbe>=0?100:30, pc: rbe>=0?'#a855f7':'#ef4444' },
+  ];
+
+  return '<div class="kpi-strip">'
+    + kpis.map(function(k){
+        return '<div class="kpi">'
+          + '<div class="kpi-n" style="color:'+k.c+'">'+k.n+'</div>'
+          + '<div class="kpi-l">'+k.l+'</div>'
+          + '<div class="kpi-bar"><div class="kpi-bar-fill" style="width:'+k.pct+'%;background:'+k.pc+'"></div></div>'
+          + '</div>';
+      }).join('')
+    + '</div>';
+}
+
+function fmtCA(n) {
+  if(Math.abs(n) >= 1000) return (Math.round(n/100)/10).toFixed(1)+'k€';
+  return Math.round(n)+'€';
+}
+
+// ═══════════════════════════════════════════════
+// GROUPES DASHBOARD TODAY
+// ═══════════════════════════════════════════════
 function renderToday() {
-  var today = new Date().toISOString().slice(0,10);
+  var sub = document.getElementById('topbar-sub');
+  if(sub) sub.textContent = new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 
-  // Date sub
-  var ds = document.getElementById('today-date-sub');
-  if(ds) {
-    var opts = {weekday:'long',day:'numeric',month:'long',year:'numeric'};
-    ds.textContent = new Date().toLocaleDateString('fr-FR', opts).toUpperCase() + ' — VUE DU JOUR';
-  }
+  var html = buildKPIStrip();
+  html += '<div class="board">';
+  html += groupDemarrages();
+  html += groupBesoins();
+  html += groupFins();
+  html += groupProspection();
+  html += groupRecouvrement();
+  html += '</div>';
 
-  // ── 1. CRM actions en retard ──
-  var retardEl = document.getElementById('today-retard');
-  if(retardEl) {
-    var crm = [];
-    try { crm = JSON.parse(localStorage.getItem('crm_btp_db') || '[]'); } catch(e) {}
-    var retard = crm.filter(function(p){ return p.nextDate && p.nextDate < today; })
-      .sort(function(a,b){ return a.nextDate.localeCompare(b.nextDate); })
-      .slice(0, 8);
-    if(retard.length === 0) {
-      retardEl.innerHTML = '<div class="today-empty">✓ Aucune action en retard</div>';
-    } else {
-      var typeIcons = {appel:'📞',email:'✉',rdv:'🤝',relance:'🔁',cv:'📄',note:'📝'};
-      retardEl.innerHTML = retard.map(function(p) {
-        var days = Math.round((new Date(today) - new Date(p.nextDate)) / 86400000);
-        var icon = typeIcons[p.nextType] || '📋';
-        return '<div class="today-item warn" onclick="navModule(\'crm\')">'
-          +'<div class="ti-icon">'+icon+'</div>'
-          +'<div class="ti-body">'
-          +'<div class="ti-title">'+escHtml(p.nom)+'</div>'
-          +'<div class="ti-sub">'+(p.nextDetail || p.nextType || 'action')+' · '+(p.nextDate||'?')+'</div>'
-          +'</div>'
-          +'<span class="ti-badge" style="background:rgba(239,68,68,.15);color:#ef4444">J+'+days+'</span>'
-          +'</div>';
-      }).join('');
-    }
-  }
+  document.getElementById('today-view').innerHTML = html;
 
-  // ── 2. Fins de mission ≤ 7j ──
-  var finsEl = document.getElementById('today-fins');
-  if(finsEl) {
-    var cands = [];
-    try { cands = JSON.parse(localStorage.getItem('cands_btp_v2') || '[]'); } catch(e) {}
-    var fins = [];
-    cands.forEach(function(c) {
-      var m = c.mission || {};
-      if(!m.client || !m.date_fin) return;
-      var diff = Math.round((new Date(m.date_fin) - new Date()) / 86400000);
-      if(diff <= 7) fins.push({nom:(c.prenom||'')+' '+(c.nom||''), client:m.client, fin:m.date_fin, diff:diff});
+  // Event listeners groupes
+  document.querySelectorAll('.group-header').forEach(function(h){
+    h.addEventListener('click', function(){
+      var body = this.nextElementSibling;
+      if(!body) return;
+      body.classList.toggle('open');
+      var chev = this.querySelector('.group-chevron');
+      if(chev) chev.classList.toggle('open');
     });
-    fins.sort(function(a,b){ return a.diff - b.diff; });
-    if(fins.length === 0) {
-      finsEl.innerHTML = '<div class="today-empty">✓ Aucune fin imminente</div>';
-    } else {
-      finsEl.innerHTML = fins.slice(0,8).map(function(f) {
-        var cls = f.diff <= 2 ? 'warn' : 'yellow';
-        var badge = f.diff < 0 ? 'Expiré' : f.diff === 0 ? 'Auj.' : 'J-'+f.diff;
-        var bcolor = f.diff <= 2 ? 'rgba(239,68,68,.15);color:#ef4444' : 'rgba(251,191,36,.15);color:#fbbf24';
-        return '<div class="today-item '+cls+'" onclick="navModule(\'candidats\')">'
-          +'<div class="ti-icon">⚙</div>'
-          +'<div class="ti-body">'
-          +'<div class="ti-title">'+escHtml(f.nom)+'</div>'
-          +'<div class="ti-sub">'+escHtml(f.client)+' · '+f.fin+'</div>'
-          +'</div>'
-          +'<span class="ti-badge" style="background:'+bcolor+'">'+badge+'</span>'
-          +'</div>';
-      }).join('');
-    }
-  }
+  });
 
-  // ── 3. Candidats en préavis ou dispo récente ──
-  var dispoEl = document.getElementById('today-dispo');
-  if(dispoEl) {
-    var cands2 = [];
-    try { cands2 = JSON.parse(localStorage.getItem('cands_btp_v2') || '[]'); } catch(e) {}
-    var dispos = cands2.filter(function(c){
-      return c.dispo === 'dispo' || c.dispo === 'preavis';
-    }).slice(0, 8);
-    if(dispos.length === 0) {
-      dispoEl.innerHTML = '<div class="today-empty">Aucun candidat disponible/préavis</div>';
-    } else {
-      dispoEl.innerHTML = dispos.map(function(c) {
-        var isPreavis = c.dispo === 'preavis';
-        var icon = isPreavis ? '⏳' : '✅';
-        var badge = isPreavis ? 'PRÉAVIS' : 'DISPO';
-        var bcolor = isPreavis ? 'rgba(251,191,36,.15);color:#fbbf24' : 'rgba(34,197,94,.15);color:#22c55e';
-        var tauxDisp = parseFloat(c.taux||c.tbh||0);
-        var tauxStr = (tauxDisp > 0 && tauxDisp <= 80) ? ' · '+tauxDisp+'€/h' : '';
-        var sub = (c.qualif||'?') + (c.dispo_date?' · dispo '+c.dispo_date:'') + tauxStr;
-        return '<div class="today-item" onclick="navModule(\'candidats\')">'
-          +'<div class="ti-icon">'+icon+'</div>'
-          +'<div class="ti-body">'
-          +'<div class="ti-title">'+escHtml((c.prenom||'')+' '+(c.nom||''))+'</div>'
-          +'<div class="ti-sub">'+escHtml(sub)+'</div>'
-          +'</div>'
-          +'<span class="ti-badge" style="background:'+bcolor+'">'+badge+'</span>'
-          +'</div>';
-      }).join('');
-    }
-  }
+  // Ouvrir les groupes non-vides par défaut
+  document.querySelectorAll('.group-body').forEach(function(b){
+    var empty = b.querySelector('.group-empty');
+    if(!empty) { b.classList.add('open'); }
+    var chev = b.previousElementSibling && b.previousElementSibling.querySelector('.group-chevron');
+    if(!empty && chev) chev.classList.add('open');
+  });
 }
 
+// ── GROUPE 1 : Démarrages du jour ──────────────
+function groupDemarrages() {
+  var td = today();
+  var rows = candsDB.filter(function(c){
+    return c.mission && c.mission.date_debut && c.mission.date_debut === td;
+  });
 
-function navModule(id) {
-  var MAP = {
-    crm: ['crm','CRM Prospection','Clients & pipeline'],
-    candidats: ['candidats','Base Candidats','Vivier & disponibilités'],
-    missions: ['missions','Missions','Missions actives'],
-    tdb: ['tdb','Tableau de Bord','KPIs temps réel']
-  };
-  var m = MAP[id];
-  if(m) load(m[0], m[1], m[2]);
-}
+  var cols = 'grid-template-columns:2fr 1.2fr 1fr 0.8fr 1fr';
+  var body = '';
 
-function escHtml(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-// ─────────────────────────────────────────
-// KPIs DEPUIS LOCALSTORAGE
-// ─────────────────────────────────────────
-function refreshKPIs() {
-  // Prospects CRM
-  try {
-    var crm = JSON.parse(localStorage.getItem('crm_btp_db') || '[]');
-    var nProspects = crm.length;
-    var nChaud = crm.filter(function(p){ return p.statut === 'chaud' || p.statut === 'client'; }).length;
-    var nRetard = crm.filter(function(p){ return p.nextDate && p.nextDate < new Date().toISOString().slice(0,10); }).length;
-    setKPI('prospects', nProspects);
-    setKPI('sk-prospects', nProspects);
-    var badge = document.getElementById('badge-crm');
-    if (badge) {
-      badge.textContent = nRetard > 0 ? nRetard + ' retard' : nChaud + ' chauds';
-      badge.style.background = nRetard > 0 ? 'rgba(239,68,68,.2)' : 'rgba(249,115,22,.15)';
-      badge.style.color = nRetard > 0 ? '#ef4444' : 'var(--accent)';
-    }
-  } catch(e) {}
-
-  // Candidats
-  try {
-    var cands = JSON.parse(localStorage.getItem('cands_btp_v2') || '[]');
-    var nMissions = cands.filter(function(c){ return c.dispo === 'mission' || (c.mission && c.mission.client); }).length;
-    var nDispo = cands.filter(function(c){ return c.dispo === 'dispo'; }).length;
-    setKPI('missions', nMissions);
-    setKPI('dispo', nDispo);
-    setKPI('sk-missions', nMissions);
-    setKPI('sk-dispo', nDispo);
-    var badge2 = document.getElementById('badge-cands');
-    if (badge2) badge2.textContent = nDispo > 0 ? nDispo + ' dispo' : cands.length;
-    var badgeMis = document.getElementById('badge-missions');
-    if (badgeMis) {
-      badgeMis.textContent = nMissions;
-      badgeMis.style.background = nMissions > 0 ? 'rgba(249,115,22,.15)' : 'rgba(100,116,139,.1)';
-      badgeMis.style.color = nMissions > 0 ? 'var(--accent)' : 'var(--muted)';
-    }
-  } catch(e) {}
-
-  // Clients scorés
-  try {
-    var clients = JSON.parse(localStorage.getItem('flc_clients') || '[]');
-    setKPI('sk-clients-score', clients.length);
-  } catch(e) {}
-}
-
-function setKPI(id, val) {
-  var el1 = document.getElementById('tk-' + id);
-  var el2 = document.getElementById('sk-' + id);
-  if (el1) el1.textContent = val;
-  if (el2) el2.textContent = val;
-}
-
-// Horloge
-function clock() {
-  var d = new Date();
-  document.getElementById('nav-clock').textContent =
-    d.toLocaleDateString('fr-FR') + ' · ' + d.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
-}
-setInterval(clock, 30000); clock();
-setInterval(refreshKPIs, 10000); refreshKPIs();
-setInterval(renderToday, 30000); renderToday();
-// Mettre à jour badge sync nav
-setInterval(function() {
-  if(typeof JTISync === 'undefined') return;
-  var s = JTISync.getStatus();
-  var badge = document.getElementById('badge-sync');
-  if(!badge) return;
-  if(!s.enabled) { badge.textContent='OFF'; badge.style.color='#64748b'; return; }
-  if(s.syncing) { badge.textContent='…'; badge.style.color='#fbbf24'; return; }
-  if(s.lastSync) { badge.textContent='OK'; badge.style.color='#22c55e'; return; }
-  badge.textContent='CFG'; badge.style.color='#3b82f6';
-}, 3000);
-
-// ─────────────────────────────────────────
-// BACKUP & EXPORT
-// ─────────────────────────────────────────
-// Nom agence : JSON localStorage agence_btp (champ nom), comme candidats2.html — toujours des libellés non vides
-function applyAgencyBrandingFromStorage() {
-  var DEFAULT_NOM = 'JTIpilot';
-  var DEFAULT_SUB = 'OUTILS DE PILOTAGE';
-  var nom = DEFAULT_NOM;
-  var subText = DEFAULT_SUB;
-  try {
-    var raw = localStorage.getItem('agence_btp');
-    if (raw) {
-      var ag = JSON.parse(raw);
-      if (ag && typeof ag === 'object') {
-        var n = ag.nom != null ? String(ag.nom).trim() : '';
-        if (n) nom = n;
-        var em = ag.emetteur != null ? String(ag.emetteur).trim() : '';
-        if (em) subText = 'par ' + em;
-      }
-    }
-  } catch (e) {}
-  nom = (nom && String(nom).trim()) || DEFAULT_NOM;
-  subText = (subText && String(subText).trim()) || DEFAULT_SUB;
-  var el = document.getElementById('nav-agency-name');
-  if (el) el.textContent = nom;
-  var sub = document.getElementById('nav-agency-sub');
-  if (sub) sub.textContent = subText;
-  var splash = document.getElementById('splash-agency-title');
-  if (splash) splash.textContent = nom + ' — OUTILS DE PILOTAGE';
-}
-applyAgencyBrandingFromStorage();
-function ensureNavReferenceLabels() {
-  var rl = document.getElementById('ni-rome-label');
-  if (rl && !String(rl.textContent || '').trim()) rl.textContent = 'ROME';
-}
-ensureNavReferenceLabels();
-setTimeout(function() {
-  var na = document.getElementById('nav-agency-name');
-  var sp = document.getElementById('splash-agency-title');
-  if (na && !String(na.textContent || '').trim()) na.textContent = 'JTIpilot';
-  if (sp && !String(sp.textContent || '').trim()) sp.textContent = 'JTIpilot — OUTILS DE PILOTAGE';
-  ensureNavReferenceLabels();
-}, 0);
-
-var BACKUP_KEYS = ['crm_btp_db','cands_btp_v2','flc_clients','jtp_missions','grilles_btp','agence_btp','tdb_cfg','crm_kpi_semaine','tdb_spark_marge','jtp_theme'];
-
-function openBackup() {
-  renderBackupStats();
-  document.getElementById('modal-backup').classList.add('open');
-}
-function closeBackup() {
-  document.getElementById('modal-backup').classList.remove('open');
-}
-
-function renderBackupStats() {
-  var statsEl = document.getElementById('backup-stats');
-  var lastEl = document.getElementById('backup-last');
-  try {
-    var crm = [], cands = [], missions = [], clients = [];
-    try { crm = JSON.parse(localStorage.getItem('crm_btp_db') || '[]'); } catch(e) {}
-    try { cands = JSON.parse(localStorage.getItem('cands_btp_v2') || '[]'); } catch(e) {}
-    try { missions = JSON.parse(localStorage.getItem('jtp_missions') || '[]'); } catch(e) {}
-    try { clients = JSON.parse(localStorage.getItem('flc_clients') || '[]'); } catch(e) {}
-    if (!Array.isArray(crm)) crm = [];
-    if (!Array.isArray(cands)) cands = [];
-    if (!Array.isArray(missions)) missions = [];
-    if (!Array.isArray(clients)) clients = [];
-
-    var dispo = cands.filter(function(c){ return c.dispo === 'dispo'; }).length;
-    var missActives = missions.filter(function(m){ return m.statut !== 'cloturee'; }).length;
-
-    var stats = [
-      { val: crm.length, lbl: 'PROSPECTS' },
-      { val: cands.length, lbl: 'CANDIDATS' },
-      { val: dispo, lbl: 'DISPOS' },
-      { val: missActives, lbl: 'MISSIONS' }
-    ];
-    var html = '';
-    stats.forEach(function(s) {
-      html += '<div style="background:var(--s3);border:1px solid var(--border);border-radius:2px;padding:10px;text-align:center">'
-        + '<div style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--accent)">' + s.val + '</div>'
-        + '<div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:.5px;margin-top:2px">' + s.lbl + '</div>'
+  if(rows.length) {
+    body += '<div class="col-headers" style="'+cols+'">'
+      + '<div class="col-h">Intérimaire — Client</div>'
+      + '<div class="col-h">Statut</div>'
+      + '<div class="col-h">Qualification</div>'
+      + '<div class="col-h">TXH</div>'
+      + '<div class="col-h">Action</div>'
+      + '</div>';
+    rows.forEach(function(c){
+      var statut = c.dispo === 'mission' ? 'Actif' : 'À confirmer';
+      var contrat = c.checks && c.checks.contrat_signe;
+      var rh = c.checks && c.checks.rh_vierge;
+      var sb = 'sb-green';
+      var action = '<span class="at at-green">Contrat ✓</span>';
+      if(!contrat) { sb='sb-amber'; action='<span class="at at-amber">Contrat à envoyer</span>'; }
+      if(!rh && !c.checks) { action='<span class="at at-red">RH manquant</span>'; sb='sb-red'; }
+      body += '<div class="pulse-row" style="'+cols+'" onclick="navigateTo(\'candidats\')">'
+        + '<div><div class="row-name">'+esc((c.prenom||'')+' '+c.nom)+'</div>'
+        + '<div class="row-sub">'+esc(c.mission.client||'—')+' · '+(c.mission.adresse||c.mission.cp_chantier||'')+'</div></div>'
+        + '<div><button class="sb '+sb+'">'+statut+'</button></div>'
+        + '<div class="row-sub">'+esc(c.qualif||'—')+'</div>'
+        + '<div class="cell-taux">'+(c.mission.tc||c.taux||'—')+'€/h</div>'
+        + '<div>'+action+'</div>'
         + '</div>';
     });
-    if (statsEl) statsEl.innerHTML = html;
-
-    var totalBytes = 0;
-    BACKUP_KEYS.forEach(function(k) {
-      var v = localStorage.getItem(k);
-      if (v) totalBytes += v.length;
-    });
-    var sizeStr = totalBytes > 1024*1024 ? (totalBytes/1024/1024).toFixed(2) + ' Mo' : (totalBytes/1024).toFixed(0) + ' Ko';
-
-    var lastStr = localStorage.getItem('jtp_last_backup') || '';
-    var lastLabel = lastStr ? 'Dernière sauvegarde : ' + lastStr : 'Aucune sauvegarde récente enregistrée';
-    if (lastEl) {
-      lastEl.innerHTML =
-        '📦 Données localStorage : <strong style="color:var(--cyan)">' + sizeStr + '</strong>'
-        + ' &nbsp;·&nbsp; ' + lastLabel;
-    }
-  } catch (e) {
-    console.warn('[Backup] renderBackupStats:', e);
-    if (statsEl) statsEl.innerHTML = '<div style="padding:10px;font-family:var(--mono);font-size:11px;color:var(--muted)">Impossible de lire les statistiques — données localStorage corrompues ou indisponibles.</div>';
-    if (lastEl) lastEl.innerHTML = '📦 <span style="color:var(--muted)">Estimation indisponible</span>';
-  }
-}
-
-function exportAll() {
-  var data = { exported: new Date().toISOString(), version: '2.0', app: 'JTIPilot', data: {} };
-  BACKUP_KEYS.forEach(function(k) {
-    try { data.data[k] = JSON.parse(localStorage.getItem(k) || 'null'); } catch(e) {}
-  });
-  var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  var dateStr = new Date().toISOString().slice(0,10);
-  a.download = 'JTIPilot_backup_' + dateStr + '.json';
-  a.click();
-  // Mémoriser la date
-  var now = new Date();
-  var label = now.toLocaleDateString('fr-FR') + ' à ' + now.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
-  localStorage.setItem('jtp_last_backup', label);
-  renderBackupStats();
-}
-
-function exportXLSXCandidats() {
-  if (typeof XLSX === 'undefined') { alert('SheetJS non chargé'); return; }
-  var cands = [];
-  try { cands = JSON.parse(localStorage.getItem('cands_btp_v2') || '[]'); } catch(e) {}
-  if (!cands.length) { alert('Aucun candidat à exporter'); return; }
-
-  var rows = cands.map(function(c) {
-    var m = c.mission || {};
-    return {
-      'Nom': c.nom || '',
-      'Prénom': c.prenom || '',
-      'Qualification': c.qualif || '',
-      'Niveau': c.niveau || '',
-      'Taux brut (€/h)': c.taux || c.tbh || '',
-      'Prétention (€/h)': c.pretention || '',
-      'Disponibilité': c.dispo || '',
-      'Date dispo': c.dispo_date || '',
-      'Téléphone': c.tel || '',
-      'Email': c.email || '',
-      'Ville': c.ville || '',
-      'CP': c.cp || '',
-      'Mobilité': c.mobilite || '',
-      'Véhicule': c.vehicule || '',
-      'Permis': c.permis || '',
-      'Exp (ans)': c.exp_annees || '',
-      'Client mission': m.client || '',
-      'Début mission': m.date_debut || '',
-      'Fin mission': m.date_fin || '',
-      'TC mission (€/h)': m.tc || '',
-      'Notes': c.notes || ''
-    };
-  });
-
-  var ws = XLSX.utils.json_to_sheet(rows);
-  var wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Candidats');
-  var dateStr = new Date().toISOString().slice(0,10);
-  XLSX.writeFile(wb, 'JTIPilot_candidats_' + dateStr + '.xlsx');
-}
-
-function exportXLSXMissions() {
-  if (typeof XLSX === 'undefined') { alert('SheetJS non chargé'); return; }
-  var missions = [];
-  try { missions = JSON.parse(localStorage.getItem('jtp_missions') || '[]'); } catch(e) {}
-
-  // Compléter avec missions depuis candidats si missions.html pas encore utilisé
-  var cands = [];
-  try { cands = JSON.parse(localStorage.getItem('cands_btp_v2') || '[]'); } catch(e) {}
-  cands.forEach(function(c) {
-    if (c.mission && c.mission.client) {
-      var alreadyIn = missions.some(function(m){ return m.candidat === (c.nom + ' ' + c.prenom).trim() && m.client === c.mission.client; });
-      if (!alreadyIn) {
-        missions.push({
-          client: c.mission.client,
-          candidat: (c.nom + ' ' + (c.prenom||'')).trim(),
-          qualif: c.qualif || '',
-          date_debut: c.mission.date_debut || '',
-          date_fin: c.mission.date_fin || '',
-          tc: c.mission.tc || '',
-          tb: c.taux || c.tbh || '',
-          coeff: c.mission.coeff || '',
-          statut: c.dispo === 'mission' ? 'active' : 'clôturée',
-          source: 'candidat'
-        });
-      }
-    }
-  });
-
-  if (!missions.length) { alert('Aucune mission à exporter'); return; }
-
-  var rows = missions.map(function(m) {
-    var tc = parseFloat(m.tc) || 0;
-    var tb = parseFloat(m.tb || m.tbh) || 0;
-    var coeff = tc && tb ? (tc/tb).toFixed(2) : (m.coeff || '');
-    var marge = tc && tb ? ((tc - tb) / tc * 100).toFixed(1) + '%' : '';
-    return {
-      'Client': m.client || '',
-      'Candidat': m.candidat || ((m.nom||'') + ' ' + (m.prenom||'')).trim(),
-      'Qualification': m.qualif || '',
-      'Date début': m.date_debut || '',
-      'Date fin': m.date_fin || '',
-      'Taux client (€/h)': tc || '',
-      'Taux brut (€/h)': tb || '',
-      'Coefficient': coeff,
-      'Marge %': marge,
-      'Statut': m.statut || '',
-      'Adresse chantier': m.adresse || '',
-      'Contact client': m.contact || '',
-      'Notes': m.notes || ''
-    };
-  });
-
-  var ws = XLSX.utils.json_to_sheet(rows);
-  var wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Missions');
-  var dateStr = new Date().toISOString().slice(0,10);
-  XLSX.writeFile(wb, 'JTIPilot_missions_' + dateStr + '.xlsx');
-}
-
-function exportXLSXCRM() {
-  if (typeof XLSX === 'undefined') { alert('SheetJS non chargé'); return; }
-  var crm = [];
-  try { crm = JSON.parse(localStorage.getItem('crm_btp_db') || '[]'); } catch(e) {}
-  if (!crm.length) { alert('Aucun prospect à exporter'); return; }
-
-  var rows = crm.map(function(p) {
-    var besoinsOuverts = (p.besoins || []).filter(function(b){ return b.statut === 'ouvert'; }).length;
-    var contact1 = (p.contacts_list || [])[0] || {};
-    return {
-      'Société': p.nom || '',
-      'Statut pipeline': p.statut || '',
-      'Décideur': p.decideur || contact1.nom || '',
-      'Téléphone': p.tel || contact1.tel || '',
-      'Email': p.email || contact1.email || '',
-      'Zone': p.zone || '',
-      'Taille': p.taille || '',
-      'Métier principal': p.metier || '',
-      'Besoins ouverts': besoinsOuverts,
-      'Prochaine action': p.nextType || '',
-      'Date prochaine action': p.nextDate || '',
-      'Détail action': p.nextDetail || '',
-      'Notes': p.notes || ''
-    };
-  });
-
-  var ws = XLSX.utils.json_to_sheet(rows);
-  var wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'CRM');
-  var dateStr = new Date().toISOString().slice(0,10);
-  XLSX.writeFile(wb, 'JTIPilot_CRM_' + dateStr + '.xlsx');
-}
-
-// ─────────────────────────────────────────
-// IMPORT MODAL
-// ─────────────────────────────────────────
-var currentImportTab = 'tempo';
-
-function openImport() { document.getElementById('modal-import').classList.add('open'); }
-function closeImport() { document.getElementById('modal-import').classList.remove('open'); }
-
-function switchImportTab(tab, el) {
-  currentImportTab = tab;
-  document.querySelectorAll('.import-tab').forEach(function(t){ t.classList.remove('active'); });
-  document.querySelectorAll('.import-panel').forEach(function(p){ p.classList.remove('active'); });
-  el.classList.add('active');
-  document.getElementById('ip-' + tab).classList.add('active');
-}
-
-function dzOver(e, id) { e.preventDefault(); document.getElementById('dz-'+id).classList.add('drag'); }
-function dzLeave(id) { document.getElementById('dz-'+id).classList.remove('drag'); }
-function dzDrop(e, id) {
-  e.preventDefault();
-  dzLeave(id);
-  var file = e.dataTransfer.files[0];
-  if (file) processFile(file, id);
-}
-function handleImportFile(input, type) {
-  if (input.files[0]) processFile(input.files[0], type);
-  input.value = '';
-}
-
-function log(type, msg, cls) {
-  var el = document.getElementById('log-' + type);
-  if (!el) return;
-  el.classList.add('show');
-  el.innerHTML += '<div class="' + (cls||'') + '">' + msg + '</div>';
-  el.scrollTop = el.scrollHeight;
-}
-
-function processFile(file, type) {
-  var logEl = document.getElementById('log-' + type);
-  if (logEl) { logEl.innerHTML = ''; logEl.classList.add('show'); }
-  log(type, '⏳ Lecture de ' + file.name + '...', '');
-
-  var ext = file.name.split('.').pop().toLowerCase();
-
-  if (ext === 'json') {
-    var r = new FileReader();
-    r.onload = function(e) { processJSON(e.target.result, type); };
-    r.readAsText(file);
-    return;
-  }
-
-  if (ext === 'xml') {
-    var r2 = new FileReader();
-    r2.onload = function(e) { processXML(e.target.result, type); };
-    r2.readAsText(file);
-    return;
-  }
-
-  if (ext === 'csv' || ext === 'txt') {
-    var r3 = new FileReader();
-    r3.onload = function(e) { processCSV(e.target.result, type); };
-    r3.readAsText(file);
-    return;
-  }
-
-  // XLS / XLSX via SheetJS
-  if (typeof XLSX !== 'undefined') {
-    var r4 = new FileReader();
-    r4.onload = function(e) {
-      try {
-        var wb = XLSX.read(e.target.result, { type: 'array' });
-        var ws = wb.Sheets[wb.SheetNames[0]];
-        var rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
-        log(type, '✓ ' + rows.length + ' lignes lues depuis ' + wb.SheetNames[0], 'log-ok');
-        processRows(rows, type);
-      } catch(err) {
-        log(type, '✗ Erreur lecture XLS : ' + err.message, 'log-err');
-      }
-    };
-    r4.readAsArrayBuffer(file);
   } else {
-    log(type, '✗ Impossible de lire ce format (SheetJS non chargé)', 'log-err');
+    body += '<div class="group-empty">Aucun démarrage prévu aujourd\'hui</div>';
   }
+
+  return group('Démarrages du jour', rows.length+' mission'+(rows.length>1?'s':''), 'gh-orange', body);
 }
 
-// ─── Parseurs par logiciel ───────────────
-var MAPPINGS = {
-  tempo: {
-    nom: ['Intérimaire','interimaire','NOM PRENOM','nom_prenom','Nom Prénom'],
-    client: ['Société','societe','Client','client','SOCIETE'],
-    qualif: ['Qualification','qualification','QUALIFICATION','Poste'],
-    tb: ['Taux brut','taux_brut','TAUX BRUT','TauxB','TB'],
-    tc: ['Taux client','taux_client','TAUX CLIENT','TauxC','TC'],
-    heures: ['Heures','heures','HEURES','NbH'],
-    debut: ['Date début','date_debut','DATE DEBUT','DateD'],
-    fin: ['Date fin','date_fin','DATE FIN','DateF'],
-    contrat: ['N° Contrat','contrat','CONTRAT','NumContrat'],
-  },
-  anael: {
-    nom: ['NomInterimaire','nom_interimaire','Interimaire'],
-    client: ['RaisonSociale','raison_sociale','Client'],
-    qualif: ['CodeQualif','qualif','Qualification'],
-    tb: ['TauxHoraireB','taux_b','TB'],
-    tc: ['TauxHoraireC','taux_c','TC'],
-    heures: ['NbHeures','nb_heures','Heures'],
-    debut: ['DateDebut','date_debut','Debut'],
-    fin: ['DateFin','date_fin','Fin'],
-    contrat: ['CodeMission','code_mission','Mission'],
-  },
-  evolia: {
-    nom: ['worker_lastname','worker_name','Nom'],
-    client: ['client_name','client','Société'],
-    qualif: ['job_title','qualification','Qualification'],
-    tb: ['hourly_rate_b','taux_brut','TB'],
-    tc: ['hourly_rate_c','taux_client','TC'],
-    heures: ['hours_worked','heures','Heures'],
-    debut: ['start_date','date_debut','Début'],
-    fin: ['end_date','date_fin','Fin'],
-    contrat: ['id_contrat','contrat','ID'],
-  }
-};
-
-function findCol(row, candidates) {
-  var keys = Object.keys(row);
-  for (var i = 0; i < candidates.length; i++) {
-    var c = candidates[i];
-    for (var j = 0; j < keys.length; j++) {
-      if (keys[j].trim().toLowerCase() === c.trim().toLowerCase()) return row[keys[j]];
-    }
-  }
-  // Fuzzy : contient le candidat
-  for (var i = 0; i < candidates.length; i++) {
-    for (var j = 0; j < keys.length; j++) {
-      if (keys[j].toLowerCase().includes(candidates[i].toLowerCase())) return row[keys[j]];
-    }
-  }
-  return '';
-}
-
-function processRows(rows, type) {
-  if (!rows || rows.length === 0) { log(type, '✗ Aucune donnée trouvée', 'log-err'); return; }
-
-  var mapping = MAPPINGS[type] || MAPPINGS.tempo;
-  var missions = [];
-  var candidatsNew = [];
-  var prospectsNew = [];
-
-  rows.forEach(function(row) {
-    var nom = String(findCol(row, mapping.nom) || '').trim();
-    var client = String(findCol(row, mapping.client) || '').trim();
-    var qualif = String(findCol(row, mapping.qualif) || '').trim();
-    var tb = parseFloat(String(findCol(row, mapping.tb) || '0').replace(',','.')) || 0;
-    var tc = parseFloat(String(findCol(row, mapping.tc) || '0').replace(',','.')) || 0;
-    var heures = parseFloat(String(findCol(row, mapping.heures) || '0').replace(',','.')) || 0;
-    var debut = String(findCol(row, mapping.debut) || '').trim();
-    var fin = String(findCol(row, mapping.fin) || '').trim();
-    var contrat = String(findCol(row, mapping.contrat) || '').trim();
-
-    if (!nom && !client) return;
-
-    // → Candidat
-    if (nom) {
-      var parts = nom.split(/\s+/);
-      candidatsNew.push({
-        id: 'imp_' + type + '_' + (contrat || Math.random().toString(36).slice(2,6)),
-        nom: parts[0] || nom,
-        prenom: parts.slice(1).join(' ') || '',
-        qualif: qualif,
-        tbh: tb,
-        dispo: fin && new Date(fin) > new Date() ? 'mission' : 'dispo',
-        mission: client ? { client: client, debut: debut, fin: fin, tc: tc } : null,
-        source: type,
-      });
-    }
-
-    // → Prospect CRM
-    if (client) {
-      prospectsNew.push({
-        id: 'imp_' + type + '_cli_' + client.toLowerCase().replace(/\s+/g,'_').slice(0,12),
-        nom: client,
-        statut: 'CLIENT',
-        metier: qualif,
-        source: type,
-      });
-    }
-  });
-
-  // Fusionner dans localStorage
-  var addedCands = mergeInto('cands_btp_v2', candidatsNew, 'id');
-  var addedProspects = mergeInto('crm_btp_db', prospectsNew, 'id');
-
-  log(type, '✓ ' + candidatsNew.length + ' candidats détectés → ' + addedCands + ' nouveaux ajoutés', 'log-ok');
-  log(type, '✓ ' + prospectsNew.length + ' clients détectés → ' + addedProspects + ' nouveaux ajoutés', 'log-ok');
-  log(type, '↻ Rafraîchissement des modules...', '');
-
-  refreshKPIs();
-  // Recharger les iframes actives
-  ['crm','candidats'].forEach(function(mod) {
-    var f = document.getElementById('if-' + mod);
-    if (f) { var src = f.src; f.src = ''; f.src = src; }
-  });
-}
-
-function processCSV(text, type) {
-  var sep = text.indexOf(';') > text.indexOf(',') ? ';' : ',';
-  var lines = text.trim().split('\n');
-  if (lines.length < 2) { log(type, '✗ Fichier CSV vide ou invalide', 'log-err'); return; }
-  var headers = lines[0].split(sep).map(function(h){ return h.trim().replace(/^"|"$/g,''); });
-  var rows = lines.slice(1).map(function(line) {
-    var vals = line.split(sep).map(function(v){ return v.trim().replace(/^"|"$/g,''); });
-    var obj = {};
-    headers.forEach(function(h, i){ obj[h] = vals[i] || ''; });
-    return obj;
-  });
-  log(type, '✓ CSV : ' + rows.length + ' lignes, ' + headers.length + ' colonnes', 'log-ok');
-  if (type === 'csv') {
-    // Afficher le mapper
-    showCSVMapper(headers, rows);
-  } else {
-    processRows(rows, type);
-  }
-}
-
-function showCSVMapper(headers, rows) {
-  var fields = ['nom','client','qualif','tb','tc','heures','debut','fin','contrat'];
-  var labels = {nom:'Nom intérimaire',client:'Client/Société',qualif:'Qualification',
-    tb:'Taux brut (€/h)',tc:'Taux client (€/h)',heures:'Heures travaillées',
-    debut:'Date début',fin:'Date fin',contrat:'N° Contrat'};
-  var html = '<div style="background:var(--s2);border:1px solid var(--border);border-radius:3px;padding:12px;margin-bottom:8px">'
-    +'<div style="font-family:var(--mono);font-size:9px;color:var(--cyan);margin-bottom:8px;letter-spacing:.5px">ASSOCIER LES COLONNES</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">';
-  fields.forEach(function(f) {
-    html += '<div style="display:flex;flex-direction:column;gap:3px">'
-      +'<label style="font-family:var(--mono);font-size:9px;color:var(--muted)">' + labels[f] + '</label>'
-      +'<select id="csvmap-' + f + '" style="background:var(--s3);border:1px solid var(--border);border-radius:2px;padding:4px 6px;color:var(--text);font-family:var(--mono);font-size:10px;outline:none">'
-      +'<option value="">— Ignorer</option>'
-      + headers.map(function(h){ return '<option value="'+h+'">'+h+'</option>'; }).join('')
-      +'</select></div>';
-  });
-  html += '</div></div>'
-    +'<button class="btn-primary" onclick="applyCSVMap('+JSON.stringify(rows).replace(/</g,'&lt;')+')" style="width:100%">IMPORTER AVEC CE MAPPAGE</button>';
-  var mapper = document.getElementById('csv-mapper');
-  if (mapper) { mapper.innerHTML = html; mapper.style.display = 'block'; }
-}
-
-function applyCSVMap(rows) {
-  var fields = ['nom','client','qualif','tb','tc','heures','debut','fin','contrat'];
-  var mapping = {};
-  fields.forEach(function(f) {
-    var el = document.getElementById('csvmap-' + f);
-    if (el && el.value) mapping[f] = [el.value];
-  });
-  var tempMapping = {};
-  Object.assign(tempMapping, MAPPINGS.tempo);
-  Object.keys(mapping).forEach(function(k){ tempMapping[k] = mapping[k]; });
-  MAPPINGS._csv_custom = tempMapping;
-  processRows(rows, '_csv_custom');
-}
-
-function processXML(text, type) {
-  try {
-    var parser = new DOMParser();
-    var doc = parser.parseFromString(text, 'text/xml');
-    var rows = [];
-    // Chercher n'importe quel nœud récurrent
-    var allNodes = doc.querySelectorAll('Mission, Contrat, Contract, mission, contrat');
-    allNodes.forEach(function(node) {
-      var obj = {};
-      node.childNodes.forEach(function(child) {
-        if (child.nodeType === 1) obj[child.tagName] = child.textContent.trim();
-      });
-      rows.push(obj);
+// ── GROUPE 2 : Besoins non pourvus ─────────────
+function groupBesoins() {
+  var besoins = [];
+  crmDB.forEach(function(p){
+    (p.besoins||[]).forEach(function(b){
+      if(!b.clos && (b.statut==='ouvert'||b.statut==='encours')) {
+        besoins.push({ client:p.nom, qualif:b.qualif||'—', nb:b.nb||1,
+          statut:b.statut, date:b.date, tauxClient:b.taux_client||'—',
+          pid:p.id, bid:b.id });
+      }
     });
-    if (rows.length === 0) {
-      // Fallback : prendre tous les enfants du root
-      var root = doc.documentElement;
-      Array.from(root.children).forEach(function(node) {
-        var obj = {};
-        Array.from(node.children).forEach(function(child) { obj[child.tagName] = child.textContent.trim(); });
-        rows.push(obj);
-      });
-    }
-    log(type, '✓ XML : ' + rows.length + ' entrées détectées', 'log-ok');
-    processRows(rows, type);
-  } catch(e) {
-    log(type, '✗ Erreur XML : ' + e.message, 'log-err');
-  }
-}
-
-function processJSON(text, type) {
-  try {
-    var data = JSON.parse(text);
-    // Backup complet JTIpilot
-    if (data.data) {
-      var count = 0;
-      Object.keys(data.data).forEach(function(k) {
-        if (data.data[k] !== null) {
-          localStorage.setItem(k, JSON.stringify(data.data[k]));
-          count++;
-        }
-      });
-      log(type, '✓ Restauration complète : ' + count + ' clés importées', 'log-ok');
-      refreshKPIs();
-      return;
-    }
-    // Array direct de candidats/prospects
-    if (Array.isArray(data)) {
-      processRows(data, 'tempo');
-      return;
-    }
-    // Export CRM
-    if (data.prospects) { mergeInto('crm_btp_db', data.prospects, 'id'); log(type, '✓ ' + data.prospects.length + ' prospects importés', 'log-ok'); }
-    if (data.candidats) { mergeInto('cands_btp_v2', data.candidats, 'id'); log(type, '✓ ' + data.candidats.length + ' candidats importés', 'log-ok'); }
-    if (data.clients) { mergeInto('flc_clients', data.clients, 'id'); log(type, '✓ ' + data.clients.length + ' clients importés', 'log-ok'); }
-    refreshKPIs();
-  } catch(e) {
-    log(type, '✗ Erreur JSON : ' + e.message, 'log-err');
-  }
-}
-
-function mergeInto(key, newItems, idField) {
-  var existing = [];
-  try { existing = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
-  var added = 0;
-  newItems.forEach(function(item) {
-    var idx = existing.findIndex(function(e){ return e[idField] === item[idField]; });
-    if (idx >= 0) { Object.assign(existing[idx], item); }
-    else { existing.push(item); added++; }
   });
-  localStorage.setItem(key, JSON.stringify(existing));
-  return added;
+  besoins.sort(function(a,b){ return (a.date||'9999').localeCompare(b.date||'9999'); });
+
+  var cols = 'grid-template-columns:2fr 1.2fr 1fr 0.8fr 1fr';
+  var body = '';
+
+  if(besoins.length) {
+    body += '<div class="col-headers" style="'+cols+'">'
+      + '<div class="col-h">Besoin — Client</div>'
+      + '<div class="col-h">Urgence</div>'
+      + '<div class="col-h">Vivier</div>'
+      + '<div class="col-h">TC client</div>'
+      + '<div class="col-h">Action</div>'
+      + '</div>';
+    besoins.slice(0,8).forEach(function(b){
+      var dl = daysLeft(b.date);
+      var urgSB = 'sb-blue'; var urgLabel = 'En cours';
+      var actTag = '<span class="at at-blue">Sourcer</span>';
+      if(dl !== null && dl <= 0) { urgSB='sb-red'; urgLabel='Aujourd\'hui'; actTag='<span class="at at-red">Envoyer CV</span>'; }
+      else if(dl !== null && dl <= 2) { urgSB='sb-orange'; urgLabel='J+'+dl; actTag='<span class="at at-orange">Relancer</span>'; }
+      else if(dl !== null && dl <= 7) { urgSB='sb-amber'; urgLabel='J+'+dl; actTag='<span class="at at-amber">Préparer</span>'; }
+      // Candidats disponibles correspondants
+      var vivier = candsDB.filter(function(c){
+        return c.dispo==='dispo' && nrm(c.qualif||'').indexOf(nrm(b.qualif).split(' ')[0]) >= 0;
+      }).length;
+      var vivierLabel = vivier > 0 ? vivier+' dispo' : 'Sourcing';
+      body += '<div class="pulse-row" style="'+cols+'" onclick="navigateTo(\'crm\')">'
+        + '<div><div class="row-name">'+esc(b.qualif)+'</div>'
+        + '<div class="row-sub">'+esc(b.client)+' · '+(b.nb>1?b.nb+' postes':'1 poste')+'</div></div>'
+        + '<div><button class="sb '+urgSB+'">'+urgLabel+'</button></div>'
+        + '<div class="row-sub">'+esc(vivierLabel)+'</div>'
+        + '<div class="cell-taux">'+esc(String(b.tauxClient))+'€/h</div>'
+        + '<div>'+actTag+'</div>'
+        + '</div>';
+    });
+    if(besoins.length > 8) {
+      body += '<div style="padding:8px 16px;font-size:11px;color:var(--muted);font-style:italic">'+(besoins.length-8)+' autres besoins — voir CRM</div>';
+    }
+  } else {
+    body += '<div class="group-empty">Aucun besoin ouvert</div>';
+  }
+
+  return group('Besoins non pourvus', besoins.length+' ouvert'+(besoins.length>1?'s':''), 'gh-red', body);
 }
 
-// ─── Démo fichier ───────────────────────
-function downloadDemo() {
-  var demos = {
-    tempo: 'N° Contrat;Intérimaire;Société;Date début;Date fin;Qualification;Taux brut;Taux client;Heures\nCT-2026-001;TARE Guy;SOE STUC ET STAFF;16/03/2026;20/03/2026;Staffeur N4;20;42;39\nCT-2026-002;SAIRIEN Jean;BATICORP RENOVATION;09/03/2026;27/03/2026;CVC N3P2;17;36;39\nCT-2026-003;MARTIN Paul;ARTISAN PLATERIE;02/03/2026;13/03/2026;Plâtrier N3P1;15.5;34;39\nCT-2026-004;BENSAID Karim;SOE STUC ET STAFF;23/03/2026;17/04/2026;Staffeur N3P2;18;39;39',
-    anael: 'CodeMission;NomInterimaire;RaisonSociale;DateDebut;DateFin;CodeQualif;TauxHoraireB;TauxHoraireC;NbHeures\nMISS-001;DUPONT Marc;RENO EXPRESS;16/03/2026;31/03/2026;ELEC-N3;16;35;35\nMISS-002;LEROY Sophie;BATIPRO IDF;09/03/2026;20/03/2026;PEINTRE-N2;13.5;30;35',
-    evolia: 'id_contrat;worker_lastname;worker_firstname;client_name;start_date;end_date;job_title;hourly_rate_b;hourly_rate_c;hours_worked\nEV-001;FONTAINE;Julien;MENUISERIE PARISIENNE;2026-03-16;2026-04-04;Menuisier N3;16;34;39\nEV-002;CHEN;Wei;CVC EXPERT;2026-03-09;2026-03-20;Chauffagiste N3;19;41;35',
+// ── GROUPE 3 : Fins de mission ─────────────────
+function groupFins() {
+  var fins = candsDB.filter(function(c){
+    if(c.dispo !== 'mission' || !c.mission || !c.mission.date_fin) return false;
+    var dl = daysLeft(c.mission.date_fin);
+    return dl !== null && dl >= 0 && dl <= 7;
+  }).sort(function(a,b){
+    return daysLeft(a.mission.date_fin) - daysLeft(b.mission.date_fin);
+  });
+
+  var cols = 'grid-template-columns:2fr 1.2fr 1fr 0.8fr 1fr';
+  var body = '';
+
+  if(fins.length) {
+    body += '<div class="col-headers" style="'+cols+'">'
+      + '<div class="col-h">Intérimaire — Client</div>'
+      + '<div class="col-h">Décision</div>'
+      + '<div class="col-h">Fin prévue</div>'
+      + '<div class="col-h">Impact</div>'
+      + '<div class="col-h">Action</div>'
+      + '</div>';
+    fins.forEach(function(c){
+      var dl = daysLeft(c.mission.date_fin);
+      var sb = dl === 0 ? 'sb-red' : dl <= 2 ? 'sb-orange' : 'sb-amber';
+      var label = dl === 0 ? 'Aujourd\'hui' : 'J+'+dl;
+      var tdbCfg = {}; try { tdbCfg=JSON.parse(localStorage.getItem('tdb_cfg')||'{}'); } catch(e){}
+      var hMois = (parseFloat(tdbCfg.h||35))*47/12;
+      var tc = parseFloat(c.mission.tc||tdbCfg.tc||34);
+      var impact = Math.round(tc * hMois / 100) / 10;
+      body += '<div class="pulse-row" style="'+cols+'" onclick="navigateTo(\'candidats\')">'
+        + '<div><div class="row-name">'+esc((c.prenom||'')+' '+c.nom)+'</div>'
+        + '<div class="row-sub">'+esc(c.mission.client||'—')+'</div></div>'
+        + '<div><button class="sb '+sb+'">'+label+'</button></div>'
+        + '<div class="cell-date">'+fmt(c.mission.date_fin)+'</div>'
+        + '<div class="cell-taux" style="color:#f59e0b">'+impact+'k€/mois</div>'
+        + '<div><span class="at at-amber">Décision</span></div>'
+        + '</div>';
+    });
+  } else {
+    body += '<div class="group-empty">Aucune fin de mission dans 7 jours</div>';
+  }
+
+  return group('Fins de mission — 7 jours', fins.length+' mission'+(fins.length>1?'s':''), 'gh-blue', body);
+}
+
+// ── GROUPE 4 : Prospection du jour ─────────────
+function groupProspection() {
+  var actions = crmDB.filter(function(p){
+    return p.nextDate && (isOD(p.nextDate) || isTD(p.nextDate));
+  }).sort(function(a,b){
+    return (a.nextDate||'9999').localeCompare(b.nextDate||'9999');
+  });
+
+  var TYPES = {
+    appel:{l:'Appel',sb:'sb-blue'},email:{l:'Email',sb:'sb-purple'},
+    rdv:{l:'RDV',sb:'sb-green'},cv:{l:'CV',sb:'sb-amber'},
+    relance:{l:'Relance',sb:'sb-orange'},note:{l:'Note',sb:'sb-gray'}
   };
-  var tab = currentImportTab;
-  var content = demos[tab] || demos.tempo;
-  var fname = 'demo_' + tab + '_export.csv';
-  var blob = new Blob([content], {type:'text/csv'});
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = fname;
-  a.click();
-}
 
+  var cols = 'grid-template-columns:2fr 1.2fr 1fr 1fr 0.8fr';
+  var body = '';
 
-// ─────────────────────────────────────────
-// RACCOURCIS CLAVIER
-// ─────────────────────────────────────────
-document.addEventListener('keydown', function(e) {
-  // Ignorer si focus sur input/textarea/select
-  var tag = (e.target.tagName || '').toLowerCase();
-  if(tag === 'input' || tag === 'textarea' || tag === 'select') {
-    // Échap : fermer modals depuis n'importe où
-    if(e.key === 'Escape') {
-      closeImport();
-      closeBackup();
-    }
-    return;
-  }
-  // Pas de modificateur (Ctrl/Alt/Meta)
-  if(e.ctrlKey || e.altKey || e.metaKey) return;
-
-  switch(e.key) {
-    case 'Escape':
-      closeImport();
-      closeBackup();
-      break;
-    case '1':
-      load('splash','Accueil','Dashboard global');
-      break;
-    case '2':
-      load('tdb','Tableau de Bord','KPIs temps réel');
-      break;
-    case '3':
-      load('crm','CRM Prospection','Clients & pipeline');
-      break;
-    case '4':
-      load('candidats','Base Candidats','Vivier & disponibilités');
-      break;
-    case '5':
-      load('missions','Missions','Missions actives');
-      break;
-    case '6':
-      load('marge','Fiche Marge','Calculateur à la volée');
-      break;
-    case 'i':
-    case 'I':
-      openImport();
-      break;
-    case 'b':
-    case 'B':
-      openBackup();
-      break;
-    case '?':
-      showKeyboardHelp();
-      break;
-  }
-});
-
-function showKeyboardHelp() {
-  var el = document.getElementById('kb-help-overlay');
-  if(el) { el.classList.toggle('open'); return; }
-  // Créer le tooltip
-  var div = document.createElement('div');
-  div.id = 'kb-help-overlay';
-  div.className = 'modal-overlay open';
-  div.onclick = function(e) { if(e.target===div) div.classList.remove('open'); };
-  div.innerHTML = '<div style="background:var(--s1);border:1px solid var(--border);border-radius:6px;padding:22px;width:min(440px,95vw);font-family:var(--mono);">'
-    +'<div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:14px;letter-spacing:.5px">⌨ RACCOURCIS CLAVIER</div>'
-    +'<div style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:11px;">'
-    +'<span style="color:var(--accent);font-weight:700">1</span><span style="color:var(--muted2)">Dashboard</span>'
-    +'<span style="color:var(--accent);font-weight:700">2</span><span style="color:var(--muted2)">Tableau de bord RA</span>'
-    +'<span style="color:var(--accent);font-weight:700">3</span><span style="color:var(--muted2)">CRM Prospection</span>'
-    +'<span style="color:var(--accent);font-weight:700">4</span><span style="color:var(--muted2)">Base Candidats</span>'
-    +'<span style="color:var(--accent);font-weight:700">5</span><span style="color:var(--muted2)">Missions</span>'
-    +'<span style="color:var(--accent);font-weight:700">6</span><span style="color:var(--muted2)">Fiche Marge</span>'
-    +'<span style="color:var(--accent);font-weight:700">I</span><span style="color:var(--muted2)">Import logiciels</span>'
-    +'<span style="color:var(--accent);font-weight:700">B</span><span style="color:var(--muted2)">Backup & Export</span>'
-    +'<span style="color:var(--accent);font-weight:700">Échap</span><span style="color:var(--muted2)">Fermer modal</span>'
-    +'<span style="color:var(--accent);font-weight:700">?</span><span style="color:var(--muted2)">Cette aide</span>'
-    +'</div>'
-    +'<div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border);text-align:right">'
-    +'<button onclick="document.getElementById(\'kb-help-overlay\').classList.remove(\'open\')" style="padding:5px 12px;background:transparent;border:1px solid var(--border);border-radius:3px;color:var(--muted);font-family:var(--mono);font-size:10px;cursor:pointer;">FERMER</button>'
-    +'</div>'
-    +'</div>';
-  document.body.appendChild(div);
-}
-
-
-// ─────────────────────────────────────────
-// PROXY CLOUDFLARE CONFIG
-// ─────────────────────────────────────────
-function openProxyModal() {
-  var url = localStorage.getItem('jtp_proxy_url') || '';
-  var key = localStorage.getItem('jtp_proxy_key') || '';
-  document.getElementById('proxy-url').value = url;
-  document.getElementById('proxy-key').value = key;
-  var st = document.getElementById('proxy-status');
-  if(st) st.textContent = url ? '✓ Proxy configuré : ' + url : 'Non configuré';
-  document.getElementById('modal-proxy').classList.add('open');
-}
-function saveProxyCfg() {
-  var url = document.getElementById('proxy-url').value.trim();
-  var key = document.getElementById('proxy-key').value.trim();
-  if(!url) { alert('URL du worker requise'); return; }
-  localStorage.setItem('jtp_proxy_url', url);
-  if(key) localStorage.setItem('jtp_proxy_key', key);
-  else localStorage.removeItem('jtp_proxy_key');
-  document.getElementById('modal-proxy').classList.remove('open');
-  updateProxyBadge();
-}
-function clearProxyCfg() {
-  localStorage.removeItem('jtp_proxy_url');
-  localStorage.removeItem('jtp_proxy_key');
-  document.getElementById('proxy-url').value = '';
-  document.getElementById('proxy-key').value = '';
-  var st = document.getElementById('proxy-status');
-  if(st) st.textContent = 'Configuration effacée';
-  updateProxyBadge();
-}
-function testProxy() {
-  var url = document.getElementById('proxy-url').value.trim();
-  var key = document.getElementById('proxy-key').value.trim();
-  if(!url) { alert('URL requise'); return; }
-  var st = document.getElementById('proxy-status');
-  if(st) st.innerHTML = '<span style="color:var(--yellow)">⏳ Test en cours…</span>';
-  var headers = {'Content-Type':'application/json'};
-  if(key) headers['X-Api-Key'] = key;
-  fetch(url, {
-    method:'POST',
-    headers: headers,
-    body: JSON.stringify({
-      model:'claude-haiku-4-5-20251001',
-      max_tokens:10,
-      messages:[{role:'user',content:'ping'}]
-    })
-  })
-  .then(function(r){ return r.json(); })
-  .then(function(d) {
-    if(d.content || d.id) {
-      if(st) st.innerHTML = '<span style="color:var(--green)">✓ Proxy opérationnel — Claude répond</span>';
-    } else if(d.error) {
-      if(st) st.innerHTML = '<span style="color:var(--warn)">⚠ Proxy joignable mais erreur API : ' + (d.error.message||JSON.stringify(d.error)) + '</span>';
-    }
-  })
-  .catch(function(e) {
-    if(st) st.innerHTML = '<span style="color:var(--warn)">✗ Proxy inaccessible : ' + e.message + '</span>';
-  });
-}
-function updateProxyBadge() {
-  var url = localStorage.getItem('jtp_proxy_url') || '';
-  var badge = document.getElementById('badge-proxy');
-  if(!badge) return;
-  if(url) { badge.textContent='ON'; badge.style.color='#22c55e'; }
-  else { badge.textContent='OFF'; badge.style.color='#64748b'; }
-}
-updateProxyBadge();
-document.getElementById('modal-proxy').addEventListener('click', function(e) {
-  if(e.target === this) this.classList.remove('open');
-});
-
-// Fermer modal en cliquant dehors
-document.getElementById('modal-import').addEventListener('click', function(e) {
-  if (e.target === this) closeImport();
-});
-document.getElementById('modal-backup').addEventListener('click', function(e) {
-  if (e.target === this) closeBackup();
-});
-</script>
-
-<!-- Supabase Sync -->
-<script src="supabase_sync.js"></script>
-<!-- PWA Service Worker -->
-<script>
-if('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
-  window.addEventListener('load', function() {
-    var swUrl = new URL('sw.js', window.location.href);
-    var scopeUrl = new URL('./', window.location.href).href;
-    navigator.serviceWorker.register(swUrl.href, { scope: scopeUrl })
-      .then(function(reg) {
-        console.log('[SW] Enregistré:', reg.scope);
-      })
-      .catch(function(err) {
-        console.warn('[SW] Ignoré — déployer sw.js à côté de index.html ou utiliser HTTPS.', err && err.message ? err.message : err);
-      });
-  });
-}
-// Install prompt PWA
-var deferredPrompt = null;
-window.addEventListener('beforeinstallprompt', function(e) {
-  e.preventDefault();
-  deferredPrompt = e;
-  var btn = document.getElementById('btn-install-pwa');
-  if(btn) btn.style.display = 'flex';
-});
-window.addEventListener('appinstalled', function() {
-  var btn = document.getElementById('btn-install-pwa');
-  if(btn) btn.style.display = 'none';
-  deferredPrompt = null;
-});
-function installPWA() {
-  if(!deferredPrompt) return;
-  deferredPrompt.prompt();
-  deferredPrompt.userChoice.then(function(r) {
-    deferredPrompt = null;
-    var btn = document.getElementById('btn-install-pwa');
-    if(btn) btn.style.display = 'none';
-  });
-}
-  // --- DÉBUT DU PATCH DEEPSEEK (INDEX/DASHBOARD) ---
-(function() {
-    // 1. Fonction pour recharger les iframes
-    window.reloadModuleIframes = function(moduleNames) {
-      moduleNames.forEach(function(mod) {
-        var iframe = document.getElementById('if-' + mod);
-        if(iframe && iframe.contentWindow) {
-          var src = iframe.src;
-          iframe.src = '';
-          setTimeout(function() { iframe.src = src; }, 50);
-        }
-      });
-    };
-
-    // 2 & 3. Interception automatique des imports pour rafraîchir les modules
-    if (typeof processRows === 'function') {
-        var _origProcessRows = processRows;
-        window.processRows = function(data, type) {
-            var res = _origProcessRows(data, type);
-            reloadModuleIframes(['crm', 'candidats', 'missions', 'clients']);
-            return res;
-        };
-    }
-    if (typeof processJSON === 'function') {
-        var _origProcessJSON = processJSON;
-        window.processJSON = function(data) {
-            var res = _origProcessJSON(data);
-            reloadModuleIframes(['crm', 'candidats', 'missions', 'clients']);
-            return res;
-        };
-    }
-
-    // 4. Écouteur pour charger les pré-remplissages dynamiques
-    window.addEventListener('message', function(e) {
-      if(!e.data) return;
-      if(e.data.type === 'navigate' && e.data.module === 'missions' && e.data.prefill) {
-        var iframeM = document.getElementById('if-missions');
-        if(iframeM) { var srcM = iframeM.src; iframeM.src = ''; setTimeout(function() { iframeM.src = srcM; }, 100); }
-      }
-      if(e.data.type === 'navigate' && e.data.module === 'candidats' && e.data.prefillCandidat) {
-        var iframeC = document.getElementById('if-candidats');
-        if(iframeC) { var srcC = iframeC.src; iframeC.src = ''; setTimeout(function() { iframeC.src = srcC; }, 100); }
-      }
+  if(actions.length) {
+    body += '<div class="col-headers" style="'+cols+'">'
+      + '<div class="col-h">Prospect — Statut</div>'
+      + '<div class="col-h">Action</div>'
+      + '<div class="col-h">Détail</div>'
+      + '<div class="col-h">Date</div>'
+      + '<div class="col-h">Urgence</div>'
+      + '</div>';
+    actions.slice(0,8).forEach(function(p){
+      var t = TYPES[p.nextType] || TYPES.note;
+      var retard = isOD(p.nextDate);
+      var statSB = p.statut==='chaud'?'sb-red':p.statut==='tiede'?'sb-amber':p.statut==='client'?'sb-green':'sb-gray';
+      var statL  = p.statut ? p.statut.charAt(0).toUpperCase()+p.statut.slice(1) : '—';
+      body += '<div class="pulse-row" style="'+cols+'" onclick="navigateTo(\'crm\')">'
+        + '<div><div class="row-name">'+esc(p.nom||'—')+'</div>'
+        + '<div class="row-sub">'+(p.metier||p.secteur||'—')+'</div></div>'
+        + '<div><button class="sb '+t.sb+'">'+t.l+'</button></div>'
+        + '<div class="row-sub">'+esc((p.nextDetail||'—').slice(0,30))+'</div>'
+        + '<div class="cell-date" style="'+(retard?'color:var(--red)':'')+'">'+fmt(p.nextDate)+'</div>'
+        + '<div><button class="sb '+statSB+'">'+statL+'</button></div>'
+        + '</div>';
     });
-})();
-// --- FIN DU PATCH DEEPSEEK (INDEX/DASHBOARD) ---
+    if(actions.length > 8) {
+      body += '<div style="padding:8px 16px;font-size:11px;color:var(--muted);font-style:italic">'+(actions.length-8)+' autres actions — voir CRM</div>';
+    }
+  } else {
+    body += '<div class="group-empty">Aucune action planifiée aujourd\'hui</div>';
+  }
+
+  return group('Prospection du jour', actions.length+' action'+(actions.length>1?'s':''), 'gh-purple', body);
+}
+
+// ── GROUPE 5 : Recouvrement ────────────────────
+function groupRecouvrement() {
+  var tdbCfg = {}; try { tdbCfg=JSON.parse(localStorage.getItem('tdb_cfg')||'{}'); } catch(e){}
+  var impaye = parseFloat(tdbCfg.impaye || 0);
+
+  // RH manquants = candidats en mission sans journal d'activité récent
+  var rhManquants = candsDB.filter(function(c){
+    return c.dispo === 'mission' && (!c.journal || c.journal.length === 0);
+  });
+
+  var body = '';
+  if(impaye > 0 || rhManquants.length > 0) {
+    var cols = 'grid-template-columns:2fr 1.5fr 1fr 1.5fr';
+    body += '<div class="col-headers" style="'+cols+'">'
+      + '<div class="col-h">Sujet</div>'
+      + '<div class="col-h">Type</div>'
+      + '<div class="col-h">Montant / Info</div>'
+      + '<div class="col-h">Action</div>'
+      + '</div>';
+    if(impaye > 0) {
+      body += '<div class="pulse-row" style="'+cols+'" onclick="navigateTo(\'tdb\')">'
+        + '<div><div class="row-name">Factures impayées</div><div class="row-sub">Retard de règlement</div></div>'
+        + '<div><button class="sb sb-red">Retard</button></div>'
+        + '<div class="cell-taux">'+(impaye/1000).toFixed(1)+'k€</div>'
+        + '<div><span class="at at-red">Relancer client</span></div>'
+        + '</div>';
+    }
+    rhManquants.slice(0,5).forEach(function(c){
+      body += '<div class="pulse-row" style="'+cols+'" onclick="navigateTo(\'candidats\')">'
+        + '<div><div class="row-name">'+esc((c.prenom||'')+' '+c.nom)+'</div>'
+        + '<div class="row-sub">'+esc(c.mission&&c.mission.client||'—')+'</div></div>'
+        + '<div><button class="sb sb-amber">RH manquant</button></div>'
+        + '<div class="cell-date">En mission</div>'
+        + '<div><span class="at at-amber">Envoyer RH</span></div>'
+        + '</div>';
+    });
+  } else {
+    body += '<div class="group-empty">Aucun retard ni RH manquant</div>';
+  }
+
+  var total = (impaye>0?1:0) + rhManquants.length;
+  return group('Recouvrement', total > 0 ? total+' alerte'+(total>1?'s':'') : 'À jour', 'gh-gray', body);
+}
+
+// ── HELPER : construire un groupe ──────────────
+function group(title, count, cls, body) {
+  return '<div class="group">'
+    + '<div class="group-header '+cls+'">'
+    + '<span class="group-title">'+title+'</span>'
+    + '<span class="group-count">&nbsp;· '+count+'</span>'
+    + '<span class="group-chevron">▼</span>'
+    + '</div>'
+    + '<div class="group-body">'+body+'</div>'
+    + '</div>';
+}
+
+// ═══════════════════════════════════════════════
+// EXPORT
+// ═══════════════════════════════════════════════
+function exportAll() {
+  var keys = ['crm_btp_db','cands_btp_v2','jtp_missions','grilles_btp','agence_btp','tdb_cfg'];
+  var data = { exported: new Date().toISOString(), version:'2.0', app:'JTIPilot', data:{} };
+  keys.forEach(function(k){ try{ data.data[k]=JSON.parse(localStorage.getItem(k)||'null'); }catch(e){} });
+  var blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  var a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='jtipilot_backup_'+today()+'.json'; a.click();
+}
+
+// ═══════════════════════════════════════════════
+// HORLOGE + RACCOURCIS + INIT
+// ═══════════════════════════════════════════════
+function clock() {
+  var el = document.getElementById('nav-clock');
+  if(el) el.textContent = new Date().toLocaleDateString('fr-FR') + ' · '
+    + new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+}
+
+document.addEventListener('keydown', function(e){
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT') return;
+  var map = {'1':'today','2':'tdb','3':'crm','4':'candidats','5':'missions','6':'marge'};
+  if(map[e.key]) navigateTo(map[e.key]);
+});
+
+// Init
+loadAll();
+navigateTo('today');
+clock();
+setInterval(clock, 30000);
+setInterval(function(){ loadAll(); refreshBadges(); }, 20000);
 </script>
 </body>
 </html>

@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Parametres — JTIpilot</title>
+<link rel="stylesheet" href="shared.css"/>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0f1117;--surface:#181c27;--surface2:#1e2335;--surface3:#242840;
+  --border:#2a3050;--border2:#323860;
+  --accent:#f97316;--blue:#3b82f6;--green:#22c55e;--warn:#ef4444;--yellow:#fbbf24;--cyan:#06b6d4;
+  --text:#e2e8f0;--muted:#64748b;--muted2:#94a3b8;
+  --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;padding:24px;}
+.page-header{margin-bottom:24px;}
+.page-header h1{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--accent);letter-spacing:1px;}
+.page-header p{font-size:11px;color:var(--muted);margin-top:4px;font-family:var(--mono);}
+.sections{display:flex;flex-direction:column;gap:20px;max-width:760px;}
+.section{background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;}
+.section-head{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.section-head h2{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.8px;}
+.section-head .sh-icon{font-size:16px;}
+.section-body{padding:18px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.field{display:flex;flex-direction:column;gap:4px;}
+.field.full{grid-column:1/-1;}
+.field label{font-size:10px;color:var(--muted);font-family:var(--mono);font-weight:700;letter-spacing:.3px;}
+.field input,.field select,.field textarea{
+  background:var(--surface2);border:1px solid var(--border);color:var(--text);
+  padding:7px 10px;border-radius:3px;font-size:12px;font-family:var(--sans);
+}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);outline:none;}
+.field textarea{resize:vertical;min-height:60px;}
+.save-bar{margin-top:14px;display:flex;gap:8px;align-items:center;}
+.btn-save{padding:8px 20px;background:var(--accent);color:#fff;border:none;border-radius:3px;
+  font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.5px;}
+.btn-save:hover{opacity:.85;}
+.btn-reset{padding:8px 14px;background:transparent;color:var(--muted);border:1px solid var(--border);
+  border-radius:3px;font-family:var(--mono);font-size:11px;cursor:pointer;}
+.btn-reset:hover{color:var(--warn);border-color:var(--warn);}
+.saved-msg{font-family:var(--mono);font-size:10px;color:var(--green);display:none;}
+.saved-msg.show{display:inline;}
+.kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.kpi-card{background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:12px 14px;}
+.kpi-card label{font-size:9px;color:var(--muted);font-family:var(--mono);font-weight:700;letter-spacing:.5px;display:block;margin-bottom:6px;}
+.kpi-card input{width:100%;background:var(--surface3);border:1px solid var(--border);color:var(--accent);
+  padding:6px 8px;border-radius:3px;font-size:18px;font-weight:700;font-family:var(--mono);text-align:center;}
+.kpi-card input:focus{border-color:var(--accent);outline:none;}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);}
+.toggle-row:last-child{border:none;}
+.toggle-label{font-size:12px;color:var(--text);}
+.toggle-desc{font-size:10px;color:var(--muted);margin-top:2px;}
+.toggle{position:relative;width:38px;height:20px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;inset:0;background:var(--surface3);border-radius:20px;cursor:pointer;transition:.2s;}
+.toggle-slider::before{content:'';position:absolute;height:14px;width:14px;left:3px;bottom:3px;background:var(--muted);border-radius:50%;transition:.2s;}
+.toggle input:checked + .toggle-slider{background:rgba(249,115,22,.3);}
+.toggle input:checked + .toggle-slider::before{transform:translateX(18px);background:var(--accent);}
+.danger-zone{background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.2);border-radius:4px;padding:14px;}
+.btn-danger{padding:7px 14px;background:transparent;color:var(--warn);border:2px solid var(--warn);
+  border-radius:3px;font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;margin-right:8px;}
+.btn-danger:hover{background:rgba(239,68,68,.1);}
+.version-tag{font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:4px;}
+</style>
+<script>
+(function(){
+  var t=localStorage.getItem('jtp_theme');
+  if(t==='light')document.documentElement.classList.add('light');
+  window.addEventListener('message',function(e){
+    if(e.data&&e.data.type==='theme'){
+      document.documentElement.classList.toggle('light',e.data.value==='light');
+      localStorage.setItem('jtp_theme',e.data.value);
+    }
+  });
+})();
+</script>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>⚙ PARAMETRES</h1>
+  <p>Configuration de votre agence et de l'outil</p>
+</div>
+
+<div class="sections">
+
+  <!-- AGENCE -->
+  <div class="section">
+    <div class="section-head">
+      <span class="sh-icon">🏗</span>
+      <h2>AGENCE</h2>
+    </div>
+    <div class="section-body">
+      <div class="form-grid">
+        <div class="field full"><label>NOM DE L'AGENCE</label><input type="text" id="ag-nom" placeholder="Ex: CAMO Intérim Paris 15"/></div>
+        <div class="field"><label>TÉLÉPHONE</label><input type="tel" id="ag-tel" placeholder="01 XX XX XX XX"/></div>
+        <div class="field"><label>EMAIL</label><input type="email" id="ag-email" placeholder="agence@camo.fr"/></div>
+        <div class="field full"><label>ADRESSE</label><input type="text" id="ag-adresse" placeholder="15 rue de Vaugirard 75015 Paris"/></div>
+        <div class="field"><label>NOM EMETTEUR (RA)</label><input type="text" id="ag-emetteur" placeholder="Jonathan TIMMIAH"/></div>
+        <div class="field"><label>SITE WEB</label><input type="text" id="ag-site" placeholder="www.camo-interim.fr"/></div>
+        <div class="field"><label>FONCTION</label><input type="text" id="ag-fond" placeholder="Responsable d'Agence"/></div>
+        <div class="field"><label>LOGO URL (optionnel)</label><input type="text" id="ag-logo" placeholder="https://..."/></div>
+        <div class="field full"><label>MENTIONS LÉGALES (propales & CV)</label><textarea id="ag-mentions" placeholder="Agence d'emploi temporaire — N° SIRET..."></textarea></div>
+      </div>
+      <div class="save-bar">
+        <button class="btn-save" onclick="saveAgence()">💾 ENREGISTRER</button>
+        <span class="saved-msg" id="msg-agence">✓ Sauvegardé</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- OBJECTIFS RA -->
+  <div class="section">
+    <div class="section-head">
+      <span class="sh-icon">📊</span>
+      <h2>OBJECTIFS RA — TABLEAU DE BORD</h2>
+    </div>
+    <div class="section-body">
+      <div class="kpi-row">
+        <div class="kpi-card"><label>ETP CIBLE (mois)</label><input type="number" id="obj-etp" placeholder="8" min="0"/></div>
+        <div class="kpi-card"><label>CA CIBLE k€ (mois)</label><input type="number" id="obj-ca" placeholder="100" min="0"/></div>
+        <div class="kpi-card"><label>MARGE CIBLE % </label><input type="number" id="obj-marge" placeholder="18" min="0" max="100"/></div>
+        <div class="kpi-card"><label>COEFF MINI ALERTE</label><input type="number" id="obj-coeff-min" placeholder="1.75" step="0.05" min="1"/></div>
+        <div class="kpi-card"><label>FRAIS FIXES k€ (mois)</label><input type="number" id="obj-ff" placeholder="15" min="0"/></div>
+        <div class="kpi-card"><label>OBJECTIF ETP M+12</label><input type="number" id="obj-etp12" placeholder="38" min="0"/></div>
+      </div>
+      <div class="save-bar">
+        <button class="btn-save" onclick="saveObjectifs()">💾 ENREGISTRER</button>
+        <span class="saved-msg" id="msg-obj">✓ Sauvegardé</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPTIONS AFFICHAGE -->
+  <div class="section">
+    <div class="section-head">
+      <span class="sh-icon">🎨</span>
+      <h2>AFFICHAGE</h2>
+    </div>
+    <div class="section-body">
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Thème sombre / clair</div>
+          <div class="toggle-desc">Bascule entre le thème sombre (défaut) et clair</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="tog-theme" onchange="toggleTheme(this)"/>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Météo client dans la sidebar CRM</div>
+          <div class="toggle-desc">Affiche l'indicateur de chaleur sur chaque carte prospect</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="tog-meteo" onchange="savePref('meteo_sidebar', this.checked)" checked/>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Alerte missions expirant dans 7j</div>
+          <div class="toggle-desc">Bandeau d'alerte dans le module Missions</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="tog-alert-missions" onchange="savePref('alert_missions_7j', this.checked)" checked/>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- DONNÉES -->
+  <div class="section">
+    <div class="section-head">
+      <span class="sh-icon">💾</span>
+      <h2>DONNÉES & SAUVEGARDE</h2>
+    </div>
+    <div class="section-body">
+      <div class="save-bar" style="margin-bottom:12px;">
+        <button class="btn-save" onclick="exportAll()">⬇ EXPORT JSON COMPLET</button>
+        <button class="btn-save" style="background:var(--blue)" onclick="document.getElementById('fi-import').click()">⬆ RESTAURER BACKUP</button>
+        <input type="file" id="fi-import" accept=".json" style="display:none" onchange="importBackup(this)"/>
+      </div>
+      <div id="stats-data" style="font-family:var(--mono);font-size:10px;color:var(--muted);line-height:1.8;"></div>
+      <div class="danger-zone" style="margin-top:16px;">
+        <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--warn);letter-spacing:.5px;margin-bottom:10px;">ZONE DANGEREUSE</div>
+        <button class="btn-danger" onclick="purgerModule('crm_btp_db','CRM')">Vider CRM</button>
+        <button class="btn-danger" onclick="purgerModule('cands_btp_v2','Candidats')">Vider Candidats</button>
+        <button class="btn-danger" onclick="purgerModule('jtp_missions','Missions')">Vider Missions</button>
+        <div style="font-size:10px;color:var(--muted);margin-top:8px;">Ces actions sont irréversibles sans backup.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="version-tag">JTIPilot v4v — Données stockées localement (localStorage)</div>
+
+</div>
+
+<script>
+var AGENCE_KEY = 'agence_btp';
+var TDB_KEY = 'tdb_cfg';
+var PREF_KEY = 'jtp_prefs';
+
+function getAgence() { try { return JSON.parse(localStorage.getItem(AGENCE_KEY)||'{}'); } catch(e){return {};} }
+function getTDB()    { try { return JSON.parse(localStorage.getItem(TDB_KEY)||'{}'); }    catch(e){return {};} }
+function getPrefs()  { try { return JSON.parse(localStorage.getItem(PREF_KEY)||'{}'); }   catch(e){return {};} }
+
+function setVal(id,v){ var el=document.getElementById(id); if(el) el.value=v||''; }
+function getVal(id){ return (document.getElementById(id)||{value:''}).value||''; }
+function showMsg(id){ var el=document.getElementById(id); if(!el)return; el.classList.add('show'); setTimeout(function(){el.classList.remove('show');},2000); }
+
+function loadAll() {
+  var ag = getAgence();
+  setVal('ag-nom',    ag.nom);
+  setVal('ag-tel',    ag.tel);
+  setVal('ag-email',  ag.email);
+  setVal('ag-adresse',ag.adresse);
+  setVal('ag-emetteur', ag.emetteur || ag.ra || ag.responsable);
+  setVal('ag-site',   ag.site);
+  setVal('ag-fond',   ag.fonction || "Responsable d'Agence");
+  setVal('ag-logo',   ag.logo);
+  setVal('ag-mentions', ag.mentions);
+
+  var td = getTDB();
+  setVal('obj-etp',      td.etp_cible);
+  setVal('obj-ca',       td.ca_cible);
+  setVal('obj-marge',    td.marge_cible);
+  setVal('obj-coeff-min',td.coeff_min || '1.75');
+  setVal('obj-ff',       td.frais_fixes || '15');
+  setVal('obj-etp12',    td.etp_cible_12m);
+
+  var pr = getPrefs();
+  var togTheme = document.getElementById('tog-theme');
+  if(togTheme) togTheme.checked = (localStorage.getItem('jtp_theme') === 'light');
+  var togMeteo = document.getElementById('tog-meteo');
+  if(togMeteo) togMeteo.checked = pr.meteo_sidebar !== false;
+  var togAlert = document.getElementById('tog-alert-missions');
+  if(togAlert) togAlert.checked = pr.alert_missions_7j !== false;
+
+  refreshStats();
+}
+
+function saveAgence() {
+  var ag = getAgence();
+  ag.nom        = getVal('ag-nom');
+  ag.tel        = getVal('ag-tel');
+  ag.email      = getVal('ag-email');
+  ag.adresse    = getVal('ag-adresse');
+  ag.emetteur   = getVal('ag-emetteur');
+  ag.ra         = getVal('ag-emetteur');
+  ag.responsable= getVal('ag-emetteur');
+  ag.site       = getVal('ag-site');
+  ag.fonction   = getVal('ag-fond') || "Responsable d'Agence";
+  ag.logo       = getVal('ag-logo');
+  ag.mentions   = getVal('ag-mentions');
+  localStorage.setItem(AGENCE_KEY, JSON.stringify(ag));
+  try { window.parent.postMessage({type:'agence_updated', agence:ag}, '*'); } catch(e){}
+  showMsg('msg-agence');
+}
+
+function saveObjectifs() {
+  var td = getTDB();
+  td.etp_cible    = parseFloat(getVal('obj-etp'))      || 0;
+  td.ca_cible     = parseFloat(getVal('obj-ca'))       || 0;
+  td.marge_cible  = parseFloat(getVal('obj-marge'))    || 18;
+  td.coeff_min    = parseFloat(getVal('obj-coeff-min'))|| 1.75;
+  td.frais_fixes  = parseFloat(getVal('obj-ff'))       || 15;
+  td.etp_cible_12m= parseFloat(getVal('obj-etp12'))    || 38;
+  localStorage.setItem(TDB_KEY, JSON.stringify(td));
+  try { window.parent.postMessage({type:'tdb_updated'}, '*'); } catch(e){}
+  showMsg('msg-obj');
+}
+
+function savePref(key, val) {
+  var pr = getPrefs();
+  pr[key] = val;
+  localStorage.setItem(PREF_KEY, JSON.stringify(pr));
+}
+
+function toggleTheme(cb) {
+  var t = cb.checked ? 'light' : 'dark';
+  localStorage.setItem('jtp_theme', t);
+  document.documentElement.classList.toggle('light', cb.checked);
+  try { window.parent.postMessage({type:'theme', value:t}, '*'); } catch(e){}
+}
+
+function refreshStats() {
+  var keys = {
+    'crm_btp_db':  'CRM Prospects/Clients',
+    'cands_btp_v2':'Candidats',
+    'jtp_missions':'Missions',
+    'flc_clients': 'Fiches clients scoring',
+    'grilles_btp': 'Grilles tarifaires'
+  };
+  var lines = [];
+  Object.keys(keys).forEach(function(k) {
+    try {
+      var d = JSON.parse(localStorage.getItem(k)||'[]');
+      var n = Array.isArray(d) ? d.length : Object.keys(d).length;
+      lines.push(keys[k] + ' : <span style="color:var(--accent);font-weight:700">' + n + '</span> entrees');
+    } catch(e) { lines.push(keys[k] + ' : 0 entrees'); }
+  });
+  var el = document.getElementById('stats-data');
+  if(el) el.innerHTML = lines.join('<br>');
+}
+
+function exportAll() {
+  var keys = ['crm_btp_db','cands_btp_v2','jtp_missions','flc_clients','grilles_btp','agence_btp','tdb_cfg','jtp_prefs'];
+  var data = {exported:new Date().toISOString(), version:'4v', app:'JTIPilot', data:{}};
+  keys.forEach(function(k){ try { data.data[k] = JSON.parse(localStorage.getItem(k)||'null'); } catch(e){} });
+  var blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'jtipilot_backup_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+}
+
+function importBackup(input) {
+  var file = input.files[0]; if(!file) return;
+  var r = new FileReader();
+  r.onload = function(e) {
+    try {
+      var d = JSON.parse(e.target.result);
+      var data = d.data || d;
+      var count = 0;
+      Object.keys(data).forEach(function(k) {
+        if(data[k] !== null) { localStorage.setItem(k, JSON.stringify(data[k])); count++; }
+      });
+      alert('Restauration OK : ' + count + ' cles importees. Rechargez la page.');
+      refreshStats();
+    } catch(err) { alert('Erreur : ' + err.message); }
+    input.value = '';
+  };
+  r.readAsText(file, 'UTF-8');
+}
+
+function purgerModule(key, label) {
+  if(!confirm('Vider toutes les donnees ' + label + ' ? Cette action est irreversible.')) return;
+  localStorage.removeItem(key);
+  refreshStats();
+  alert(label + ' vide.');
+}
+
+loadAll();
+</script>
+</body>
+</html>
