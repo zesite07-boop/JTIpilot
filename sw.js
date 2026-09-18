@@ -1,83 +1,91 @@
-// JTIPilot Service Worker v1.0
-const CACHE = 'jtipilot-v1';
-const CORE = [
-  '/',
-  '/index.html',
-  '/crm2.html',
-  '/candidats2.html',
-  '/missions.html',
-  '/clients.html',
-  '/marge2.html',
-  '/tdb.html',
-  '/pl.html',
-  '/juridique.html',
-  '/objections.html',
-  '/rome.html',
-  '/shared.css',
-  '/manifest.json',
-  'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap',
-  'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'
+// ═══════════════════════════════════════════════════════
+// JTIpilot — Service Worker (app shell only)
+// ═══════════════════════════════════════════════════════
+// Stratégie : network-first avec repli cache, limité à la coquille
+// applicative (index.html, manifest.json, icônes). Choisi plutôt que
+// cache-first car l'app est mise à jour fréquemment (nombreuses passes
+// de correctifs) : network-first garantit que l'utilisateur voit toujours
+// la dernière version quand il est en ligne, et ne bascule sur le cache
+// que hors-ligne ou en cas d'échec réseau — pas de risque de rester
+// coincé sur une version périmée qui masquerait un vrai correctif.
+//
+// IMPORTANT : ce service worker n'intercepte QUE les requêtes GET
+// same-origin vers les fichiers de la coquille applicative listés
+// ci-dessous. Tout le reste (appels Supabase, CDN SheetJS/xlsx,
+// Google Fonts, requêtes IndexedDB via le navigateur, POST/PUT, etc.)
+// passe intégralement à travers sans jamais être mis en cache ni
+// intercepté, afin de ne jamais interférer avec la synchro Supabase
+// ou la sauvegarde IndexedDB déjà en place dans l'app.
+
+var CACHE_VERSION = 'jtipilot-shell-v1';
+var SHELL_PATHS = [
+  './index.html',
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png',
+  './icon-512-maskable.png',
+  './apple-touch-icon.png'
 ];
 
-self.addEventListener('install', function(e) {
-  e.waitUntil(
-    caches.open(CACHE).then(function(cache) {
-      // Core files en priorité, fonts/CDN en best-effort
-      var core = CORE.slice(0, 14);
-      var optional = CORE.slice(14);
-      var corePromise = cache.addAll(core);
-      var optPromise = Promise.allSettled(
-        optional.map(function(url) {
-          return fetch(url).then(function(r) { return cache.put(url, r); }).catch(function(){});
-        })
-      );
-      return Promise.all([corePromise, optPromise]);
-    }).then(function() { return self.skipWaiting(); })
+self.addEventListener('install', function(event){
+  self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_VERSION).then(function(cache){
+      return cache.addAll(SHELL_PATHS).catch(function(){
+        // Si un fichier manque (ex. icône pas encore déployée), ne bloque
+        // pas l'installation du service worker pour autant.
+      });
+    })
   );
 });
 
-self.addEventListener('activate', function(e) {
-  e.waitUntil(
-    caches.keys().then(function(keys) {
+self.addEventListener('activate', function(event){
+  event.waitUntil(
+    caches.keys().then(function(keys){
       return Promise.all(
-        keys.filter(function(k){ return k !== CACHE; }).map(function(k){ return caches.delete(k); })
+        keys.filter(function(k){ return k !== CACHE_VERSION; })
+            .map(function(k){ return caches.delete(k); })
       );
-    }).then(function() { return self.clients.claim(); })
+    }).then(function(){ return self.clients.claim(); })
   );
 });
 
-self.addEventListener('fetch', function(e) {
-  // Ignorer les requêtes non-GET et cross-origin non-cachées
-  if(e.request.method !== 'GET') return;
-  var url = e.request.url;
-  // API calls: network only
-  if(url.includes('api.anthropic.com') || url.includes('fonts.gstatic.com') && !url.includes('fonts.googleapis.com')) {
-    return;
-  }
-  e.respondWith(
-    caches.match(e.request).then(function(cached) {
-      if(cached) {
-        // Revalider en arrière-plan (stale-while-revalidate)
-        var fetchPromise = fetch(e.request).then(function(response) {
-          if(response && response.status === 200) {
-            var clone = response.clone();
-            caches.open(CACHE).then(function(cache) { cache.put(e.request, clone); });
-          }
-          return response;
-        }).catch(function(){});
-        return cached;
-      }
-      return fetch(e.request).then(function(response) {
-        if(response && response.status === 200 && e.request.url.startsWith(self.location.origin)) {
-          var clone = response.clone();
-          caches.open(CACHE).then(function(cache) { cache.put(e.request, clone); });
-        }
-        return response;
-      }).catch(function() {
-        // Offline fallback
-        if(e.request.headers.get('accept') && e.request.headers.get('accept').includes('text/html')) {
-          return caches.match('/index.html');
-        }
+function isShellRequest(url){
+  if(url.origin !== self.location.origin) return false;
+  var path = url.pathname;
+  // Coquille applicative uniquement : page racine, index.html, manifest, icônes.
+  return path === '/' ||
+         /\/index\.html$/.test(path) ||
+         /\/manifest\.json$/.test(path) ||
+         /\/(icon-192|icon-512|icon-512-maskable|apple-touch-icon)\.png$/.test(path);
+}
+
+self.addEventListener('fetch', function(event){
+  var req = event.request;
+
+  // Ne jamais toucher aux requêtes non-GET (Supabase POST/PATCH, etc.)
+  if(req.method !== 'GET') return;
+
+  var url;
+  try{ url = new URL(req.url); }catch(e){ return; }
+
+  // Laisser passer tout ce qui n'est pas la coquille applicative :
+  // Supabase, CDN (cdnjs SheetJS/xlsx, fonts.googleapis.com), API
+  // geo.api.gouv.fr, Claude API, etc. — aucune interception, aucun cache.
+  if(!isShellRequest(url)) return;
+
+  event.respondWith(
+    fetch(req).then(function(res){
+      // Réseau dispo : on sert la version fraîche et on rafraîchit le cache.
+      var resClone = res.clone();
+      caches.open(CACHE_VERSION).then(function(cache){
+        cache.put(req, resClone);
+      });
+      return res;
+    }).catch(function(){
+      // Hors-ligne ou échec réseau : repli sur le cache si présent.
+      return caches.match(req).then(function(cached){
+        return cached || Response.error();
       });
     })
   );
